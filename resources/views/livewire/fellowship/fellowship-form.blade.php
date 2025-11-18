@@ -1,5 +1,5 @@
 <div x-data="{ lang: 'id', selectedCategories: [] }">
-    <div class="max-w-5xl mx-auto bg-white py-10 px-20 rounded-lg shadow-md">
+    <div class="max-w-5xl mx-auto bg-white py-10 mb-20 px-20 rounded-lg shadow-md">
         <nav class="text-sm text-gray-600 mb-6 flex items-center gap-2">
             <a href="{{ route('fellowship.index') }}" class="text-gray-800 hover:text-blue-600 font-medium">
                 Page Fellowship
@@ -296,54 +296,28 @@
     text: '+ Tambah Blok Liputan',
     onAction: function () {
         editor.insertContent(`
-        <section class='liputan-blok'
-            style='display:flex; gap:20px; align-items:flex-start; margin:20px 0; border-bottom:1px solid #ddd; padding-bottom:15px; flex-wrap:wrap;'>
+<section class='liputan-blok flex flex-col md:flex-row md:gap-3 gap-2 border-b pb-4'>
 
-            <!-- Gambar Liputan -->
-            <div class='liputan-gambar' style='flex:0 0 40%; min-width:250px;'>
-                <img src='https://placehold.co/400x250' alt='Gambar'
-                    style='width:100%; border-radius:8px; object-fit:cover; display:block;'>
-            </div>
+    <!-- Gambar -->
+    <div class='liputan-gambar w-full md:w-2/5'>
+        <img src='https://placehold.co/800x450'
+             class='w-full h-auto object-cover rounded'>
+    </div>
 
-            <!-- Info Liputan -->
-            <div class='liputan-info' style='flex:1; min-width:250px;'>
-                <h2 style='font-size:20px; font-weight:bold; margin-bottom:5px;'>Judul Liputan</h2>
-                <p style='color:#555; margin-bottom:5px; line-height:1.6;'>
-                    Tulis deskripsi singkat di sini. Misalnya ringkasan dari isi berita atau liputan.
-                </p>
-                <p style='color:#c00; font-weight:bold;'>Nama Penulis</p>
-            </div>
-        </section>
+    <!-- Info -->
+    <div class='liputan-info flex-1 mt-1 md:mt-0'>
+        <h2 class='text-[20px] font-bold leading-tight'>Judul Liputan</h2>
 
-        <style>
-    @media (max-width: 780px) {
-        .liputan-blok {
-            flex-direction: column !important;
-            align-items: center !important;
-            text-align: center !important;
-            padding: 0 15px !important; /* Pertahankan padding horizontal untuk teks */
-        }
-        .liputan-gambar {
-            flex: none !important;
-            width: 100vw !important; /* ✅ Atur lebar kontainer gambar menjadi full viewport width */
-            margin-bottom: 10px !important;
-            /* Hapus atau setel ulang min-width jika ada konflik */
-            min-width: 100% !important; 
-        }
-        .liputan-gambar img {
-            width: 100vw !important; /* ✅ Gambar full lebar layar */
-            max-width: 100vw !important;
-            /* Geser ke kiri dan kanan untuk menutupi padding container utama (jika ada 15px) */
-            margin-left: -15px !important; 
-            margin-right: -15px !important; 
-            border-radius: 0 !important; /* Opsional: Agar full edge to edge tanpa sudut melengkung */
-            height: auto; /* Pastikan aspek rasio gambar tetap terjaga */
-        }
-        .liputan-info {
-            width: 100% !important;
-        }
-    }
-</style>
+        <div class='text-gray-700 leading-snug text-[15px]'>
+            Tulis deskripsi singkat di sini. Misalnya ringkasan dari isi liputan...
+        </div>
+
+        <div class='text-red-600 font-semibold text-[14px] mt-1'>
+            Nama Penulis
+        </div>
+    </div>
+
+</section>
         `);
     }
 });
@@ -457,44 +431,6 @@
                 </template>
             </div>
 
-            {{-- <div x-data="{
-        categories: {{ Js::from($categories) }},
-        selectedCategories: @entangle('selectedCategories'),
-        contents: @entangle('contents'),
-    }" class="space-y-4">
-                <label class="block font-semibold">Pilih Kategori:</label>
-
-                <template x-for="cat in categories" :key="cat.id">
-                    <div class="border rounded p-2">
-                        <label class="flex items-center gap-2">
-                            <input type="checkbox" :value="cat.id" x-model="selectedCategories">
-                            <span x-text="cat.kategori_name"></span>
-                        </label>
-
-                        <!-- Bagian yang muncul saat kategori dipilih -->
-                        <template x-if="selectedCategories.includes(cat.id.toString())">
-                            <div class="mt-3 space-y-2 border-t pt-3">
-                                <label class="block text-sm">Status:</label>
-                                <select class="border rounded px-2 py-1 w-full" :name="'categories['+cat.id+'][status]'"
-                                    x-model="contents[cat.id]?.status">
-                                    <option value="draft">Draft</option>
-                                    <option value="active">Active</option>
-                                    <option value="inactive">Inactive</option>
-                                </select>
-
-                                <label class="block text-sm">Konten:</label>
-                                <textarea class="border rounded w-full h-24 p-2"
-                                    :name="'categories['+cat.id+'][content_id]'" x-model="contents[cat.id]?.content_id"
-                                    placeholder="Tulis konten di sini..."></textarea>
-                            </div>
-                        </template>
-                    </div>
-                </template>
-
-                <div class="mt-4 text-sm text-gray-600">
-                    Selected: <span x-text="JSON.stringify(selectedCategories)"></span>
-                </div>
-            </div> --}}
 
             <div class="flex flex-col sm:flex-row items-center gap-4">
                 <div class="max-w-full w-full"
@@ -541,4 +477,5 @@
             </button>
         </form>
     </div>
+    @include('front.components.floating')
 </div>

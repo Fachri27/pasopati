@@ -10,12 +10,44 @@
     --font-serif: 'Merriweather', ui-serif, Georgia, serif;
 }
 
+
+/* warna link & sup tetap */
+
 .prose sup,
 .prose a sup,
 .prose .reference,
 .prose a {
     color: #ef4444 !important;
-    /* Tailwind red-500 */
     text-decoration-color: #ef4444 !important;
-    /* biar underline-nya juga merah */
+}
+
+
+/* HAPUS aturan .content-wrapper * { ... } */
+
+
+/* kasih margin halus untuk elemen tertentu */
+
+.content-wrapper p {
+    margin: 0 0 1rem 0 !important;
+}
+
+.content-wrapper li {
+    margin-bottom: 0.5rem !important;
+}
+
+.content-wrapper blockquote {
+    margin: 1rem 0 !important;
+}
+
+.content-wrapper img {
+    margin: 0 !important;
+}
+
+
+/* judul */
+
+.content-wrapper h2,
+.content-wrapper h3 {
+    margin-top: 1.25rem !important;
+    margin-bottom: 0.75rem !important;
 }

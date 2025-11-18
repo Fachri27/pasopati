@@ -1,6 +1,6 @@
 <div>
     <div class="my-6" x-data="{ lang: 'id' }">
-        <div class="max-w-4xl mx-auto bg-white py-10 px-20 rounded-lg shadow-md"
+        <div class="max-w-4xl mx-auto bg-white py-10 mb-20 px-20 rounded-lg shadow-md"
             x-data="{ page_type: @entangle('page_type') }">
             <nav class="text-sm text-gray-600 mb-6 flex items-center gap-2">
                 <a href="{{ route('pages.index') }}" class="text-gray-800 hover:text-blue-600 font-medium">
@@ -408,4 +408,5 @@
             </form>
         </div>
     </div>
+    @include('front.components.floating')
 </div>

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Fellowship;
 use App\Models\Page;
 use Illuminate\Http\Request;
 
@@ -27,6 +28,11 @@ class PageController extends Controller
             ->latest()
             ->get();
 
+        $fellowship = Fellowship::with(['translations' => function ($q) use ($locale) {
+            $q->where('locale', $locale);
+        }])
+            ->first();
+
         // Ambil semua page dengan type ngopini
         $ngopini = Page::with(['translations' => function ($q) use ($locale) {
             $q->where('locale', $locale);
@@ -40,7 +46,7 @@ class PageController extends Controller
             'description' => __('pasopati.id: Pasopati Project dirancang sebagai sebuah situs yang menampilkan informasi, data, dan analisis isu-isu kehutanan, persawitan, dan pertambangan. Situs ini fokus menyampaikan suara kritis pada tema-tema tersebut di atas, termasuk mengenai pelakunya dan kebijakan-kebijakan terkait.
             Pasopati Project didedikasikan untuk mencapai salah satu tujuan Auriga, yakni mengeliminir aksi-aksi destruktif terhadap sumberdaya alam. Situs ini dikelola oleh Auriga. Namun demikian ekspose-ekspose tertentu dalam situs ini dilakukan bersama jejaring.'),
             'image' => asset('images/image.png'),
-            'type' => 'article',    
+            'type' => 'article',
         ];
 
         seo()->setLocale($locale)
@@ -57,7 +63,7 @@ class PageController extends Controller
 
         // function untuk searc
 
-        return view('front.home', compact('pages', 'mainNgopini', 'otherNgopini', 'search'));
+        return view('front.home', compact('pages', 'mainNgopini', 'otherNgopini', 'search', 'fellowship'));
     }
 
     public function preview($locale, $page_type, $slug)
@@ -96,13 +102,13 @@ class PageController extends Controller
             ->where('page_type', 'ngopini')
             ->where('status', 'active')
             ->get();
-        
+
         $meta = [
             'title' => __('Pasopati'),
             'description' => __('pasopati.id: Pasopati Project dirancang sebagai sebuah situs yang menampilkan informasi, data, dan analisis isu-isu kehutanan, persawitan, dan pertambangan. Situs ini fokus menyampaikan suara kritis pada tema-tema tersebut di atas, termasuk mengenai pelakunya dan kebijakan-kebijakan terkait.
             Pasopati Project didedikasikan untuk mencapai salah satu tujuan Auriga, yakni mengeliminir aksi-aksi destruktif terhadap sumberdaya alam. Situs ini dikelola oleh Auriga. Namun demikian ekspose-ekspose tertentu dalam situs ini dilakukan bersama jejaring.'),
             'image' => asset('images/image.png'),
-            'type' => 'article',    
+            'type' => 'article',
         ];
 
         seo()->setLocale($locale)
@@ -121,14 +127,14 @@ class PageController extends Controller
         }])
             ->where('expose_type', $expose_type)
             ->where('status', 'active')
-            ->get();    
+            ->get();
 
         $meta = [
             'title' => __('Pasopati'),
             'description' => __('pasopati.id: Pasopati Project dirancang sebagai sebuah situs yang menampilkan informasi, data, dan analisis isu-isu kehutanan, persawitan, dan pertambangan. Situs ini fokus menyampaikan suara kritis pada tema-tema tersebut di atas, termasuk mengenai pelakunya dan kebijakan-kebijakan terkait.
             Pasopati Project didedikasikan untuk mencapai salah satu tujuan Auriga, yakni mengeliminir aksi-aksi destruktif terhadap sumberdaya alam. Situs ini dikelola oleh Auriga. Namun demikian ekspose-ekspose tertentu dalam situs ini dilakukan bersama jejaring.'),
             'image' => asset('images/image.png'),
-            'type' => 'article',    
+            'type' => 'article',
         ];
 
         seo()->setLocale($locale)

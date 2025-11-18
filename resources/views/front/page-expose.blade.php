@@ -30,7 +30,7 @@ $translation = $page->translations->where('locale', $locale)->first();
             <div class="absolute inset-0 bg-black/50 flex items-center justify-center">
             </div>
         </section>
-        <h1 class="max-w-4xl mx-auto text-black text-xl sm:text-xl md:text-3xl lg:text-4xl font-serif font-semibold text-center px-4 leading-snug mb-10 md:mb-20 lg:mb-30">
+        <h1 class="max-w-4xl mx-auto text-black text-xl sm:text-xl md:text-3xl lg:text-4xl font-serif font-semibold text-center px-4 leading-snug mb-10 md:mb-20 lg:mb-20">
             {!! nl2br(e($translation->title)) !!}
         </h1>
 

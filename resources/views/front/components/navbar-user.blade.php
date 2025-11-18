@@ -78,8 +78,7 @@
                         <ul>
                             <li>
                                 <span class="text-red-700 text-xl">•</span>
-                                <a
-                                    href="{{ route('artikel.expose', ['expose_type' => 'deforetasi']) }}">
+                                <a href="{{ route('artikel.expose', ['expose_type' => 'deforetasi']) }}">
                                     Deforestasi
                                 </a>
                             </li>
@@ -87,8 +86,7 @@
                         <ul>
                             <li>
                                 <span class="text-red-700 text-xl">•</span>
-                                <a
-                                    href="{{ route('artikel.expose', ['expose_type' => 'kebakaran']) }}">
+                                <a href="{{ route('artikel.expose', ['expose_type' => 'kebakaran']) }}">
                                     Kebakaran
                                 </a>
                             </li>
@@ -96,8 +94,7 @@
                         <ul>
                             <li>
                                 <span class="text-red-700 text-xl">•</span>
-                                <a
-                                    href="{{ route('artikel.expose', ['expose_type' => 'pulp']) }}">
+                                <a href="{{ route('artikel.expose', ['expose_type' => 'pulp']) }}">
                                     Pulp & paper
                                 </a>
                             </li>
@@ -105,30 +102,30 @@
                         <ul>
                             <li>
                                 <span class="text-red-700 text-xl">•</span>
-                                <a
-                                    href="{{ route('artikel.expose', ['expose_type' => 'mining']) }}">
+                                <a href="{{ route('artikel.expose', ['expose_type' => 'mining']) }}">
                                     Mining & energy
                                 </a>
                             </li>
                         </ul>
                     </li>
                     <li class="border-b border-black">
-                        <span class="uppercase font-semibold">fellowship</span>
+                        <span class="uppercase font-semibold">Fellowship</span>
+
                         <ul>
+                            @foreach ($yearPosts as $year => $posts)
+                            @foreach ($posts as $post)
                             <li>
                                 <span class="text-red-700 text-xl">•</span>
-                                <a href="">2020 - 2021</a>
+
+                                <a href="{{ route('fellowship.preview', [$locale, $post->slug]) }}">
+                                    {{ $year }}
+                                </a>
                             </li>
-                            <li>
-                                <span class="text-red-700 text-xl">•</span>
-                                <a href="">2021</a>
-                            </li>
-                            <li>
-                                <span class="text-red-700 text-xl">•</span>
-                                <a href="">2022</a>
-                            </li>
+                            @endforeach
+                            @endforeach
                         </ul>
                     </li>
+
                     <li class="border-b border-black">
                         <span class="uppercase font-semibold">sawit</span>
                         <ul>

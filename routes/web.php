@@ -27,6 +27,7 @@ Route::group([
         ->name('home.locale');
 
     Route::get('/artikel/{expose_type}', [PageController::class, 'artikel'])->name('artikel.expose');
+    Route::get('/fellowship/{slug}', [PageController::class, 'fellowshipArtikel'])->name('fellowship.by.year');
 
     Route::get('/fellowship', [FellowshipController::class, 'indexUser'])->name('fellowship.user');
     Route::get('/fellowship/{slug}', [FellowshipController::class, 'preview'])->name('fellowship.preview');
@@ -39,9 +40,9 @@ Route::group([
         return view('front.page-expose');
     })->name('artikel-landing');
 
-    Route::get('/content', [PageController::class, 'show'])
-        ->where('type', 'expose|fellowship|ngopini|static')
-        ->name('artikel.landing');
+    // Route::get('/content', [PageController::class, 'show'])
+    //     ->where('type', 'expose|fellowship|ngopini|static')
+    //     ->name('artikel.landing');
 
     Route::get('/{page_type}/{slug}', [PageController::class, 'preview'])->name('show-page');
 
@@ -99,3 +100,8 @@ Route::group(['prefix' => 'laravel-filemanager', 'middleware' => ['web', 'auth']
 });
 
 Route::post('/upload-editor-image', [EditorController::class, 'uploadEditorImage']);
+
+
+Route::fallback(function () {
+    return redirect('/');
+});
