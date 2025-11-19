@@ -27,7 +27,7 @@ Route::group([
         ->name('home.locale');
 
     Route::get('/artikel/{expose_type}', [PageController::class, 'artikel'])->name('artikel.expose');
-    Route::get('/fellowship/{slug}', [PageController::class, 'fellowshipArtikel'])->name('fellowship.by.year');
+    // Route::get('/fellowship/{slug}', [PageController::class, 'fellowshipArtikel'])->name('fellowship.by.year');
 
     Route::get('/fellowship', [FellowshipController::class, 'indexUser'])->name('fellowship.user');
     Route::get('/fellowship/{slug}', [FellowshipController::class, 'preview'])->name('fellowship.preview');

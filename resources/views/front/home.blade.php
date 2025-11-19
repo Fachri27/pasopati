@@ -7,7 +7,7 @@
     {{-- <p>Current Locale: {{ app()->getLocale() }}</p> --}}
     {{-- <p>{{ __('messages.welcome') }}</p> --}}
     <div class="flex space-x-3 mt-6 px-3">
-        <a href="{{ route('fellowship.preview', $fellowship->slug) }}">
+         <a href="{{ route('fellowship.preview', $fellowship->slug ?? 'default') }}">
             <img src="{{ asset('img/ban-1.png') }}" alt="" class="w-[350px]">
         </a>
         <a href="{{ route('fellowship.user') }}">

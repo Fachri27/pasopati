@@ -21,7 +21,7 @@ class FellowshipController extends Controller
             },
         ])
             ->where('slug', $slug)
-            ->first();
+            ->firstOrFail();
 
         $categories = $fellowship->kategoris;
 
