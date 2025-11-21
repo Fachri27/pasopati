@@ -63,7 +63,7 @@ $user = auth()->user()->role;
         </div>
 
         {{-- Menu mobile --}}
-        <div x-show="openMenu" x-transition class="md:hidden bg-gray-800 border-t border-gray-700">
+        <div x-show="openMenu" x-transition class="md:hidden bg-gray-800 border-t border-gray-700" style="display: none !important">
             <div class="px-2 pt-2 pb-3 space-y-1">
                 <a href="" class="block px-3 py-2 rounded hover:bg-gray-700">Dashboard</a>
                 <a href="" class="block px-3 py-2 rounded hover:bg-gray-700">Artikel</a>
