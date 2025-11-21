@@ -47,7 +47,7 @@
                 x-transition:enter-start="translate-x-full" x-transition:enter-end="translate-x-0"
                 x-transition:leave="transition ease-in duration-200" x-transition:leave-start="translate-x-0"
                 x-transition:leave-end="translate-x-full"
-                class="fixed top-0 right-0 bg-white w-100 h-full z-50 p-6 overflow-y-auto" @click.away="open = false"
+                class="fixed top-0 right-0 bg-white sm:w-[75vw] md:w-100 h-full z-50 p-6 overflow-y-auto" @click.away="open = false"
                 style="display: none !important;">
                 <div class="flex justify-end">
                     <button @click="open = false">

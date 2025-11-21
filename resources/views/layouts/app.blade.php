@@ -33,7 +33,7 @@
     // Gunakan title/deskripsi default
     $pageTitle = $pageTitle ?? "$urlTitle | $appName";
     $pageDescription = $pageDescription ?? "Informasi tentang $urlTitle di $appName.";
-    $pageImage = $pageImage ?? asset('images/new3.png');
+    $pageImage = $pageImage ?? asset('img/image.png');
     $pageType = $pageType ?? 'website';
     $currentUrl = url()->current();
     @endphp
