@@ -394,7 +394,7 @@
                         <label class="block font-medium mb-1">Expose Type</label>
                         <select wire:model="expose_type"
                             class="w-full border px-3 py-2 rounded-lg focus:ring focus:border-blue-400">
-                            <option value="deforetasi">Deforestasi</option>
+                            <option value="deforestasi">Deforestasi</option>
                             <option value="kebakaran">Kebakaran</option>
                             <option value="pulp">Pulp & paper</option>
                             <option value="mining">Mining & energy</option>

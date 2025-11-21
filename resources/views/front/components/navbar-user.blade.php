@@ -78,33 +78,29 @@
                         <ul>
                             <li>
                                 <span class="text-red-700 text-xl">•</span>
-                                <a href="{{ route('artikel.expose', ['expose_type' => 'deforetasi']) }}">
-                                    Deforestasi
-                                </a>
+                                <a href="{{ route('artikel.expose', ['locale' => app()->getLocale(), 'expose_type' => 'deforestasi']) }}">
+                                Deforestasi
                             </li>
                         </ul>
                         <ul>
                             <li>
                                 <span class="text-red-700 text-xl">•</span>
-                                <a href="{{ route('artikel.expose', ['expose_type' => 'kebakaran']) }}">
-                                    Kebakaran
-                                </a>
+                                <a href="{{ route('artikel.expose', ['locale' => app()->getLocale(), 'expose_type' => 'kebakaran']) }}">
+                                Kebakaran
                             </li>
                         </ul>
                         <ul>
                             <li>
                                 <span class="text-red-700 text-xl">•</span>
-                                <a href="{{ route('artikel.expose', ['expose_type' => 'pulp']) }}">
-                                    Pulp & paper
-                                </a>
+                               <a href="{{ route('artikel.expose', ['locale' => app()->getLocale(), 'expose_type' => 'pulp']) }}">
+                                Pulp & paper
                             </li>
                         </ul>
                         <ul>
                             <li>
                                 <span class="text-red-700 text-xl">•</span>
-                                <a href="{{ route('artikel.expose', ['expose_type' => 'mining']) }}">
-                                    Mining & energy
-                                </a>
+                                <a href="{{ route('artikel.expose', ['locale' => app()->getLocale(), 'expose_type' => 'mining']) }}">
+                                Mining & energy
                             </li>
                         </ul>
                     </li>
