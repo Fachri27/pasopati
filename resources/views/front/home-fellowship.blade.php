@@ -24,24 +24,24 @@
 
     <div class="md:flex gap-6 mb-10">
         <!-- Gambar -->
-        <div class="bg-gray-200 md:w-[450px] w-full md:h-auto h-[200px] overflow-hidden flex-shrink-0">
+        <div class="bg-gray-200 md:w-[400px] w-full md:h-auto h-[200px] overflow-hidden flex-shrink-0">
             <img src="{{ asset('storage/' . $fellowship->meta_image) }}" alt="Gambar 1"
                 class="w-full h-full object-cover">
         </div>
 
         {{-- teks --}}
         <div class="">
-            <p class="text-red-600 font-bold md:text-lg">{{ \Carbon\Carbon::parse($fellowship->start_date)->format('Y') }}
+            <p class="text-red-600 font-bold md:text-md">{{ \Carbon\Carbon::parse($fellowship->start_date)->format('Y') }}
             </p>
             <h2 class="text-gray-800 font-semibold tracking-tight text-sm uppercase mt-2 font-sans">
                 {{ $translation->sub_judul }}
             </h2>
             <a href="{{ route('fellowship.preview', $fellowship->slug) }}">
-                <h1 class="text-xl md:text-2xl font-extrabold leading-tight mt-2 font-sans">
+                <h1 class="text-xl md:text-xl font-extrabold leading-tight mt-2 font-sans">
                     {{ $translation->title }}
                 </h1>
             </a>
-            <div class="prose prose-sm mt-4 text-gray-700 text-sm font-serif">
+            <div class="prose prose-sm mt-4 text-gray-700 text-sm">
                 {!! $translation->excerpt !!}
             </div>
         </div>

@@ -16,9 +16,12 @@
         <div class="flex flex-col transition">
             <!-- Gambar Artikel -->
             <a href="{{ route('ngopini-show', $artikel->slug) }}">
-                <img src="{{ asset('storage/' . $artikel->featured_image) }}"
-                    alt="{{ $translation->title ?? $artikel->title }}" class="w-full h-[200px] object-cover">
+                <div class="w-full aspect-video overflow-hidden">
+                    <img src="{{ asset('storage/' . $artikel->featured_image) }}"
+                        alt="{{ $translation->title ?? $artikel->title }}" class="w-full h-full object-cover">
+                </div>
             </a>
+
 
             <!-- Konten Artikel -->
             <div class="p-3">
@@ -31,18 +34,18 @@
                 </p>
                 <div class="flex items-center justify-between mt-5">
                     @php
-                        $locale = app()->getLocale();
+                    $locale = app()->getLocale();
                     @endphp
                     @if ($locale === 'id')
-                        <a href=""
-                            class="text-sm font-semibold text-green-600 hover:text-green-700 focus:outline-none focus:underline">
-                            Baca selengkapnya →
-                        </a>
+                    <a href=""
+                        class="text-sm font-semibold text-green-600 hover:text-green-700 focus:outline-none focus:underline">
+                        Baca selengkapnya →
+                    </a>
                     @else
-                        <a href=""
-                            class="text-sm font-semibold text-green-600 hover:text-green-700 focus:outline-none focus:underline">
-                            Read more →
-                        </a>
+                    <a href=""
+                        class="text-sm font-semibold text-green-600 hover:text-green-700 focus:outline-none focus:underline">
+                        Read more →
+                    </a>
                     @endif
                 </div>
             </div>

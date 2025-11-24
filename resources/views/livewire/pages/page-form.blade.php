@@ -270,6 +270,20 @@
                             target: this.$refs.editor_id,
                             plugins: 'advlist anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount code fullscreen insertdatetime help preview',
                             toolbar: 'undo redo | styles | bold italic underline strikethrough forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image media table | code removeformat | fullscreen preview',
+                            extended_valid_elements: 'iframe[src|width|height|frameborder|allowfullscreen|style|class|loading|referrerpolicy]',
+                            verify_html: false,
+                            forced_root_block: '',
+                            allow_html_in_named_anchor: true,
+                            cleanup: false,
+                            valid_children: '+body[iframe]',
+                            sandbox_iframes: false,
+
+                            // Jangan hapus atribut iframe saat paste
+                            paste_enable_default_filters: false,
+                            paste_as_text: false,
+
+                            content_style: 'iframe { width:100%; height:400px; }',
+
                             font_size_formats: '8pt 10pt 12pt 14pt 16pt 18pt 24pt 36pt 48pt',
                             menubar: 'file edit view insert format tools table',
                             skin: true,
@@ -288,9 +302,7 @@
                             statusbar: true,
                             elementpath: false,
                             resize: true,
-                            forced_root_block: 'p',
                             valid_elements: '*[*]',
-                            forced_root_block: '',
                             br_in_pre: false,
                             entity_encoding: 'raw',
                             setup(editor) {
@@ -336,6 +348,19 @@
                             target: this.$refs.editor_en,
                             plugins: 'advlist anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount code fullscreen insertdatetime help preview',
                             toolbar: 'undo redo | styles | bold italic underline strikethrough forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image media table | code removeformat | fullscreen preview',
+                            extended_valid_elements: 'iframe[src|width|height|frameborder|allowfullscreen|style|class|loading|referrerpolicy]',
+                            verify_html: false,
+                            forced_root_block: '',
+                            allow_html_in_named_anchor: true,
+                            cleanup: false,
+                            valid_children: '+body[iframe]',
+                            sandbox_iframes: false,
+
+                            // Jangan hapus atribut iframe saat paste
+                            paste_enable_default_filters: false,
+                            paste_as_text: false,
+
+                            content_style: 'iframe { width:100%; height:400px; }',
                             font_size_formats: '8pt 10pt 12pt 14pt 16pt 18pt 24pt 36pt 48pt',
                             menubar: 'file edit view insert format tools table',
                             skin: true,
@@ -354,9 +379,7 @@
                             statusbar: true,
                             elementpath: false,
                             resize: true,
-                            forced_root_block: 'p',
                             valid_elements: '*[*]',
-                            forced_root_block: '',
                             br_in_pre: false,
                             entity_encoding: 'raw',
                             setup(editor) {
@@ -394,6 +417,7 @@
                         <label class="block font-medium mb-1">Expose Type</label>
                         <select wire:model="expose_type"
                             class="w-full border px-3 py-2 rounded-lg focus:ring focus:border-blue-400">
+                            <option value="">Pilih Expose type</option>
                             <option value="deforestasi">Deforestasi</option>
                             <option value="kebakaran">Kebakaran</option>
                             <option value="pulp">Pulp & paper</option>

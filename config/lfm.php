@@ -49,7 +49,7 @@ return [
         'file'  => [
             'folder_name'  => 'files',
             'startup_view' => 'list',
-            'max_size'     => 200000, // size in KB
+            'max_size'     => 2000000, // size in KB
             'thumb' => true,
             'thumb_width' => 80,
             'thumb_height' => 80,

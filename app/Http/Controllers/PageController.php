@@ -25,7 +25,7 @@ class PageController extends Controller
             })
             ->where('page_type', 'expose')
             ->where('status', 'active')
-            ->latest()
+            ->orderBy('published_at', 'desc')
             ->get();
 
         $fellowship = Fellowship::with(['translations' => function ($q) use ($locale) {
@@ -39,6 +39,7 @@ class PageController extends Controller
         }])
             ->where('page_type', 'ngopini')
             ->where('status', 'active')
+            ->orderBy('published_at', 'desc')
             ->get();
 
         $meta = [

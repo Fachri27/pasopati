@@ -16,46 +16,54 @@ class PageForm extends Component
     use WithFileUploads;
 
     public $page;
-
     public $title_id;
-
     public $title_en;
-
     public $slug;
-
     public $page_type = 'expose';
-
     public $type = 'default';
-
     public $status = 'draft';
-
     public $published_at;
-
     public $featured_image;
-
     public $old_featured_image;
-
-    public $content_id;
-
-    public $content_en;
-
+    public $content_id = '';
+    public $content_en = '';
     public $excerpt_id;
-
     public $excerpt_en;
-
-    public $expose_type = 'deforestasi';
-
+    public $expose_type;
     public $source_type = 'manual';
-
     public $file_import_id;
     public $file_import_en;
+
+    // 🔥 WAJIB agar Livewire tidak membersihkan HTML
+    protected $rules = [
+        'title_id' => 'required|string|max:255',
+        'title_en' => 'required|string|max:255',
+        'page_type' => 'required|in:expose,ngopini',
+        'type' => 'required|in:parallax,default',
+        'featured_image' => 'nullable|image|mimes:jpg,jpeg,png,PNG|max:5048',
+        'published_at' => 'nullable|date',
+        'status' => 'required|in:draft,active,inactive',
+        'file_import_id' => 'nullable|file|mimes:docx|max:10240',
+        'file_import_en' => 'nullable|file|mimes:docx|max:10240',
+
+        // 🔥 konten HTML jangan difilter
+        'content_id' => 'nullable|string',
+        'content_en' => 'nullable|string',
+    ];
+
+    protected $casts = [
+        'content_id' => 'string',
+        'content_en' => 'string',
+    ];
+
+    // 🔥 Matikan sanitasi internal Livewire (iframe tidak terhapus)
+    public static $sanitizeHtml = false;
 
     public function mount($pageId = null)
     {
         if ($pageId) {
             $this->page = Page::with('translations')->findOrFail($pageId);
 
-            // Ambil translation masing-masing locale
             $idTranslation = $this->page->translations->firstWhere('locale', 'id');
             $enTranslation = $this->page->translations->firstWhere('locale', 'en');
 
@@ -80,16 +88,14 @@ class PageForm extends Component
 
             $this->old_featured_image = $this->page->featured_image;
             $this->featured_image = null;
-
         }
     }
 
     public function updateTitleId($value)
     {
-        if (! $this->slug) {
+        if (!$this->slug) {
             $this->slug = Str::slug($value);
         }
-
     }
 
     public function updatedSourceType()
@@ -99,20 +105,9 @@ class PageForm extends Component
 
     public function save()
     {
-        // dd('save called');
-        $page = $this->page ?? new Page;
+        $this->validate();
 
-        $this->validate([
-            'title_id' => 'required|string|max:255',
-            'title_en' => 'required|string|max:255',
-            'page_type' => 'required|in:expose,ngopini',
-            'type' => 'required|in:parallax,default',
-            'featured_image' => 'nullable|image|mimes:jpg,jpeg,png,PNG|max:5048',
-            'published_at' => 'nullable|date',
-            'status' => 'required|in:draft,active,inactive',
-            'file_import_id' => 'nullable|file|mimes:docx|max:10240',
-            'file_import_en' => 'nullable|file|mimes:docx|max:10240',
-        ]);
+        $page = $this->page ?? new Page;
 
         $data = [
             'slug' => Str::slug($this->title_id),
@@ -128,18 +123,14 @@ class PageForm extends Component
         if ($this->file_import_id) {
             $path = $this->file_import_id->store('pages/import', 'public');
             $parser = app(ImportToHtmlService::class);
-            $html = $parser->parseToHtml(storage_path('app/public/'.$path));
-
-            $this->content_id = $html;
+            $this->content_id = $parser->parseToHtml(storage_path('app/public/'.$path));
             $data['source_file'] = $path;
         }
 
         if ($this->file_import_en) {
             $path = $this->file_import_en->store('pages/import', 'public');
             $parser = app(ImportToHtmlService::class);
-            $html = $parser->parseToHtml(storage_path('app/public/'.$path));
-
-            $this->content_en = $html;
+            $this->content_en = $parser->parseToHtml(storage_path('app/public/'.$path));
             $data['source_file'] = $path;
         }
 
@@ -176,10 +167,12 @@ class PageForm extends Component
             $data['featured_image'] = $this->old_featured_image;
         }
 
-        // simpan atau update
+
+        // Simpan page
         $page->fill($data)->save();
         $page->refresh();
 
+        // 🔥 simpan iframe apa adanya tanpa pemotongan HTML
         foreach (['id', 'en'] as $locale) {
             PageTranslation::updateOrCreate(
                 ['page_id' => $page->id, 'locale' => $locale],
@@ -192,7 +185,6 @@ class PageForm extends Component
         }
 
         session()->flash('success', 'Page berhasil disimpan.');
-
         return redirect()->route('pages.index');
     }
 
@@ -202,3 +194,4 @@ class PageForm extends Component
             ->layout('layouts.admin');
     }
 }
+
