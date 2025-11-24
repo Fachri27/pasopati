@@ -37,7 +37,7 @@
                     $locale = app()->getLocale();
                     @endphp
                     @if ($locale === 'id')
-                    <a href=""
+                    <a href="{{ route('ngopini-show', $artikel->slug) }}"
                         class="text-sm font-semibold text-green-600 hover:text-green-700 focus:outline-none focus:underline">
                         Baca selengkapnya →
                     </a>
