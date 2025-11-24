@@ -32,12 +32,12 @@
         <div x-show="selectedId === {{ $category->id }}" style="display: none !important">
             {{-- Konten dari pivot sesuai bahasa --}}
             @if($locale === 'id')
-            <div class="content-wrapper prose prose-md leading-relaxed md:text-left text-justify prose-p:mb-4">
+            <div class="content-wrapper prose prose-md leading-relaxed md:text-left text-justify prose-p:mb-4 [&_*]:leading-[1.9] [&_*]:my-4">
                 {!! $category->pivot->content_id !!}
             </div>
 
             @else
-            <div class="content-wrapper prose prose-md leading-relaxed md:text-left text-justify prose-p:mb-4">{!!
+            <div class="content-wrapper prose prose-md leading-relaxed md:text-left text-justify prose-p:mb-4 [&_*]:leading-[1.9] [&_*]:my-4">{!!
                 $category->pivot->content_en !!}</div>
             @endif
         </div>

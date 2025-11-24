@@ -51,8 +51,8 @@ $translation = $page->translations->where('locale', $locale)->first();
 {{-- ============================= --}}
 {{-- KONTEN UTAMA --}}
 {{-- ============================= --}}
-<div
-    class="prose prose-sm sm:prose-base md:prose-lg lg:prose-base prose-black max-w-3xl mx-auto text-justify md:text-left px-5 leading-relaxed font-serif">
+<<div
+    class="prose prose-sm sm:prose-base md:prose-lg lg:prose-base prose-black max-w-3xl mx-auto text-justify md:text-left px-5 font-serif [&_*]:leading-[1.9] [&_*]:my-4">
     {!! $translation->content !!}
 </div>
 

@@ -26,7 +26,7 @@ $translation = $page->translations->where('locale', $locale)->first();
 
             <!-- ARTIKEL -->
             <div class="mt-8">
-                <div class="prose prose-md max-w-none  prose-headings:font-semibold leading-relaxed md:text-left text-justify">
+                <div class="prose prose-md max-w-none  prose-headings:font-semibold leading-relaxed md:text-left text-justify [&_*]:leading-[1.9] [&_*]:my-4">
                     {!! $translation->content !!}
                 </div>
             </div>
