@@ -57,19 +57,25 @@ $translation = $page->translations->where('locale', $locale)->first();
 {{-- KONTEN UTAMA --}}
 {{-- ============================= --}}
 <div class="
-    prose prose-base
-    max-w-3xl mx-auto
-    px-5 font-open
-    md:text-left text-justify
+  prose prose-base
+  max-w-2xl mx-auto
+  px-5 font-open
+  text-justify md:text-left
 
-    prose-p:text-slate-800
-    prose-p:leading-[2]
-    prose-p:my-6
+  prose-p:text-slate-800
+  prose-p:leading-[2]
+  prose-p:my-6
 
-    prose-h2:mt-6 prose-h2:mb-3 prose-h2:font-semibold
-    prose-h3:mt-5 prose-h3:mb-3 prose-h3:font-semibold
-    prose-h4:mt-6 prose-h4:mb-3 prose-h4:font-medium
-  ">
+  prose-h2:text-[18px] md:prose-h2:text-[22px]
+  prose-h2:mt-6 prose-h2:mb-3 prose-h2:font-semibold
+
+  prose-h3:text-[16px] md:prose-h3:text-[20px]
+  prose-h3:mt-5 prose-h3:mb-3 prose-h3:font-semibold
+
+  prose-h4:text-[15px] md:prose-h4:text-[18px]
+  prose-h4:mt-6 prose-h4:mb-3 prose-h4:font-medium
+">
+
     {!! $translation->content !!}
 </div>
 
