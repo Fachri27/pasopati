@@ -1,4 +1,4 @@
-<div class="bg-gray-100 mb-8 py-6 mt-8">
+<div class="bg-gray-100 mb-8 py-6 mt-8 font-sans">
     <!-- Header Judul -->
     <div class="flex items-center justify-center mb-4">
         <div class="flex-grow border-t border-gray-400"></div>

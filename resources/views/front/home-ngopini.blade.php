@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-screen-lg mx-auto px-4 py-8">
+<div class="max-w-screen-lg mx-auto px-4 py-8 font-sans">
 
     <!-- Judul Section -->
     <h1 class="text-2xl font-bold uppercase text-red-600 mb-6 mt-20">Ngopini</h1>

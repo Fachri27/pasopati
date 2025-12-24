@@ -49,7 +49,7 @@ class FellowshipForm extends Component
 
     public $userId;
 
-    public $status = 'draft';
+    public $status;
 
     protected $listeners = ['updateCategoryContent' => 'updateCategoryContent'];
 
@@ -116,7 +116,7 @@ class FellowshipForm extends Component
                 $this->selectedKategori[$kategori->id] = [
                     'id' => $kategori->pivot->content_id ?? '',
                     'en' => $kategori->pivot->content_en ?? '',
-                    'status' => $kategori->pivot->status ?? 'draft',
+                    'status' => $kategori->pivot->status ?? '',
                 ];
             }
 

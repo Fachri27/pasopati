@@ -1,4 +1,4 @@
-<div class="bg-gray-100 mt-[200px]">
+<div class="bg-gray-100 mt-[200px] font-sans">
     <div class="max-w-screen-lg mx-auto py-8 px-4 text-center text-gray-800 space-y-4">
         @php $locale = app()->getLocale(); @endphp
         @if ($locale === 'id')

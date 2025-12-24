@@ -31,7 +31,7 @@
 
         {{-- teks --}}
         <div class="">
-            <p class="text-red-600 font-bold md:text-md">{{ \Carbon\Carbon::parse($fellowship->start_date)->format('Y') }}
+            <p class="text-red-600 font-bold md:text-md font-sans">{{ \Carbon\Carbon::parse($fellowship->start_date)->format('Y') }}
             </p>
             <h2 class="text-gray-800 font-semibold tracking-tight text-sm uppercase mt-2 font-sans">
                 {{ $translation->sub_judul }}
@@ -41,7 +41,7 @@
                     {{ $translation->title }}
                 </h1>
             </a>
-            <div class="prose prose-sm mt-4 text-gray-700 text-sm">
+            <div class="prose prose-sm mt-4 text-gray-600 text-sm font-open">
                 {!! $translation->excerpt !!}
             </div>
         </div>

@@ -23,6 +23,10 @@ class Page extends Model
         'user_id',
     ];
 
+    protected $casts = [
+        'expose_type' => 'array',
+    ];
+
     protected static function boot()
     {
         parent::boot();
@@ -48,10 +52,12 @@ class Page extends Model
     public function translation($locale = null)
     {
         $locale = $locale ?? app()->getLocale();
+
         return $this->translations->where('locale', $locale)->first();
     }
 
-    public function user() {
+    public function user()
+    {
         return $this->belongsTo(User::class);
     }
 }

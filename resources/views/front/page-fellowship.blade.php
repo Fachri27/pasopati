@@ -5,7 +5,8 @@
         <img src="{{ asset('storage/' . $fellowship->image) }}" alt="poster 1" class="w-full h-auto object-cover">
     </div>
 </section>
-<div x-data="{ selectedId: {{ $categories->first()->id ?? 'null' }} }" class="md:flex max-w-screen-lg mx-auto md:mt-10">
+<div x-data="{ selectedId: {{ $categories->first()->id ?? 'null' }} }"
+    class="md:flex max-w-screen-lg mx-auto md:mt-10 font-sans">
 
     <!-- Sidebar -->
     <aside class="md:w-64 w-full bg-white md:sticky md:top-0  md:self-start md:p-4 pt-5 px-3">
@@ -32,12 +33,36 @@
         <div x-show="selectedId === {{ $category->id }}" style="display: none !important">
             {{-- Konten dari pivot sesuai bahasa --}}
             @if($locale === 'id')
-            <div class="content-wrapper prose prose-md leading-relaxed md:text-left text-justify prose-p:mb-4 [&_*]:leading-[1.9] [&_*]:my-4">
+            <div class="prose prose-base
+    max-w-3xl mx-auto
+    px-5 font-open
+    md:text-left text-justify
+
+    prose-p:text-slate-800
+    prose-p:leading-[2]
+    prose-p:my-6
+
+    prose-h2:mt-6 prose-h2:mb-3 prose-h2:font-semibold
+    prose-h3:mt-5 prose-h3:mb-3 prose-h3:font-semibold
+    prose-h4:mt-6 prose-h4:mb-3 prose-h4:font-medium">
                 {!! $category->pivot->content_id !!}
             </div>
 
             @else
-            <div class="content-wrapper prose prose-md leading-relaxed md:text-left text-justify prose-p:mb-4 [&_*]:leading-[1.9] [&_*]:my-4">{!!
+            <div class="
+            prose prose-base
+    max-w-3xl mx-auto
+    px-5 font-open
+    md:text-left text-justify
+
+    prose-p:text-slate-800
+    prose-p:leading-[2]
+    prose-p:my-6
+
+    prose-h2:mt-6 prose-h2:mb-3 prose-h2:font-semibold
+    prose-h3:mt-5 prose-h3:mb-3 prose-h3:font-semibold
+    prose-h4:mt-6 prose-h4:mb-3 prose-h4:font-medium
+            ">{!!
                 $category->pivot->content_en !!}</div>
             @endif
         </div>

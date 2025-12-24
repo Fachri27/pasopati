@@ -3,7 +3,7 @@
         <div class="flex justify-between items-center h-16">
 
             <a href="/" class="md:text-2xl text-xl font-bold text-red-600 uppercase text-bold">
-                <img src="https://pasopati.id/img/logo_pasopati.png" alt="" class="img-logo md:w-[400px] w-[200px]"
+                <img src="{{ asset('img/logo_pasopati.png') }}" alt="" class="img-logo md:w-[400px] w-[200px]"
                     id="logo-pasopati">
             </a>
 
@@ -73,37 +73,46 @@
                     <li>
                         <a href="" class="block text-gray-800 font-semibold uppercase">Home</a>
                     </li>
-                    <li class="border-b border-black">
-                        <span class="uppercase text-sm font-semibold">expose</span>
-                        <ul>
-                            <li>
-                                <span class="text-red-700 text-xl">•</span>
-                                <a href="{{ route('artikel.expose', ['locale' => app()->getLocale(), 'expose_type' => 'deforestasi']) }}">
-                                Deforestasi
-                            </li>
-                        </ul>
-                        <ul>
-                            <li>
-                                <span class="text-red-700 text-xl">•</span>
-                                <a href="{{ route('artikel.expose', ['locale' => app()->getLocale(), 'expose_type' => 'kebakaran']) }}">
-                                Kebakaran
-                            </li>
-                        </ul>
-                        <ul>
-                            <li>
-                                <span class="text-red-700 text-xl">•</span>
-                               <a href="{{ route('artikel.expose', ['locale' => app()->getLocale(), 'expose_type' => 'pulp']) }}">
-                                Pulp & paper
-                            </li>
-                        </ul>
-                        <ul>
-                            <li>
-                                <span class="text-red-700 text-xl">•</span>
-                                <a href="{{ route('artikel.expose', ['locale' => app()->getLocale(), 'expose_type' => 'mining']) }}">
-                                Mining & energy
-                            </li>
-                        </ul>
-                    </li>
+                    <li class="border-b border-black pb-4">
+    <span class="uppercase text-sm font-semibold block mb-2">
+        Expose
+    </span>
+
+    <ul class="space-y-2">
+        <li class="flex items-center gap-2">
+            <span class="text-red-700 text-xl leading-none">•</span>
+            <a href="{{ route('artikel.expose', ['locale' => app()->getLocale(), 'expose_type' => 'deforestasi']) }}"
+               class="hover:underline">
+                Deforestasi
+            </a>
+        </li>
+
+        <li class="flex items-center gap-2">
+            <span class="text-red-700 text-xl leading-none">•</span>
+            <a href="{{ route('artikel.expose', ['locale' => app()->getLocale(), 'expose_type' => 'kebakaran']) }}"
+               class="hover:underline">
+                Kebakaran
+            </a>
+        </li>
+
+        <li class="flex items-center gap-2">
+            <span class="text-red-700 text-xl leading-none">•</span>
+            <a href="{{ route('artikel.expose', ['locale' => app()->getLocale(), 'expose_type' => 'pulp']) }}"
+               class="hover:underline">
+                Pulp & Paper
+            </a>
+        </li>
+
+        <li class="flex items-center gap-2">
+            <span class="text-red-700 text-xl leading-none">•</span>
+            <a href="{{ route('artikel.expose', ['locale' => app()->getLocale(), 'expose_type' => 'mining']) }}"
+               class="hover:underline">
+                Mining & Energy
+            </a>
+        </li>
+    </ul>
+</li>
+
                     <li class="border-b border-black">
                         <span class="uppercase font-semibold">Fellowship</span>
 

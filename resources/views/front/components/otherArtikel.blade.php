@@ -32,12 +32,12 @@
                 </div>
 
                 <!-- Title -->
-                <h3 class="mt-3 font-semibold text-gray-800 text-base group-hover:text-red-600 transition">
+                <h3 class="mt-3 font-semibold text-gray-800 text-base group-hover:text-red-600 transition font-sans">
                     {{ $title }}
                 </h3>
 
                 <!-- Excerpt -->
-                <p class="text-sm text-gray-600 mt-1 leading-relaxed">
+                <p class="text-sm text-gray-600 mt-1 leading-relaxed font-sans">
                     {{ $excerpt }}
                 </p>
 

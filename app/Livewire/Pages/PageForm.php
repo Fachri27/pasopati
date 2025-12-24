@@ -16,22 +16,39 @@ class PageForm extends Component
     use WithFileUploads;
 
     public $page;
+
     public $title_id;
+
     public $title_en;
+
     public $slug;
+
     public $page_type = 'expose';
+
     public $type = 'default';
+
     public $status = 'draft';
+
     public $published_at;
+
     public $featured_image;
+
     public $old_featured_image;
+
     public $content_id = '';
+
     public $content_en = '';
+
     public $excerpt_id;
+
     public $excerpt_en;
-    public $expose_type;
+
+    public $expose_type = [];
+
     public $source_type = 'manual';
+
     public $file_import_id;
+
     public $file_import_en;
 
     // 🔥 WAJIB agar Livewire tidak membersihkan HTML
@@ -45,6 +62,8 @@ class PageForm extends Component
         'status' => 'required|in:draft,active,inactive',
         'file_import_id' => 'nullable|file|mimes:docx|max:10240',
         'file_import_en' => 'nullable|file|mimes:docx|max:10240',
+        'expose_type' => 'nullable|array',
+        'expose_type.*' => 'string|in:deforestasi,kebakaran,pulp,mining',
 
         // 🔥 konten HTML jangan difilter
         'content_id' => 'nullable|string',
@@ -76,7 +95,7 @@ class PageForm extends Component
                 'status' => $this->page->status,
                 'featured_image' => $this->page->featured_image,
                 'source_type' => $this->page->source_type,
-                'expose_type' => $this->page->expose_type,
+                'expose_type' =>  $this->page->expose_type ?? [],
                 'file_import_id' => $this->page->source_file,
                 'file_import_en' => $this->page->source_file,
                 'published_at' => $this->page->published_at,
@@ -93,7 +112,7 @@ class PageForm extends Component
 
     public function updateTitleId($value)
     {
-        if (!$this->slug) {
+        if (! $this->slug) {
             $this->slug = Str::slug($value);
         }
     }
@@ -113,11 +132,13 @@ class PageForm extends Component
             'slug' => Str::slug($this->title_id),
             'type' => $this->type,
             'page_type' => $this->page_type,
-            'expose_type' => $this->expose_type,
             'published_at' => $this->published_at,
             'status' => $this->status,
             'user_id' => auth()->id(),
             'source_type' => $this->source_type,
+            'expose_type' => $this->page_type === 'expose'
+                ? $this->expose_type
+                : [],
         ];
 
         if ($this->file_import_id) {
@@ -167,7 +188,6 @@ class PageForm extends Component
             $data['featured_image'] = $this->old_featured_image;
         }
 
-
         // Simpan page
         $page->fill($data)->save();
         $page->refresh();
@@ -185,6 +205,7 @@ class PageForm extends Component
         }
 
         session()->flash('success', 'Page berhasil disimpan.');
+
         return redirect()->route('pages.index');
     }
 
@@ -194,4 +215,3 @@ class PageForm extends Component
             ->layout('layouts.admin');
     }
 }
-

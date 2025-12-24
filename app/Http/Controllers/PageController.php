@@ -123,17 +123,26 @@ class PageController extends Controller
 
     public function artikel($locale, $expose_type)
     {
+        // pastikan expose_type jadi array
+        $exposeTypes = is_array($expose_type)
+            ? $expose_type
+            : explode(',', $expose_type);
+
         $pages = Page::with(['translations' => function ($q) use ($locale) {
             $q->where('locale', $locale);
         }])
-            ->where('expose_type', $expose_type)
             ->where('status', 'active')
+            ->where(function ($q) use ($exposeTypes) {
+                foreach ($exposeTypes as $type) {
+                    $q->orWhereJsonContains('expose_type', $type);
+                }
+            })
             ->get();
 
+        // SEO
         $meta = [
             'title' => __('Pasopati'),
-            'description' => __('pasopati.id: Pasopati Project dirancang sebagai sebuah situs yang menampilkan informasi, data, dan analisis isu-isu kehutanan, persawitan, dan pertambangan. Situs ini fokus menyampaikan suara kritis pada tema-tema tersebut di atas, termasuk mengenai pelakunya dan kebijakan-kebijakan terkait.
-            Pasopati Project didedikasikan untuk mencapai salah satu tujuan Auriga, yakni mengeliminir aksi-aksi destruktif terhadap sumberdaya alam. Situs ini dikelola oleh Auriga. Namun demikian ekspose-ekspose tertentu dalam situs ini dilakukan bersama jejaring.'),
+            'description' => __('pasopati.id: Pasopati Project dirancang sebagai sebuah situs yang menampilkan informasi, data, dan analisis isu-isu kehutanan, persawitan, dan pertambangan. Situs ini fokus menyampaikan suara kritis pada tema-tema tersebut di atas, termasuk mengenai pelakunya dan kebijakan-kebijakan terkait. Pasopati Project didedikasikan untuk mencapai salah satu tujuan Auriga, yakni mengeliminir aksi-aksi destruktif terhadap sumberdaya alam. Situs ini dikelola oleh Auriga. Namun demikian ekspose-ekspose tertentu dalam situs ini dilakukan bersama jejaring.'),
             'image' => asset('img/image.png'),
             'type' => 'article',
         ];
@@ -144,6 +153,6 @@ class PageController extends Controller
             ->set('image', $meta['image'])
             ->set('type', $meta['type']);
 
-        return view('front.show-artikel', compact('pages', 'locale', 'expose_type'));
+        return view('front.show-artikel', compact('pages', 'locale', 'exposeTypes'));
     }
 }
