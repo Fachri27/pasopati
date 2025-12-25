@@ -134,7 +134,7 @@ class PageController extends Controller
             ->where('status', 'active')
             ->where(function ($q) use ($exposeTypes) {
                 foreach ($exposeTypes as $type) {
-                    $q->orWhereJsonContains('expose_type', $type);
+                    $q->orWhereJsonContains('expose_type',$type);
                 }
             })
             ->get();
