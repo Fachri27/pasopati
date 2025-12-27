@@ -7,6 +7,8 @@
 @theme {
     --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif;
     --font-open: 'Open Sans', ui-sans-serif, system-ui, sans-serif;
+    /* --font-serif: 'Source Serif 4', ui-serif, Georgia, serif; */
+    --font-serif: 'Libre Baskerville', ui-serif, Georgia, serif;
     /* --loader-red: #ef4444; */
     /* merah */
 }

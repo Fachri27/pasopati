@@ -22,7 +22,7 @@ $translation = $page->translations->where('locale', $locale)->first();
             </div>
 
             <!-- ARTIKEL -->
-            <div class="
+            {{-- <div class="
                prose prose-base
                 max-w-3xl mx-auto
                 px-5 font-open
@@ -37,6 +37,26 @@ $translation = $page->translations->where('locale', $locale)->first();
                 prose-h4:mt-6 prose-h4:mb-3 prose-h4:font-medium
 
             ">
+                {!! $translation->content !!}
+            </div> --}}
+            <div class="
+                prose
+                max-w-[680px] mx-auto
+                px-5 font-serif
+
+                text-[16.5px] md:text-[19px]
+                text-left
+
+                prose-p:text-[#1a1a1a]
+                prose-p:leading-[1.7] md:prose-p:leading-[1.75]
+                prose-p:my-[1em]
+
+                prose-h2:text-[24px]
+                prose-h2:mt-8 prose-h2:mb-4 prose-h2:font-bold
+
+                prose-h3:text-[21px]
+                prose-h3:mt-6 prose-h3:mb-3 prose-h3:font-semibold
+                ">
                 {!! $translation->content !!}
             </div>
 
