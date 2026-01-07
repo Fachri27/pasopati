@@ -1,46 +1,61 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-screen-xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6 px-5 mt-25">
+<div class="max-w-screen-xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-y-20 px-5 auto-rows-fr mt-25">
+
     @foreach ($pages as $page)
-    <article class="group bg-red-700 overflow-hidden shadow-sm hover:shadow-xl rounded-md flex flex-col">
 
-        <!-- Gambar -->
-        <div class="overflow-hidden h-40 sm:h-48 md:h-52 lg:h-56 transition-transform transform group-hover:scale-105">
-            @if ($page->featured_image)
-            <img src="{{ asset('storage/' . $page->featured_image) }}"
-                alt="{{ $page->translations->first()->title ?? '' }}" class="w-full h-full object-cover">
-            @else
-            <div class="h-full w-full bg-gray-200 flex items-center justify-center text-gray-500">
-                No Image
-            </div>
-            @endif
-        </div>
+        <!-- WRAPPER ITEM -->
+        <div class="flex flex-col gap-2 h-full">
 
-        <!-- Konten -->
-        <div class="p-4 flex flex-col flex-grow text-white">
-            <time class="text-xs opacity-80 mb-2">
+            <!-- TANGGAL (DI LUAR CARD) -->
+            <time class="text-xs text-gray-500">
                 {{ \Carbon\Carbon::parse($page->published_at)->translatedFormat('d F Y') }}
             </time>
 
-            <a href="{{ route('show-page', ['page_type'=> $page->page_type, 'slug' => $page->slug]) }}">
-                <h3 class="text-lg font-semibold mb-2 line-clamp-2">
-                    {{ $page->translations->first()->title ?? '' }}
-                </h3>
-            </a>
+            <!-- CARD -->
+            <article class="group bg-[#e3061d] shadow-sm hover:shadow-xl flex flex-col h-full">
 
-            <div class="prose prose-sm text-white max-w-none line-clamp-3 opacity-90 mb-3">
-                {!! $page->translations->first()->excerpt ?? '' !!}
-            </div>
+                <!-- Gambar -->
+                <div class="overflow-hidden aspect-[16/9]">
+                    @if ($page->featured_image)
+                        <img src="{{ asset('storage/' . $page->featured_image) }}"
+                            alt="{{ $page->translations->first()->title ?? '' }}"
+                            class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105">
+                    @else
+                        <div class="h-full w-full bg-gray-200 flex items-center justify-center text-gray-500">
+                            No Image
+                        </div>
+                    @endif
+                </div>
 
-            <div class="mt-auto">
-                <a href="{{ route('show-page', ['page_type'=> $page->page_type, 'slug' => $page->slug]) }}"
-                    class="text-sm font-semibold text-green-300 hover:text-green-500 transition">
-                    Baca selengkapnya →
-                </a>
-            </div>
+                <!-- Konten -->
+                <!-- Konten -->
+                <div class="p-4 flex flex-col flex-grow text-white">
+                    {{-- <time class="text-xs opacity-80 mb-2">
+                        {{ \Carbon\Carbon::parse($page->published_at)->translatedFormat('d F Y') }}
+                    </time> --}}
+
+                    <a href="{{ route('show-page', ['page_type' => $page->page_type, 'slug' => $page->slug]) }}">
+                        <h3 class="text-lg font-semibold mb-2 leading-snug font-sans">
+                            {{ $page->translations->first()->title ?? '' }}
+                        </h3>
+                    </a>
+
+                    <div class="
+                    prose prose-sm text-white max-w-none opacity-90 mb-3
+                    prose-p:leading-snug
+                    prose-p:my-1
+                    font-open
+                ">
+                        {!! $page->translations->first()->excerpt ?? '' !!}
+                    </div>
+                </div>
+
+            </article>
+
         </div>
-    </article>
+
     @endforeach
 </div>
 @endsection

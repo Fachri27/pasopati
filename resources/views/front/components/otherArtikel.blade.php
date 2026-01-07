@@ -37,7 +37,7 @@
                 </h3>
 
                 <!-- Excerpt -->
-                <p class="text-sm text-gray-600 mt-1 leading-relaxed font-sans">
+                <p class="text-sm text-gray-600 mt-1 leading-relaxed font-open">
                     {{ $excerpt }}
                 </p>
 

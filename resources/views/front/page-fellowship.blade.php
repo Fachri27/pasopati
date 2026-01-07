@@ -34,14 +34,14 @@
             {{-- Konten dari pivot sesuai bahasa --}}
             @if($locale === 'id')
             <div class="prose
-                max-w-[680px] mx-auto
-                px-5 font-serif
+                max-w-2xl mx-auto
+                px-5 font-open
 
-                text-[16.5px] md:text-[19px]
+                text-[16.5px] md:text-[16px]
                 text-left
 
                 prose-p:text-[#1a1a1a]
-                prose-p:leading-[1.7] md:prose-p:leading-[1.75]
+                prose-p:leading-[1.6] md:prose-p:leading-[1.6]
                 prose-p:my-[1em]
 
                 prose-h2:text-[24px]
@@ -55,14 +55,14 @@
             @else
             <div class="
             prose
-                max-w-[680px] mx-auto
-                px-5 font-serif
+                max-w-2xl mx-auto
+                px-5 font-open
 
-                text-[16.5px] md:text-[19px]
+                text-[16.5px] md:text-[16px]
                 text-left
 
                 prose-p:text-[#1a1a1a]
-                prose-p:leading-[1.7] md:prose-p:leading-[1.75]
+                prose-p:leading-[1.6] md:prose-p:leading-[1.6]
                 prose-p:my-[1em]
 
                 prose-h2:text-[24px]

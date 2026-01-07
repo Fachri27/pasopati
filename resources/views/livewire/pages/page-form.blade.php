@@ -37,7 +37,7 @@
                             {{-- Title & Slug ID --}}
                             <div x-show="lang === 'id'" x-data="{
                                 title: @js(old('title_id', $title_id ?? '')),
-                                slug: @js(old('slug', $slug ?? '')),
+                                slug: @js(old('slugId', $slugId ?? '')),
                                 makeSlug(text) {
                                     return text.toLowerCase()
                                         .replace(/[^a-z0-9]+/g, '-')
@@ -55,10 +55,21 @@
                             </div>
 
                             {{-- Title EN --}}
-                            <div x-show="lang === 'en'">
+                            <div x-show="lang === 'en'" x-data="{
+                                slug: @js(old('slugEn', $slugEn ?? '')),
+                                makeSlug(text) {
+                                    return text.toLowerCase()
+                                        .replace(/[^a-z0-9]+/g, '-')
+                                        .replace(/^-+|-+$/g, '');
+                                }
+                             }" x-init="if(title && !slug){ slug = makeSlug(title) }">
                                 <label class="font-medium">Title (EN)</label>
                                 <input type="text" wire:model="title_en"
                                     class="w-full border rounded-lg px-3 py-2 mt-1">
+
+                                    <label class="text-sm mt-2 block">Slug</label>
+                                    <input type="text" x-model="slug" readonly
+                                        class="w-full bg-gray-100 border rounded-lg px-3 py-2">
                             </div>
 
                             {{-- Publish + Page Type --}}

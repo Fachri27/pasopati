@@ -9,33 +9,33 @@
     <link rel="shortcut icon" href="https://pasopati.id/theme/webmag/img/auriga2.png">
 
     @php
-    $meta = seo()->all();
-    $locale = $meta['locale'];
-    $alternate = $locale === 'id' ? 'en' : 'id';
-    // build alternate url safe: jika kamu punya struktur /{locale}/...
-    $alternateUrl = url(str_replace("/{$locale}/", "/{$alternate}/", request()->getRequestUri()));
+        $meta = seo()->all();
+        $locale = $meta['locale'];
+        $alternate = $locale === 'id' ? 'en' : 'id';
+        // build alternate url safe: jika kamu punya struktur /{locale}/...
+        $alternateUrl = url(str_replace("/{$locale}/", "/{$alternate}/", request()->getRequestUri()));
     @endphp
 
     @php
-    use Illuminate\Support\Str;
+        use Illuminate\Support\Str;
 
-    $appName = config('app.name', 'Pasopati');
-    $locale = app()->getLocale();
-    $currentPath = request()->path(); // contoh: id/about
-    $pathParts = explode('/', $currentPath);
-    $urlSegment = end($pathParts);
+        $appName = config('app.name', 'Pasopati');
+        $locale = app()->getLocale();
+        $currentPath = request()->path(); // contoh: id/about
+        $pathParts = explode('/', $currentPath);
+        $urlSegment = end($pathParts);
 
-    // Format URL segment ke Title
-    $urlTitle = Str::of($urlSegment)
-    ->replace('-', ' ')
-    ->title(); // contoh: apa-itu-pembela-lingkungan => Apa Itu Pembela Lingkungan
+        // Format URL segment ke Title
+        $urlTitle = Str::of($urlSegment)
+            ->replace('-', ' ')
+            ->title(); // contoh: apa-itu-pembela-lingkungan => Apa Itu Pembela Lingkungan
 
-    // Gunakan title/deskripsi default
-    $pageTitle = $pageTitle ?? "$urlTitle | $appName";
-    $pageDescription = $pageDescription ?? "Informasi tentang $urlTitle di $appName.";
-    $pageImage = $pageImage ?? asset('img/image.png');
-    $pageType = $pageType ?? 'website';
-    $currentUrl = url()->current();
+        // Gunakan title/deskripsi default
+        $pageTitle = $pageTitle ?? "$urlTitle | $appName";
+        $pageDescription = $pageDescription ?? "Informasi tentang $urlTitle di $appName.";
+        $pageImage = $pageImage ?? asset('img/image.png');
+        $pageType = $pageType ?? 'website';
+        $currentUrl = url()->current();
     @endphp
 
     <!-- 🌐 Basic Meta -->
@@ -75,9 +75,16 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Poppins:wght@600;700&display=swap"
         rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@400;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@400;700&display=swap"
+        rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+        rel="stylesheet">
 
 
     <style>
@@ -85,8 +92,8 @@
             font-family: 'Inter', sans-serif;
         }
 
-        h1,a
-        h2,
+        h1,
+        a h2,
         h3,
         h4 {
             font-family: 'Poppins', sans-serif;

@@ -1,10 +1,10 @@
-<div class="bg-gray-100 mb-8 py-6 mt-8 font-sans">
+<div class="bg-gray-100 mb-8 py-6 mt-8">
     <!-- Header Judul -->
-    <div class="flex items-center justify-center mb-4">
+    <div class="flex items-center justify-center mb-4 font-sans">
         <div class="flex-grow border-t border-gray-400"></div>
         <span class="mx-2 text-gray-500">&laquo;&laquo;</span>
         <a href="{{ route('ngopini.index') }}">
-            <h2 class="uppercase text-red-700 font-bold md:text-4xl text-2xl mx-4 tracking-wide">
+            <h2 class="uppercase text-[#d50c2e] font-bold md:text-4xl text-2xl mx-4 tracking-wide">
                 ngopini-hutan
             </h2>
         </a>
@@ -13,12 +13,12 @@
     </div>
 
     <!-- Deskripsi -->
-    <div class="flex flex-col items-center py-2 px-4">
+    <div class="flex flex-col items-center py-2 px-4 font-open">
         @php
             $locale = app()->getLocale();
         @endphp
         @if ($locale === 'id')      
-            <p class="max-w-2xl text-center text-base md:text-lg text-gray-800 leading-relaxed">
+            <p class="max-w-2xl text-center md:text-lg text-gray-800 leading-relaxed font-open">
                 Ngopini-Hutan digagas Auriga Nusantara sebagai ruang dialog antar-pemangku kepentingan kehutanan.
                 Mengundang kehadiran dan partisipasi akademisi, praktisi, pemerintah, masyarakat sipil, dan media.
             </p>
@@ -44,10 +44,10 @@
                     class="w-full h-auto object-contain">
             </div>
 
-            <div class="flex items-center justify-center my-6">
+            <div class="flex items-center justify-center my-6 font-sans">
                 <div class="flex-grow border-t border-gray-300"></div>
                 <span class="mx-3 text-gray-500">&laquo;&laquo;</span>
-                <p class="text-red-500 font-semibold text-base md:text-lg mx-2 tracking-wide">
+                <p class="text-[#e3061d] font-semibold text-base md:text-lg mx-2 tracking-wide">
                     {{ \Carbon\Carbon::parse($mainNgopini->published_at)->translatedFormat('F Y') }}
                 </p>
                 <span class="mx-3 text-gray-500">&raquo;&raquo;</span>
@@ -56,10 +56,10 @@
 
             <div class="text-center space-y-3">
                 <a href="{{ route('ngopini-show', $mainNgopini->slug) }}"
-                    class="font-bold text-xl md:text-2xl text-[#212631] hover:text-red-600 transition leading-snug block">
+                    class="font-bold text-xl md:text-2xl text-[#212631] hover:text-[#d50c2e] transition leading-snug block font-sans">
                     {{ $translation->title }}
                 </a>
-                <p class="text-gray-600 text-sm md:text-base leading-relaxed">
+                <p class="text-gray-600 text-sm md:text-base leading- font-open">
                     {!! $translation->excerpt !!}
                 </p>
             </div>
@@ -81,7 +81,7 @@
                 <img src="{{ asset('storage/' . $item->featured_image) }}"
                     alt="{{ $translation ? $translation->title : $item->title }}" class="w-full h-[200px] object-cover">
                 <div class="p-3">
-                    <h3 class="text-lg font-bold text-[#212631] hover:text-red-600 transition mb-1">
+                    <h3 class="text-lg font-bold text-[#212631] hover:text-[#d50c2e] transition mb-1">
                         <a href="{{ route('ngopini-show', $item->slug) }}">
                             {{ $translation ? $translation->title : $item->title }}
                         </a>
