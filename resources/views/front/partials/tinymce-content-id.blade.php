@@ -6,7 +6,7 @@
                         tinymce.init({
                             target: this.$refs.editor_id,
                             plugins: 'advlist anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount code fullscreen insertdatetime help preview',
-                            toolbar: 'undo redo | styles | addImage | addVideo | addBorderMerah | bold italic underline strikethrough forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image media table | code removeformat | fullscreen preview',
+                            toolbar: 'undo redo | styles | addImage | addVideo | addBorderMerah | addSlider | bold italic underline strikethrough forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image media table | code removeformat | fullscreen preview',
                             extended_valid_elements: 'iframe[src|width|height|frameborder|allowfullscreen|style|class|loading|referrerpolicy]',
                             verify_html: false,
                             forced_root_block: '',
@@ -111,6 +111,39 @@
                                         }
                                 });
 
+                                editor.ui.registry.addButton('addSlider', {
+                                    text: '+ Tambah Slider',
+                                    onAction: function () {
+                                        editor.insertContent(`
+                                    <div class='tmce-slider' data-index='0'>
+                                        <div class='tmce-slides'>
+                                            <figure class='active'>
+                                                <img alt='' data-widget='image' height='100%' src='https://placehold.co/800x450' width='100%'>
+                                                <figcaption class='media-caption-text'>Caption gambar pertama</figcaption>
+                                            </figure>
+
+                                                <figure>
+                                                    <img alt='' data-widget='image' height='100%' src='https://placehold.co/800x450' width='100%'>
+                                                <figcaption class='media-caption-text'>Caption gambar kedua</figcaption>
+                                            </figure>
+
+                                                <figure>
+                                                    <img alt='' data-widget='image' height='100%' src='https://placehold.co/800x450' width='100%'>
+                                                <figcaption class='media-caption-text'>Caption gambar ketiga</figcaption>
+                                            </figure>
+                                        </div>
+
+                                        <div class='tmce-controls'>
+                                            <button class='prev'>Prev</button>
+                                            <button class='next'>Next</button>
+                                        </div>
+                                    </div>
+
+
+                                            `);
+                                        }
+                                });
+
                             },
                             file_picker_callback(callback, value, meta) {
                                 let cmsURL = '/laravel-filemanager?editor=' + meta.fieldname;
@@ -133,3 +166,4 @@
     <label class="block font-medium mb-1">Content (ID)</label>
     <textarea x-ref="editor_id" id="editor_id"></textarea>
 </div>
+

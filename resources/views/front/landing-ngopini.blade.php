@@ -59,7 +59,7 @@
                     class="font-bold text-xl md:text-2xl text-[#212631] hover:text-[#d50c2e] transition leading-snug block font-sans">
                     {{ $translation->title }}
                 </a>
-                <p class="text-gray-600 text-sm md:text-base leading- font-open">
+                <p class="text-gray-600 text-sm md:text-base leading-snug font-open">
                     {!! $translation->excerpt !!}
                 </p>
             </div>
@@ -88,8 +88,8 @@
                     </h3>
                     <p class="text-gray-600 text-sm leading-relaxed">
                         {{ $translation
-                        ? Str::limit(strip_tags($translation->excerpt), 100, '...')
-                        : Str::limit(strip_tags($item->content), 100, '...')
+                        ? Str::limit(strip_tags($translation->excerpt), 300, '...')
+                        : Str::limit(strip_tags($item->content), 300, '...')
                         }}
                     </p>
                 </div>

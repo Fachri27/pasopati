@@ -119,5 +119,26 @@
     @include('front.components.footer')
     @livewireScripts
 </body>
+<script>
+document.addEventListener('click', function (e) {
+    const slider = e.target.closest('.tmce-slider');
+    if (!slider) return;
+
+    const slides = slider.querySelectorAll('figure');
+    let index = parseInt(slider.dataset.index);
+
+    if (e.target.classList.contains('next')) {
+        index = (index + 1) % slides.length;
+    }
+
+    if (e.target.classList.contains('prev')) {
+        index = (index - 1 + slides.length) % slides.length;
+    }
+
+    slides.forEach(slide => slide.classList.remove('active'));
+    slides[index].classList.add('active');
+    slider.dataset.index = index;
+});
+</script>
 
 </html>

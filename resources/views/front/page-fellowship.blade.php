@@ -34,43 +34,44 @@
             {{-- Konten dari pivot sesuai bahasa --}}
             @if($locale === 'id')
             <div class="prose
-                max-w-2xl mx-auto
-                px-5 font-open
+      max-w-2xl mx-auto
+      px-5
+      poppins-regular
 
-                text-[16.5px] md:text-[16px]
-                text-left
+      md:text-md sm:text-base text-sm
+      text-left
 
-                prose-p:text-[#1a1a1a]
-                prose-p:leading-[1.6] md:prose-p:leading-[1.6]
-                prose-p:my-[1em]
+      prose-p:leading-relaxed md:prose-p:leading-relaxed
+      prose-p:tracking-[0.020em]
+      prose-p:my-[1em]
 
-                prose-h2:text-[24px]
-                prose-h2:mt-8 prose-h2:mb-4 prose-h2:font-bold
+      prose-h2:text-[24px]
+      prose-h2:mt-8 prose-h2:mb-4 prose-h2:font-bold
 
-                prose-h3:text-[21px]
-                prose-h3:mt-6 prose-h3:mb-3 prose-h3:font-semibold">
+      prose-h3:text-[21px]
+      prose-h3:mt-6 prose-h3:mb-3 prose-h3:font-semibold">
                 {!! $category->pivot->content_id !!}
             </div>
 
             @else
             <div class="
             prose
-                max-w-2xl mx-auto
-                px-5 font-open
+      max-w-2xl mx-auto
+      px-5
+      poppins-regular
 
-                text-[16.5px] md:text-[16px]
-                text-left
+      md:text-md sm:text-base text-sm
+      text-left
 
-                prose-p:text-[#1a1a1a]
-                prose-p:leading-[1.6] md:prose-p:leading-[1.6]
-                prose-p:my-[1em]
+      prose-p:leading-relaxed md:prose-p:leading-relaxed
+      prose-p:tracking-[0.020em]
+      prose-p:my-[1em]
 
-                prose-h2:text-[24px]
-                prose-h2:mt-8 prose-h2:mb-4 prose-h2:font-bold
+      prose-h2:text-[24px]
+      prose-h2:mt-8 prose-h2:mb-4 prose-h2:font-bold
 
-                prose-h3:text-[21px]
-                prose-h3:mt-6 prose-h3:mb-3 prose-h3:font-semibold
-            ">{!!
+      prose-h3:text-[21px]
+      prose-h3:mt-6 prose-h3:mb-3 prose-h3:font-semibold>{!!
                 $category->pivot->content_en !!}</div>
             @endif
         </div>

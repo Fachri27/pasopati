@@ -4,7 +4,6 @@
 @source '../../storage/framework/views/*.php';
 @source '../**/*.blade.php';
 @source '../**/*.js';
-
 @theme {
     --font-sans: 'Poppins', 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
     /* --font-open: 'Open Sans', ui-sans-serif, system-ui, sans-serif; */
@@ -13,8 +12,6 @@
     /* --loader-red: #ef4444; */
     /* merah */
 }
-
-
 
 .poppins-thin {
     font-family: "Poppins", sans-serif;
@@ -27,7 +24,6 @@
     font-weight: 400;
     font-style: normal;
 }
-
 
 
 /* .dot {
@@ -125,4 +121,52 @@ figure.media-caption figcaption {
     font-size: 11px;
     line-height: 1.35;
     color: #444;
+}
+
+
+/* slider */
+
+.tmce-slider {
+    max-width: 700px;
+    margin: 24px auto;
+    text-align: center;
+}
+
+.tmce-slides figure {
+    display: none;
+    margin: 0;
+}
+
+.tmce-slides figure.active {
+    display: block;
+}
+
+.tmce-slides img {
+    width: 100%;
+    height: auto;
+    border-radius: 6px;
+}
+
+.tmce-slides figcaption {
+    font-size: 14px;
+    color: #555;
+    margin-top: 8px;
+}
+
+.tmce-controls {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+}
+
+.tmce-controls button {
+    background: #eee;
+    border: none;
+    padding: 6px 14px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.tmce-controls button:hover {
+    background: #ddd;
 }

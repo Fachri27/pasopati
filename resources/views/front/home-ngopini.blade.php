@@ -32,22 +32,6 @@
                         <p class="text-gray-700 text-sm mt-2 leading-relaxed">
                             {{ Str::limit(strip_tags($translation->excerpt ?? ''), 130, '...') }}
                         </p>
-                        <div class="flex items-center justify-between mt-5">
-                            @php
-                                $locale = app()->getLocale();
-                            @endphp
-                            @if ($locale === 'id')
-                                <a href="{{ route('ngopini-show', $artikel->slug) }}"
-                                    class="text-sm font-semibold text-green-600 hover:text-green-700 focus:outline-none focus:underline">
-                                    Baca selengkapnya →
-                                </a>
-                            @else
-                                <a href=""
-                                    class="text-sm font-semibold text-green-600 hover:text-green-700 focus:outline-none focus:underline">
-                                    Read more →
-                                </a>
-                            @endif
-                        </div>
                     </div>
                 </div>
             @empty

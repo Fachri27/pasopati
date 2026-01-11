@@ -44,7 +44,7 @@ $translation = $page->translations->where('locale', $locale)->first();
                 max-w-2xl mx-auto
                 px-5 poppins-regular
 
-                text-md md:text-md
+                md:text-md sm:text-base text-sm
                 text-left
 
                 prose-p:text-[#1a1a1a]

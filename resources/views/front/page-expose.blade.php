@@ -18,20 +18,19 @@
                         offset = window.scrollY * 0.3
                     }
                 })
-            " class="relative min-h-[30vh] md:min-h-[70vh] overflow-hidden md:mb-20 mb-10">
+            " class="relative min-h-[30vh] md:min-h-[80vh] overflow-hidden md:mb-20 mb-10">
                 <!-- Background Image -->
                 <div class="absolute inset-0 w-full h-full bg-center bg-cover"
                     :style="`transform: translateY(${offset}px); background-image: url('{{ asset('storage/' . $page->featured_image) }}')`">
                 </div>
-
-                <!-- Overlay -->
-                <div class="absolute inset-0 bg-black/50"></div>
             </section>
 
             <div
-                class="max-w-4xl mx-auto text-black text-xl sm:text-xl md:text-3xl lg:text-4xl font-serif font-semibold text-center px-4 leading-snug mb-10 md:mb-20 lg:mb-20">
+                class="max-w-4xl mx-auto text-center my-10 sm:my-16 md:my-20 px-5">
                 {{-- {!! nl2br(e($translation->title)) !!} --}}
-                {{ $translation->title }}
+                <div class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-base mb-7 font-serif">
+                    {{ $translation->title ?? $page->slug }}
+                </div>
             </div>
 
         @else
@@ -85,7 +84,7 @@
       px-5
       poppins-regular
 
-      text-[16.5px] md:text-md
+      md:text-md sm:text-base text-sm
       text-left
 
       prose-p:leading-relaxed md:prose-p:leading-relaxed
