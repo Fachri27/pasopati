@@ -51,7 +51,7 @@
                         prose-p:leading-snug
                         prose-p:my-1
                         font-open
-                        line-clamp-3
+                        flex-grow
                     ">
                         {!! $page->translations->first()->excerpt ?? '' !!}
                     </div>
