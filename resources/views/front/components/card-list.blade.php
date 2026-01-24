@@ -41,7 +41,7 @@
                 <div class="p-4 flex flex-col flex-grow text-white">
 
                     <a href="{{ route('show-page', ['page_type' => $page->page_type, 'slug' => $page->slug]) }}">
-                        <h3 class="text-lg font-semibold mb-2 leading-snug font-sans">
+                        <h3 class="text-xl font-semibold mb-2 leading-snug font-sans">
                             {{ $page->translations->first()->title ?? '' }}
                         </h3>
                     </a>

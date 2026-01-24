@@ -60,7 +60,7 @@ class PageController extends Controller
         $mainNgopini = $ngopini->first();
 
         // Data untuk list di kanan (artikel selain utama)
-        $otherNgopini = $ngopini->skip(1)->take(3);
+        $otherNgopini = $ngopini->skip(1)->take(2);
 
         // function untuk searc
 

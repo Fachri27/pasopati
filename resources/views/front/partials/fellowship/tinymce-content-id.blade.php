@@ -128,9 +128,21 @@
                                     style='display:flex; flex-wrap:wrap; align-items:flex-start; gap:16px; margin:20px 0; border-bottom:1px solid #ddd; padding-bottom:20px;'>
                                     
                                     <!-- Foto Mentor -->
-                                    <div style='flex:0 0 120px; width:120px; height:120px; overflow:hidden; border-radius:50%;'>
+                                    <div style='flex:0 0 120px;
+                                                width:120px;
+                                                height:120px;
+                                                display:flex;
+                                                align-items:center;
+                                                justify-content:center;
+                                                overflow:hidden;
+                                                border-radius:50%;'>
                                         <img src='https://placehold.co/150x150' alt='Gambar'
-                                            style='width:100%; height:100%; object-fit:cover; border-radius:50%; display:block;'>
+                                            style=' width:100%;
+                                                    height:100%;
+                                                    object-fit:cover;
+                                                    object-position:center top;
+                                                    border-radius:50%;
+                                                    display:block;'>
                                     </div>
 
                                     <!-- Info Mentor -->

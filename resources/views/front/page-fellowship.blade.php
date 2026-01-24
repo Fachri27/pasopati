@@ -25,7 +25,7 @@
     </aside>
 
     <!-- Content -->
-    <main class="flex-1 px-5 py-5 md:py-2 text-sm">
+    <main class="flex-1 px-5 py-3 md:py-2 text-sm">
         @foreach ($categories as $category)
         @php
         $catTrans = $category->translations->first();
