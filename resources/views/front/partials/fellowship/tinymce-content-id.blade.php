@@ -92,20 +92,24 @@
     text: '+ Tambah Blok Liputan',
     onAction: function () {
         editor.insertContent(`
-<section class='liputan-blok flex flex-col md:flex-row md:gap-3 gap-2 border-b pb-4'>
+<section class='liputan-blok flex flex-col md:flex-row md:gap-3 gap-2 border-b pb-4 md:items-start'>
 
     <!-- Gambar -->
     <div class='liputan-gambar w-full md:w-2/5'>
         <img src='https://placehold.co/800x450'
-             class='w-full h-auto object-cover rounded'>
+             class='w-full h-auto object-cover rounded block'>
     </div>
 
     <!-- Info -->
-    <div class='liputan-info flex-1 mt-1 md:mt-0'>
-        <h2 class='text-[20px] font-bold leading-tight'>Judul Liputan</h2>
+    <div class='liputan-info flex-1'>
+        <h2 class='text-[20px] font-bold leading-tight m-0'>
+            Tragedi harimau sumatera: Hidup dijagal, mati dijual (1)
+        </h2>
 
-        <div class='text-gray-700 leading-snug text-[15px]'>
-            Tulis deskripsi singkat di sini. Misalnya ringkasan dari isi liputan...
+        <div class='text-gray-700 leading-snug text-[15px] mt-1'>
+            Memperingati Hari Harimau Internasional, kami merilis tulisan
+            hasil investigasi terhadap perburuan dan perdagangan harimau sumatera.
+            Tulisan terdiri dari 4 bagian.
         </div>
 
         <div class='text-red-600 font-semibold text-[14px] mt-1'>
@@ -114,6 +118,8 @@
     </div>
 
 </section>
+
+
         `);
     }
 });
