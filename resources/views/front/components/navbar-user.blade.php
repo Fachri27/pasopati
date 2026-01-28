@@ -136,11 +136,11 @@
                         <ul>
                             <li>
                                 <span class="text-red-700 text-xl">•</span>
-                                <a href="">CBI</a>
+                                <a href="{{ route('cbi') }}">CBI</a>
                             </li>
                             <li>
                                 <span class="text-red-700 text-xl">•</span>
-                                <a href="">ANJ</a>
+                                <a href="#">ANJ</a>
                             </li>
                         </ul>
                     </li>

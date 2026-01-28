@@ -67,9 +67,9 @@
                                 <input type="text" wire:model="title_en"
                                     class="w-full border rounded-lg px-3 py-2 mt-1">
 
-                                    <label class="text-sm mt-2 block">Slug</label>
-                                    <input type="text" x-model="slug" readonly
-                                        class="w-full bg-gray-100 border rounded-lg px-3 py-2">
+                                <label class="text-sm mt-2 block">Slug</label>
+                                <input type="text" x-model="slug" readonly
+                                    class="w-full bg-gray-100 border rounded-lg px-3 py-2">
                             </div>
 
                             {{-- Publish + Page Type --}}
@@ -120,11 +120,11 @@
 
                                 <div class="mt-3">
                                     @if ($featured_image)
-                                    <img src="{{ $featured_image->temporaryUrl() }}"
-                                        class="w-20 h-20 rounded-lg object-cover border">
+                                        <img src="{{ $featured_image->temporaryUrl() }}"
+                                            class="w-20 h-20 rounded-lg object-cover border">
                                     @elseif ($old_featured_image)
-                                    <img src="{{ asset('storage/' . $old_featured_image) }}"
-                                        class="w-20 h-20 rounded-lg object-cover border">
+                                        <img src="{{ asset('storage/' . $old_featured_image) }}"
+                                            class="w-20 h-20 rounded-lg object-cover border">
                                     @endif
                                 </div>
                             </div>
@@ -181,12 +181,12 @@
 
                             <div x-show="lang === 'id'">
                                 {{-- excerpt_editor_id --}}
-                                @includeWhen(true,'front.partials.tinymce-excerpt-id')
+                                @includeWhen(true, 'front.partials.tinymce-excerpt-id')
                             </div>
 
                             <div x-show="lang === 'en'">
                                 {{-- excerpt_editor_en --}}
-                                @includeWhen(true,'front.partials.tinymce-excerpt-en')
+                                @includeWhen(true, 'front.partials.tinymce-excerpt-en')
                             </div>
                         </div>
 
@@ -196,12 +196,12 @@
 
                             <div x-show="lang === 'id'">
                                 {{-- editor_id --}}
-                                @includeWhen(true,'front.partials.tinymce-content-id')
+                                @includeWhen(true, 'front.partials.tinymce-content-id')
                             </div>
 
                             <div x-show="lang === 'en'">
                                 {{-- editor_en --}}
-                                @includeWhen(true,'front.partials.tinymce-content-en')
+                                @includeWhen(true, 'front.partials.tinymce-content-en')
                             </div>
                         </div>
                     </div>

@@ -53,6 +53,11 @@ Route::group([
     })->name('ngopini');
 
     Route::get('/ngopini', [PageController::class, 'indexNgopini'])->name('ngopini.index');
+    Route::get('/cbi', function () {
+        return view('front.cbi');
+    })->name('cbi');
+
+
 });
 
 Route::get('/dashboard', function () {
