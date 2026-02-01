@@ -26,7 +26,7 @@
                 <div class="overflow-hidden aspect-[16/9]">
                     @if ($page->featured_image)
                         <img
-                            src="{{ asset('storage/' . $page->featured_image) }}"
+                            src="{{ asset('storage/'. $page->featured_image) }}"
                             alt="{{ $page->translations->first()->title ?? '' }}"
                             class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                         >
