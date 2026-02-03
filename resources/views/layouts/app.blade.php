@@ -58,8 +58,8 @@
     <meta property="og:description" content="{{ $meta['description'] }}">
     <meta property="og:image" content="{{ $meta['image'] }}">
     <meta property="og:image:alt" content="{{ $meta['title'] }}">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
+    <meta property="og:image:width" content="300">
+    <meta property="og:image:height" content="150">
 
     <!-- 🐦 Twitter -->
     <meta name="twitter:card" content="summary_large_image">

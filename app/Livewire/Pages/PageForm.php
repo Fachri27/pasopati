@@ -177,7 +177,7 @@ class PageForm extends Component
             if (file_exists($fullPath)) {
                 $manager = ImageManager::gd()
                     ->read($fullPath)
-                    ->resize(1200, 630);
+                    ->resize(300, 150);
                 $manager->save($metaDir.'/'.$filename);
             }
 
