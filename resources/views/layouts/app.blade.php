@@ -16,7 +16,7 @@
         $alternateUrl = url(str_replace("/{$locale}/", "/{$alternate}/", request()->getRequestUri()));
     @endphp
 
-    @php
+    {{-- @php
         use Illuminate\Support\Str;
 
         $appName = config('app.name', 'Pasopati');
@@ -36,7 +36,7 @@
         $pageImage = $pageImage ?? asset('img/image.png');
         $pageType = $pageType ?? 'website';
         $currentUrl = url()->current();
-    @endphp
+    @endphp --}}
 
     <!-- 🌐 Basic Meta -->
     <title>{{$meta['title'] }}</title>

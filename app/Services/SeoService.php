@@ -54,7 +54,7 @@ class SeoService
         return [
             'title' => $this->get('title'),
             'description' => $this->get('description'),
-            'image' => $this->get('image'),
+            'image' => url($this->get('image')),
             'type' => $this->get('type'),
             'locale' => $this->locale,
         ];
