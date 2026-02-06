@@ -4,7 +4,7 @@
         <div class="flex-grow border-t border-gray-400"></div>
         <span class="mx-2 text-gray-500">&laquo;&laquo;</span>
         <a href="{{ route('ngopini.index') }}">
-            <h2 class="uppercase text-[#d50c2e] font-bold md:text-4xl text-2xl mx-4 tracking-wide">
+            <h2 class="uppercase text-[#e3061c] font-bold md:text-4xl text-2xl mx-4 tracking-wide">
                 ngopini-hutan
             </h2>
         </a>
