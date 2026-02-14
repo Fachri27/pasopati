@@ -22,10 +22,10 @@
                     </div>
                 </form>
                 <div class="flex items-right space-x-1 text-sm">
-                    <a href="{{ route(Route::currentRouteName(), array_merge(Route::current()->parameters(), ['locale' => 'en'])) }}"
+                    <a href="{{ route('locale.switch', 'en') }}"
                         class="hover:text-green-900 {{ app()->getLocale() === 'en' ? 'font-bold text-red-600' : '' }}">EN</a>
                     <span>|</span>
-                    <a href="{{ route(Route::currentRouteName(), array_merge(Route::current()->parameters(), ['locale' => 'id'])) }}"
+                    <a href="{{ route('locale.switch', 'id') }}"
                         class="hover:text-green-900 {{ app()->getLocale() === 'id' ? 'font-bold text-red-600' : '' }}">ID</a>
                 </div>
                 <button @click="open = !open" class="bg-[#2B5343] py-4 px-3">
@@ -47,8 +47,8 @@
                 x-transition:enter-start="translate-x-full" x-transition:enter-end="translate-x-0"
                 x-transition:leave="transition ease-in duration-200" x-transition:leave-start="translate-x-0"
                 x-transition:leave-end="translate-x-full"
-                class="fixed top-0 right-0 bg-white sm:w-[75vw] md:w-100 h-full z-50 p-6 overflow-y-auto" @click.away="open = false"
-                style="display: none !important;">
+                class="fixed top-0 right-0 bg-white sm:w-[75vw] md:w-100 h-full z-50 p-6 overflow-y-auto"
+                @click.away="open = false" style="display: none !important;">
                 <div class="flex justify-end">
                     <button @click="open = false">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
@@ -74,44 +74,44 @@
                         <a href="" class="block text-gray-800 font-semibold uppercase">Home</a>
                     </li>
                     <li class="border-b border-black pb-4">
-    <span class="uppercase text-sm font-semibold block mb-2">
-        Expose
-    </span>
+                        <span class="uppercase text-sm font-semibold block mb-2">
+                            Expose
+                        </span>
 
-    <ul class="space-y-2">
-        <li class="flex items-center gap-2">
-            <span class="text-red-700 text-xl leading-none">•</span>
-            <a href="{{ route('artikel.expose', ['locale' => app()->getLocale(), 'expose_type' => 'deforestasi']) }}"
-               class="hover:underline">
-                Deforestasi
-            </a>
-        </li>
+                        <ul class="space-y-2">
+                            <li class="flex items-center gap-2">
+                                <span class="text-red-700 text-xl leading-none">•</span>
+                                <a href="{{ route('artikel.expose', ['expose_type' => 'deforestasi']) }}"
+                                    class="hover:underline">
+                                    Deforestasi
+                                </a>
+                            </li>
 
-        <li class="flex items-center gap-2">
-            <span class="text-red-700 text-xl leading-none">•</span>
-            <a href="{{ route('artikel.expose', ['locale' => app()->getLocale(), 'expose_type' => 'kebakaran']) }}"
-               class="hover:underline">
-                Kebakaran
-            </a>
-        </li>
+                            <li class="flex items-center gap-2">
+                                <span class="text-red-700 text-xl leading-none">•</span>
+                                <a href="{{ route('artikel.expose', ['expose_type' => 'kebakaran']) }}"
+                                    class="hover:underline">
+                                    Kebakaran
+                                </a>
+                            </li>
 
-        <li class="flex items-center gap-2">
-            <span class="text-red-700 text-xl leading-none">•</span>
-            <a href="{{ route('artikel.expose', ['locale' => app()->getLocale(), 'expose_type' => 'pulp']) }}"
-               class="hover:underline">
-                Pulp & Paper
-            </a>
-        </li>
+                            <li class="flex items-center gap-2">
+                                <span class="text-red-700 text-xl leading-none">•</span>
+                                <a href="{{ route('artikel.expose', ['expose_type' => 'pulp']) }}"
+                                    class="hover:underline">
+                                    Pulp & Paper
+                                </a>
+                            </li>
 
-        <li class="flex items-center gap-2">
-            <span class="text-red-700 text-xl leading-none">•</span>
-            <a href="{{ route('artikel.expose', ['locale' => app()->getLocale(), 'expose_type' => 'mining']) }}"
-               class="hover:underline">
-                Mining & Energy
-            </a>
-        </li>
-    </ul>
-</li>
+                            <li class="flex items-center gap-2">
+                                <span class="text-red-700 text-xl leading-none">•</span>
+                                <a href="{{ route('artikel.expose', ['expose_type' => 'mining']) }}"
+                                    class="hover:underline">
+                                    Mining & Energy
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
 
                     <li class="border-b border-black">
                         <span class="uppercase font-semibold">Fellowship</span>
@@ -122,7 +122,7 @@
                             <li>
                                 <span class="text-red-700 text-xl">•</span>
 
-                                <a href="{{ route('fellowship.preview', [$locale, $post->slug]) }}">
+                                <a href="{{ route('fellowship.preview', ['slug' => $post->slug]) }}">
                                     {{ $year }}
                                 </a>
                             </li>

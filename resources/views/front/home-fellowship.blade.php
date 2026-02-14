@@ -19,7 +19,7 @@
 <div class="max-w-screen-lg mx-auto md:px-0 px-5">
     @foreach ($fellowships as $fellowship )
     @php
-    $translation = $fellowship->translations->first();
+    $translation = $fellowship->translations->first() ?? $fellowship->translations()->first();
     @endphp
 
     <div class="md:flex gap-6 mb-10">
@@ -31,18 +31,19 @@
 
         {{-- teks --}}
         <div class="">
-            <p class="text-red-600 font-bold md:text-md font-sans">{{ \Carbon\Carbon::parse($fellowship->start_date)->format('Y') }}
+            <p class="text-red-600 font-bold md:text-md font-sans">{{
+                \Carbon\Carbon::parse($fellowship->start_date)->format('Y') }}
             </p>
             <h2 class="text-gray-800 font-semibold tracking-tight text-sm uppercase mt-2 font-sans">
-                {{ $translation->sub_judul }}
+                {{ $translation->sub_judul ?? '' }}
             </h2>
             <a href="{{ route('fellowship.preview', $fellowship->slug) }}">
                 <h1 class="text-xl md:text-xl font-extrabold leading-tight mt-2 font-sans">
-                    {{ $translation->title }}
+                    {{ $translation->title ?? '' }}
                 </h1>
             </a>
             <div class="prose prose-sm mt-4 text-gray-600 text-sm font-open">
-                {!! $translation->excerpt !!}
+                {!! $translation->excerpt ?? '' !!}
             </div>
         </div>
     </div>

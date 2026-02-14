@@ -2,14 +2,12 @@
 
 namespace App\Livewire\Pages;
 
-use App\Models\Page;
-use App\Models\PageTranslation;
-use App\Services\ImportToHtmlService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use App\Models\{Page, PageTranslation};
+use App\Services\ImportToHtmlService;
 use Intervention\Image\ImageManager;
-use Livewire\Component;
-use Livewire\WithFileUploads;
+use Livewire\{Component, WithFileUploads};
 
 class PageForm extends Component
 {

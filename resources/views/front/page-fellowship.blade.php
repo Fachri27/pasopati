@@ -29,10 +29,12 @@
         @foreach ($categories as $category)
         @php
         $catTrans = $category->translations->first();
+        $contentId = $category->pivot->content_id ?? '';
+        $contentEn = $category->pivot->content_en ?? '';
+        $content = $locale === 'id' ? $contentId : ($contentEn ?: $contentId);
         @endphp
+
         <div x-show="selectedId === {{ $category->id }}" style="display: none !important">
-            {{-- Konten dari pivot sesuai bahasa --}}
-            @if($locale === 'id')
             <div class="prose
       max-w-2xl mx-auto
       px-5
@@ -50,33 +52,12 @@
 
       prose-h3:text-[21px]
       prose-h3:mt-6 prose-h3:mb-3 prose-h3:font-semibold">
-                {!! $category->pivot->content_id !!}
+                {!! $content !!}
             </div>
-
-            @else
-            <div class="
-            prose
-      max-w-2xl mx-auto
-      px-5
-      poppins-regular
-
-      md:text-md sm:text-base text-sm
-      text-left
-
-      prose-p:leading-relaxed md:prose-p:leading-relaxed
-      prose-p:tracking-[0.020em]
-      prose-p:my-[1em]
-
-      prose-h2:text-[24px]
-      prose-h2:mt-8 prose-h2:mb-4 prose-h2:font-bold
-
-      prose-h3:text-[21px]
-      prose-h3:mt-6 prose-h3:mb-3 prose-h3:font-semibold>{!!
-                $category->pivot->content_en !!}</div>
-            @endif
         </div>
-        @endforeach
-    </main>
+</div>
+@endforeach
+</main>
 </div>
 
 @include('front.components.floating')

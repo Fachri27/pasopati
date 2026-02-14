@@ -2,7 +2,7 @@
 
 @section('content')
 @php
-$locale = request()->segment(1);
+$locale = app()->getLocale();
 $translation = $page->translations->where('locale', $locale)->first();
 @endphp
 
@@ -58,7 +58,7 @@ $translation = $page->translations->where('locale', $locale)->first();
                 prose-h3:text-[21px]
                 prose-h3:mt-6 prose-h3:mb-3 prose-h3:font-semibold
                 ">
-                {!! $translation->content !!}
+                {!! $translation->content ?? '' !!}
             </div>
 
         </div>
@@ -79,8 +79,8 @@ $translation = $page->translations->where('locale', $locale)->first();
             @endphp
 
             <div class="w-full">
-                <a href="{{ url($locale . '/' . $item->slug) }}">
-                    <img src="{{ asset('storage/' . $item->featured_image) }}" alt="{{ $page->slug }}"
+                <a href="{{ route('ngopini-show', $item->slug) }}">
+                    <img src="{{ asset('storage/' . $item->featured_image) }}" alt="{{ $item->slug }}"
                         class="w-full h-auto object-contain shadow mb-3">
                 </a>
 

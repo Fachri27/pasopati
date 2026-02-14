@@ -10,7 +10,7 @@
         <a href="{{ route('fellowship.preview', $fellowship->slug ?? '# ') }}">
             <img src="{{ asset('img/ban-1.png') }}" alt="" class="w-[350px]">
         </a>
-        <a href="{{ route('fellowship.user') }}">
+        <a href="{{ route('fellowship-user') }}">
             <img src="{{ asset('img/ban-2.png') }}" alt="" class="w-[350px]">
         </a>
     </div>

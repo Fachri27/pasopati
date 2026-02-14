@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Fellowship;
-use App\Models\Page;
 use Illuminate\Http\Request;
+use App\Models\{Fellowship, Page};
 
 class PageController extends Controller
 {
-    public function indexUser(Request $request, $locale)
+    public function indexUser(Request $request)
     {
+        $locale = app()->getLocale();
         $search = $request->input('search');
         $pages = Page::with(['translations' => function ($q) use ($locale) {
             $q->where('locale', $locale);
@@ -64,11 +64,12 @@ class PageController extends Controller
 
         // function untuk searc
 
-        return view('front.home', compact('pages', 'mainNgopini', 'otherNgopini', 'search', 'fellowship'));
+        return view('front.home', compact('pages', 'mainNgopini', 'otherNgopini', 'search', 'fellowship', 'locale'));
     }
 
-    public function preview($locale, $page_type, $slug)
+    public function preview($page_type, $slug)
     {
+        $locale = app()->getLocale();
         $page = Page::with('translations')
             ->where('page_type', $page_type)
             ->where('slug', $slug)
@@ -89,14 +90,15 @@ class PageController extends Controller
             ->set('type', $meta['type']);
 
         if ($page_type === 'ngopini') {
-            return view('front.page-ngopini', compact('page', 'related'));
+            return view('front.page-ngopini', compact('page', 'related', 'locale'));
         } else {
-            return view('front.page-expose', compact('page', 'related'));
+            return view('front.page-expose', compact('page', 'related', 'locale'));
         }
     }
 
-    public function indexNgopini($locale)
+    public function indexNgopini()
     {
+        $locale = app()->getLocale();
         $pages = Page::with(['translations' => function ($q) use ($locale) {
             $q->where('locale', $locale);
         }])
@@ -121,8 +123,34 @@ class PageController extends Controller
         return view('front.home-ngopini', compact('pages', 'locale'));
     }
 
-    public function artikel($locale, $expose_type)
+    public function showNgopini($slug)
     {
+        $locale = app()->getLocale();
+        $page = Page::with('translations')
+            ->where('page_type', 'ngopini')
+            ->where('slug', $slug)
+            ->firstOrFail();
+
+        $related = Page::where('id', '!=', $page->id)
+            ->where('page_type', 'ngopini')
+            ->latest()
+            ->take(3)
+            ->get();
+
+        $meta = $page->getSeoData($locale);
+
+        seo()->setLocale($locale)
+            ->set('title', ['id' => $meta['title'], 'en' => $meta['title']])
+            ->set('description', ['id' => $meta['description'], 'en' => $meta['description']])
+            ->set('image', $meta['image'])
+            ->set('type', $meta['type']);
+
+        return view('front.page-ngopini', compact('page', 'related', 'locale'));
+    }
+
+    public function artikel($expose_type)
+    {
+        $locale = app()->getLocale();
         // pastikan expose_type jadi array
         $exposeTypes = is_array($expose_type)
             ? $expose_type

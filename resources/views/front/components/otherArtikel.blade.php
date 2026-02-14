@@ -1,6 +1,6 @@
 <div class="max-w-screen-lg mx-auto">
     <section class="mt-12 px-4">
-        
+
         <!-- Judul -->
         <div class="flex items-center mb-6">
             <h2 class="text-red-600 font-bold uppercase text-sm tracking-wide">
@@ -14,21 +14,21 @@
             @foreach ($related as $item)
 
             @php
-                $trans = $item->translations->where('locale', $locale)->first();
-                $thumbnail = $item->featured_image
-                    ? asset('storage/' . $item->featured_image)
-                    : asset('/images/default.jpg');
+            $trans = $item->translations->where('locale', $locale)->first();
+            $thumbnail = $item->featured_image
+            ? asset('storage/' . $item->featured_image)
+            : asset('/images/default.jpg');
 
-                $title = $trans->title ?? $item->title;
-                $excerpt = Str::limit(strip_tags($trans->content ?? ''), 120);
+            $title = $trans->title ?? $item->title;
+            $excerpt = Str::limit(strip_tags($trans->content ?? ''), 120);
             @endphp
 
-            <a href="{{ route('show-page', ['locale' => $locale, 'page_type'=> $item->page_type, 'slug' => $item->slug]) }}" 
-               class="group block">
+            <a href="{{ route('show-page', ['page_type'=> $item->page_type, 'slug' => $item->slug]) }}"
+                class="group block">
 
                 <div class="w-full h-44 bg-gray-200 overflow-hidden">
-                    <img src="{{ $thumbnail }}" 
-                         class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                    <img src="{{ $thumbnail }}"
+                        class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
                 </div>
 
                 <!-- Title -->

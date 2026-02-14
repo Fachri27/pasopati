@@ -14,7 +14,8 @@
         <div class="md:flex items-center justify-between mb-4">
             <div class="flex items-center gap-2">
                 <label for="statusFilter" class="text-sm font-medium text-gray-700">Filter Status:</label>
-                <select id="statusFilter" wire:model.live.debounce.100ms="status" class="border-gray-300 rounded-md text-sm">
+                <select id="statusFilter" wire:model.live.debounce.100ms="status"
+                    class="border-gray-300 rounded-md text-sm">
                     <option value="">Semua</option>
                     <option value="draft">Draft</option>
                     <option value="active">Active</option>
@@ -23,13 +24,13 @@
             </div>
             <div class="md:flex items-center gap-2">
                 <label for="userFilter" class="text-sm font-medium text-gray-700">Filter Author:</label>
-                <select id="userFilter" wire:model.live.debounce.100ms="author" class="border-gray-300 rounded-md text-sm">
+                <select id="userFilter" wire:model.live.debounce.100ms="author"
+                    class="border-gray-300 rounded-md text-sm">
                     <option value="">Semua Penulis</option>
                     <option value="me">Saya</option>
                 </select>
             </div>
-            <div 
-            x-data="{
+            <div x-data="{
                 dateRange: @entangle('dataRange').defer,
                 picker: null,
                 init() {
@@ -48,21 +49,12 @@
                     this.dateRange = ''
                     $wire.set('dataRange', null)
                 }
-            }"
-            >
-                <input
-                    x-ref="dateRange"
-                    type="text"
-                    class="border rounded p-2 w-64"
-                    placeholder="Pilih tanggal..."
-                    readonly
-                >
+            }">
+                <input x-ref="dateRange" type="text" class="border rounded p-2 w-64" placeholder="Pilih tanggal..."
+                    readonly>
 
-                <button 
-                    type="button"
-                    @click="resetDate"
-                    class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-2 rounded"
-                >
+                <button type="button" @click="resetDate"
+                    class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-2 rounded">
                     Reset
                 </button>
 
@@ -129,7 +121,8 @@
                 </td>
                 <td class="p-3">{{ auth()->user()->name }}</td>
                 <td class="p-3">
-                    <a href="{{ route('page.preview', ['locale' => app()->getLocale(), 'page_type' => $data->page_type, 'slug' => $data->slug]) }}" target="_blank">
+                    <a href="{{ route('page.preview', ['page_type' => $data->page_type, 'slug' => $data->slug]) }}"
+                        target="_blank">
                         <button class="bg-gray-600 px-3 py-1 rounded text-white">Preview</button>
                     </a>
                     <a href="{{ route('pages.edit', $data->id) }}">
@@ -146,12 +139,11 @@
             {{ $pages->links() }}
         </div>
     </div>
-     @if (session('success'))
+    @if (session('success'))
     <div x-data="{ show: true }" x-show="show" x-transition:enter="transition ease-out duration-500"
         x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0"
         x-transition:leave="transition ease-in duration-500" x-transition:leave-start="opacity-100 translate-y-0"
-        x-transition:leave-end="opacity-0 translate-y-2" x-init="setTimeout(() => show = false, 3000)"
-        class="fixed bottom-6 right-6 bg-green-400 text-white p-10 shadow-lg 
+        x-transition:leave-end="opacity-0 translate-y-2" x-init="setTimeout(() => show = false, 3000)" class="fixed bottom-6 right-6 bg-green-400 text-white p-10 shadow-lg 
                hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2">
         {{ session('success') }}
     </div>

@@ -15,17 +15,19 @@
     <!-- Deskripsi -->
     <div class="flex flex-col items-center py-2 px-4 font-open">
         @php
-            $locale = app()->getLocale();
+        $locale = app()->getLocale();
         @endphp
-        @if ($locale === 'id')      
-            <p class="max-w-2xl text-center md:text-lg text-gray-800 leading-relaxed font-open">
-                Ngopini-Hutan digagas Auriga Nusantara sebagai ruang dialog antar-pemangku kepentingan kehutanan.
-                Mengundang kehadiran dan partisipasi akademisi, praktisi, pemerintah, masyarakat sipil, dan media.
-            </p>
+        @if ($locale === 'id')
+        <p class="max-w-2xl text-center md:text-lg text-gray-800 leading-relaxed font-open">
+            Ngopini-Hutan digagas Auriga Nusantara sebagai ruang dialog antar-pemangku kepentingan kehutanan.
+            Mengundang kehadiran dan partisipasi akademisi, praktisi, pemerintah, masyarakat sipil, dan media.
+        </p>
         @else
-            <p class="max-w-2xl text-center text-base md:text-lg text-gray-800 leading-relaxed">
-                Ngopini-Hutan was initiated by Auriga Nusantara as a space for dialogue among forestry stakeholders. It invites the presence and participation of academics, practitioners, government representatives, civil society, and the media.
-            </p>
+        <p class="max-w-2xl text-center text-base md:text-lg text-gray-800 leading-relaxed">
+            Ngopini-Hutan was initiated by Auriga Nusantara as a space for dialogue among forestry stakeholders. It
+            invites the presence and participation of academics, practitioners, government representatives, civil
+            society, and the media.
+        </p>
         @endif
     </div>
 
@@ -60,7 +62,7 @@
                     {{ $translation->title }}
                 </a>
                 <p class="text-gray-600 text-sm md:text-base leading-snug font-open">
-                    {!! $translation->excerpt !!}
+                    {!! $translation->excerpt ?? '' !!}
                 </p>
             </div>
             @else
@@ -88,7 +90,7 @@
                     </h3>
                     <p class="text-gray-600 text-sm leading-relaxed">
                         {{ $translation
-                        ? Str::limit(strip_tags($translation->excerpt), 300, '...')
+                        ? Str::limit(strip_tags($translation->excerpt ?? ''), 300, '...')
                         : Str::limit(strip_tags($item->content), 300, '...')
                         }}
                     </p>

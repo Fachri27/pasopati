@@ -7,7 +7,8 @@ use Illuminate\Http\Request;
 
 class FellowshipController extends Controller
 {
-    public function Preview($locale, $slug) {
+    public function Preview($slug) {
+        $locale = app()->getLocale();
         $fellowship = Fellowship::with([
             'translations' => function ($q) use ($locale) {
                 $q->where('locale', $locale);
@@ -36,8 +37,9 @@ class FellowshipController extends Controller
         return view('front.page-fellowship', compact('fellowship', 'categories', 'locale'));
     }
 
-    public function indexUser($locale, Request $request)
+    public function indexUser(Request $request)
     {
+        $locale = app()->getLocale();
         $search = $request->input('search');
         $fellowships = Fellowship::with(['translations' => function ($q) use ($locale) {
             $q->where('locale', $locale);
