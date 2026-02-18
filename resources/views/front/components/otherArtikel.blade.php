@@ -23,7 +23,7 @@
             $excerpt = Str::limit(strip_tags($trans->content ?? ''), 120);
             @endphp
 
-            <a href="{{ route('show-page', ['page_type'=> $item->page_type, 'slug' => $item->slug]) }}"
+            <a href="{{ route('show-page', ['locale' => app()->getLocale(), 'page_type'=> $item->page_type, 'slug' => $item->slug]) }}"
                 class="group block">
 
                 <div class="w-full h-44 bg-gray-200 overflow-hidden">

@@ -7,7 +7,7 @@ use App\Models\{Fellowship, Page};
 
 class PageController extends Controller
 {
-    public function indexUser(Request $request)
+    public function indexUser(Request $request, $locale)
     {
         $locale = app()->getLocale();
         $search = $request->input('search');
@@ -67,7 +67,7 @@ class PageController extends Controller
         return view('front.home', compact('pages', 'mainNgopini', 'otherNgopini', 'search', 'fellowship', 'locale'));
     }
 
-    public function preview($page_type, $slug)
+    public function preview($locale, $page_type, $slug)
     {
         $locale = app()->getLocale();
         $page = Page::with('translations')
@@ -96,7 +96,7 @@ class PageController extends Controller
         }
     }
 
-    public function indexNgopini()
+    public function indexNgopini($locale)
     {
         $locale = app()->getLocale();
         $pages = Page::with(['translations' => function ($q) use ($locale) {
@@ -123,7 +123,7 @@ class PageController extends Controller
         return view('front.home-ngopini', compact('pages', 'locale'));
     }
 
-    public function showNgopini($slug)
+    public function showNgopini($locale, $slug)
     {
         $locale = app()->getLocale();
         $page = Page::with('translations')
@@ -148,7 +148,7 @@ class PageController extends Controller
         return view('front.page-ngopini', compact('page', 'related', 'locale'));
     }
 
-    public function artikel($expose_type)
+    public function artikel($locale, $expose_type)
     {
         $locale = app()->getLocale();
         // pastikan expose_type jadi array

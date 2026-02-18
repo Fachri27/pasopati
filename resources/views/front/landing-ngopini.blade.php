@@ -3,7 +3,7 @@
     <div class="flex items-center justify-center mb-4 font-sans">
         <div class="flex-grow border-t border-gray-400"></div>
         <span class="mx-2 text-gray-500">&laquo;&laquo;</span>
-        <a href="{{ route('ngopini.index') }}">
+        <a href="{{ route('ngopini.index', ['locale' => app()->getLocale()]) }}">
             <h2 class="uppercase text-[#e3061c] font-bold md:text-4xl text-2xl mx-4 tracking-wide">
                 ngopini-hutan
             </h2>
@@ -57,7 +57,7 @@
             </div>
 
             <div class="text-center space-y-3">
-                <a href="{{ route('ngopini-show', $mainNgopini->slug) }}"
+                <a href="{{ route('ngopini-show', ['locale' => app()->getLocale(), 'slug' => $mainNgopini->slug]) }}"
                     class="font-bold text-xl md:text-2xl text-[#212631] hover:text-[#d50c2e] transition leading-snug block font-sans">
                     {{ $translation->title }}
                 </a>
@@ -84,7 +84,7 @@
                     alt="{{ $translation ? $translation->title : $item->title }}" class="w-full h-[200px] object-cover">
                 <div class="p-3">
                     <h3 class="text-lg font-bold text-[#212631] hover:text-[#d50c2e] transition mb-1">
-                        <a href="{{ route('ngopini-show', $item->slug) }}">
+                        <a href="{{ route('ngopini-show', ['locale' => app()->getLocale(), 'slug' => $item->slug]) }}">
                             {{ $translation ? $translation->title : $item->title }}
                         </a>
                     </h3>

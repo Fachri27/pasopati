@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Middleware\RedirectIfAuthenticated;
+use App\Http\Middleware\RedirectOldPublicUrls;
+use App\Http\Middleware\RedirectOldUrls;
 use App\Http\Middleware\RoleMiddleware;
 use App\Http\Middleware\SetLocale;
 use Illuminate\Foundation\Application;
@@ -14,8 +16,14 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->web(append: [
+            RedirectOldPublicUrls::class,
+        ]);
+        
         $middleware->alias(aliases: [
-            'setlocale' => setLocale::class,
+            'setlocale' => SetLocale::class,
+            'redirect.old.urls' => RedirectOldUrls::class,
+            'redirect.old.public.urls' => RedirectOldPublicUrls::class,
             'guest' => RedirectIfAuthenticated::class,
             'role' => RoleMiddleware::class,
         ]);

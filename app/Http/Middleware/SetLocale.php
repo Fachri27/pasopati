@@ -11,8 +11,8 @@ class SetLocale
 {
     public function handle(Request $request, Closure $next)
     {
-        // Determine locale from session/cookie or fallback to app default
-        $locale = session('locale') ?? $request->cookie('locale') ?? config('app.locale');
+        // Determine locale from URL route parameter (primary source)
+        $locale = $request->route('locale') ?? session('locale') ?? $request->cookie('locale') ?? config('app.locale');
         $supported = ['id', 'en'];
 
         if (! in_array($locale, $supported)) {
@@ -29,7 +29,8 @@ class SetLocale
         // Set PHP locale untuk tanggal/bulan
         setlocale(LC_TIME, $locale == 'id' ? 'id_ID.UTF-8' : 'en_US.UTF-8');
 
-        // do not force locale into the URL - we manage locale via session/cookie
+        // Store locale in session for future requests
+        session(['locale' => $locale]);
 
         return $next($request);
     }

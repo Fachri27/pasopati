@@ -79,13 +79,14 @@ $translation = $page->translations->where('locale', $locale)->first();
             @endphp
 
             <div class="w-full">
-                <a href="{{ route('ngopini-show', $item->slug) }}">
+                <a href="{{ route('ngopini-show', ['locale' => app()->getLocale(), 'slug' => $item->slug]) }}">
                     <img src="{{ asset('storage/' . $item->featured_image) }}" alt="{{ $item->slug }}"
                         class="w-full h-auto object-contain shadow mb-3">
                 </a>
 
                 <h3 class="font-semibold text-lg leading-snug mb-3 font-sans">
-                    <a href="{{ route('ngopini-show', $item->slug) }}" class="hover:text-red-600">
+                    <a href="{{ route('ngopini-show', ['locale' => app()->getLocale(), 'slug' => $item->slug]) }}"
+                        class="hover:text-red-600">
                         {{ $title }}
                     </a>
                 </h3>

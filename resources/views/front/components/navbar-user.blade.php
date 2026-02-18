@@ -22,10 +22,16 @@
                     </div>
                 </form>
                 <div class="flex items-right space-x-1 text-sm">
-                    <a href="{{ route('locale.switch', 'en') }}"
+                    @php
+                    $currentLocale = app()->getLocale();
+                    $currentPath = str_replace('/' . $currentLocale, '', request()->getPathInfo());
+                    $otherLocale = $currentLocale === 'en' ? 'id' : 'en';
+                    $switchUrl = '/' . $otherLocale . $currentPath;
+                    @endphp
+                    <a href="{{ $switchUrl }}"
                         class="hover:text-green-900 {{ app()->getLocale() === 'en' ? 'font-bold text-red-600' : '' }}">EN</a>
                     <span>|</span>
-                    <a href="{{ route('locale.switch', 'id') }}"
+                    <a href="{{ $switchUrl }}"
                         class="hover:text-green-900 {{ app()->getLocale() === 'id' ? 'font-bold text-red-600' : '' }}">ID</a>
                 </div>
                 <button @click="open = !open" class="bg-[#2B5343] py-4 px-3">
@@ -81,7 +87,7 @@
                         <ul class="space-y-2">
                             <li class="flex items-center gap-2">
                                 <span class="text-red-700 text-xl leading-none">•</span>
-                                <a href="{{ route('artikel.expose', ['expose_type' => 'deforestasi']) }}"
+                                <a href="{{ route('artikel.expose', ['locale' => app()->getLocale(), 'expose_type' => 'deforestasi']) }}"
                                     class="hover:underline">
                                     Deforestasi
                                 </a>
@@ -89,7 +95,7 @@
 
                             <li class="flex items-center gap-2">
                                 <span class="text-red-700 text-xl leading-none">•</span>
-                                <a href="{{ route('artikel.expose', ['expose_type' => 'kebakaran']) }}"
+                                <a href="{{ route('artikel.expose', ['locale' => app()->getLocale(), 'expose_type' => 'kebakaran']) }}"
                                     class="hover:underline">
                                     Kebakaran
                                 </a>
@@ -97,7 +103,7 @@
 
                             <li class="flex items-center gap-2">
                                 <span class="text-red-700 text-xl leading-none">•</span>
-                                <a href="{{ route('artikel.expose', ['expose_type' => 'pulp']) }}"
+                                <a href="{{ route('artikel.expose', ['locale' => app()->getLocale(), 'expose_type' => 'pulp']) }}"
                                     class="hover:underline">
                                     Pulp & Paper
                                 </a>
@@ -105,7 +111,7 @@
 
                             <li class="flex items-center gap-2">
                                 <span class="text-red-700 text-xl leading-none">•</span>
-                                <a href="{{ route('artikel.expose', ['expose_type' => 'mining']) }}"
+                                <a href="{{ route('artikel.expose', ['locale' => app()->getLocale(), 'expose_type' => 'mining']) }}"
                                     class="hover:underline">
                                     Mining & Energy
                                 </a>
@@ -122,7 +128,8 @@
                             <li>
                                 <span class="text-red-700 text-xl">•</span>
 
-                                <a href="{{ route('fellowship.preview', ['slug' => $post->slug]) }}">
+                                <a
+                                    href="{{ route('fellowship.preview', ['locale' => app()->getLocale(), 'slug' => $post->slug]) }}">
                                     {{ $year }}
                                 </a>
                             </li>
@@ -136,7 +143,7 @@
                         <ul>
                             <li>
                                 <span class="text-red-700 text-xl">•</span>
-                                <a href="{{ route('cbi') }}">CBI</a>
+                                <a href="{{ route('cbi', ['locale' => app()->getLocale()]) }}">CBI</a>
                             </li>
                             <li>
                                 <span class="text-red-700 text-xl">•</span>

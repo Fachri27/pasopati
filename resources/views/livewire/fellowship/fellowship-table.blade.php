@@ -110,7 +110,8 @@
                             {{auth()->user()->name}}
                         </td>
                         <td class="p-3">
-                            <a href="{{ route('fellowship.preview', ['slug' => $data->slug]) }}" target="_blank">
+                            <a href="{{ route('fellowship.preview', ['locale' => 'id', 'slug' => $data->slug]) }}"
+                                target="_blank">
                                 <button class="bg-gray-600 px-3 py-1 rounded text-white">Preview</button>
                             </a>
                             <a href="{{ route('fellowship.edit', $data->id) }}">

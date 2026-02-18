@@ -37,7 +37,7 @@
             <h2 class="text-gray-800 font-semibold tracking-tight text-sm uppercase mt-2 font-sans">
                 {{ $translation->sub_judul ?? '' }}
             </h2>
-            <a href="{{ route('fellowship.preview', $fellowship->slug) }}">
+            <a href="{{ route('fellowship.preview', ['locale' => app()->getLocale(), 'slug' => $fellowship->slug]) }}">
                 <h1 class="text-xl md:text-xl font-extrabold leading-tight mt-2 font-sans">
                     {{ $translation->title ?? '' }}
                 </h1>

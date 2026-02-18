@@ -8,38 +8,7 @@ use App\Livewire\{KategoriForm, KategoriTable};
 use App\Livewire\Pages\{PageForm, PageTable};
 use App\Livewire\Users\{UserForm, UserTable};
 
-// route to switch locale (sets session and redirects back)
-Route::get('/locale/{locale}', function ($locale) {
-    $supported = ['id', 'en'];
-    if (! in_array($locale, $supported)) {
-        abort(404);
-    }
-    session(['locale' => $locale]);
-
-    $previous = url()->previous() ?: '/';
-    $prevPath = parse_url($previous, PHP_URL_PATH) ?: '/';
-    $prevQuery = parse_url($previous, PHP_URL_QUERY);
-
-    $segments = explode('/', trim($prevPath, '/'));
-    if (! empty($segments) && in_array($segments[0], $supported)) {
-        array_shift($segments);
-    }
-
-    $newPath = '/' . implode('/', $segments);
-    if ($newPath === '/') {
-        $redirectUrl = '/';
-    } else {
-        $redirectUrl = $newPath;
-    }
-
-    if ($prevQuery) {
-        $redirectUrl .= '?' . $prevQuery;
-    }
-
-    return redirect($redirectUrl ?: '/');
-})->name('locale.switch');
-
-Route::middleware(['setlocale'])->group(function () {
+Route::middleware(['setlocale'])->prefix('{locale}')->where(['locale' => 'id|en'])->group(function () {
     // home (no locale in URL)
     Route::get('/', [PageController::class, 'indexUser'])->name('home');
 
@@ -68,9 +37,10 @@ Route::middleware(['setlocale'])->group(function () {
     Route::get('/cbi', function () {
         return view('front.cbi');
     })->name('cbi');
+
+    // public catch-all page preview (at end)
+    Route::get('/{page_type}/{slug}', [PageController::class, 'preview'])->name('show-page');
 });
-
-
 
 Route::get('/dashboard', function () {
     return view('pages.admin.dashboard-admin');
@@ -117,9 +87,6 @@ Route::group(['prefix' => 'laravel-filemanager', 'middleware' => ['web', 'auth']
 });
 
 Route::post('/upload-editor-image', [EditorController::class, 'uploadEditorImage']);
-
-// public catch-all page preview (moved to bottom so admin routes are not shadowed)
-Route::get('/{page_type}/{slug}', [PageController::class, 'preview'])->name('show-page');
 
 Route::fallback(function () {
     return redirect('/');
