@@ -55,13 +55,13 @@ Route::middleware(['auth', 'role:admin,editor'])->group(function () {
     Route::get('/admin/fellowship', FellowshipTable::class)->name('fellowship.index');
     Route::get('/admin/fellowship/create', FellowshipForm::class)->name('fellowship.create');
     Route::get('/admin/fellowship/{fellowshipId}/edit', FellowshipForm::class)->name('fellowship.edit');
-    Route::get('/admin/{slug}/preview-fellowship', [FellowshipController::class, 'preview'])->name('fellowship.preview.admin');
+    Route::get('/admin/{locale}/{slug}/preview-fellowship', [FellowshipController::class, 'preview'])->name('fellowship.preview.admin');
 
     // Pages
     Route::get('/pages', PageTable::class)->name('pages.index');
     Route::get('/pages/create', PageForm::class)->name('pages.create');
     Route::get('/pages/{pageId}/edit', PageForm::class)->name('pages.edit');
-    Route::get('/{page_type}/{slug}/preview', [PageController::class, 'preview'])->name('page.preview');
+    Route::get('{locale}/{page_type}/{slug}/preview', [PageController::class, 'preview'])->name('page.preview');
 
     // User
     Route::get('/user/{userId}/edit', UserForm::class)->name('user.edit');

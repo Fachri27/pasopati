@@ -67,9 +67,13 @@ class PageController extends Controller
         return view('front.home', compact('pages', 'mainNgopini', 'otherNgopini', 'search', 'fellowship', 'locale'));
     }
 
-    public function preview($locale, $page_type, $slug)
+    public function preview($locale = null, $page_type = null, $slug = null)
     {
-        $locale = app()->getLocale();
+        // Fallback jika $locale null (misal akses dari admin preview lama)
+        if (!$locale || !in_array($locale, ['id','en'])) {
+            $locale = app()->getLocale() ?? config('app.locale') ?? 'id';
+        }
+        app()->setLocale($locale);
         $page = Page::with('translations')
             ->where('page_type', $page_type)
             ->where('slug', $slug)

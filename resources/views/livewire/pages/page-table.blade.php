@@ -121,7 +121,7 @@
                 </td>
                 <td class="p-3">{{ auth()->user()->name }}</td>
                 <td class="p-3">
-                    <a href="{{ route('page.preview', ['page_type' => $data->page_type, 'slug' => $data->slug]) }}"
+                    <a href="{{ route('page.preview', ['locale' => app()->getLocale(), 'page_type' => $data->page_type, 'slug' => $data->slug]) }}"
                         target="_blank">
                         <button class="bg-gray-600 px-3 py-1 rounded text-white">Preview</button>
                     </a>

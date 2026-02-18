@@ -7,8 +7,13 @@ use Illuminate\Http\Request;
 
 class FellowshipController extends Controller
 {
-    public function Preview($locale, $slug) {
-        $locale = app()->getLocale();
+    public function Preview($locale = null, $slug = null) {
+        // Fallback jika $locale null (misal akses dari admin preview lama)
+        if (!$locale || !in_array($locale, ['id','en'])) {
+            $locale = app()->getLocale() ?? config('app.locale') ?? 'id';
+        }
+        // Set locale agar konsisten di view dan query
+        app()->setLocale($locale);
         $fellowship = Fellowship::with([
             'translations' => function ($q) use ($locale) {
                 $q->where('locale', $locale);

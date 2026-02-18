@@ -2,16 +2,11 @@
 
 namespace App\Livewire\Fellowship;
 
-use App\Models\Fellowship;
-use App\Models\FellowshipTranslation;
-use App\Models\Kategori;
-use App\Models\KategoriFellowship;
-use App\Models\KategoriTranslation;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use App\Models\{Fellowship, FellowshipTranslation, Kategori, KategoriFellowship, KategoriTranslation};
 use Intervention\Image\ImageManager;
-use Livewire\Component;
-use Livewire\WithFileUploads;
+use Livewire\{Component, WithFileUploads};
 
 class FellowshipForm extends Component
 {
@@ -44,8 +39,10 @@ class FellowshipForm extends Component
     public $end_date;
 
     public $image;
+    public $image2;
 
     public $old_image;
+    public $old_image2;
 
     public $userId;
 
@@ -102,6 +99,7 @@ class FellowshipForm extends Component
                 'sub_judul_en' => $enTranslation->sub_judul ?? '-',
                 'slug' => $this->fellowship->slug,
                 'image' => $this->fellowship->image,
+                'image2' => $this->fellowship->image2 ?? null,
                 'start_date' => $this->fellowship->start_date,
                 'end_date' => $this->fellowship->end_date,
                 'status' => $this->fellowship->status,
@@ -109,7 +107,9 @@ class FellowshipForm extends Component
                 'excerpt_en' => $enTranslation->excerpt ?? '',
             ]);
             $this->old_image = $this->fellowship->image;
+            $this->old_image2 = $this->fellowship->image2 ?? null;
             $this->image = null;
+            $this->image2 = null;
 
             foreach ($this->fellowship->kategoris as $kategori) {
                 $this->selectedCategories[] = $kategori->id;
@@ -151,6 +151,7 @@ class FellowshipForm extends Component
             'start_date' => 'required|date',
             'end_date' => 'nullable|date',
             'image' => 'nullable|image|mimes:jpg,jpeg,png|max:5048',
+            'image2' => 'nullable|image|mimes:jpg,jpeg,png|max:5048',
             'status' => 'required|in:draft,active,inactive',
         ]);
 
@@ -197,7 +198,7 @@ class FellowshipForm extends Component
             if (file_exists($fullPath)) {
                 $manager = ImageManager::gd()
                     ->read($fullPath)
-                    ->resize(1200, 630);
+                    ->resize(1600, 900);
                 $manager->save($metaDir.'/'.$filename);
 
                 $metaPath = 'fellowship/meta/'.$filename;
@@ -209,6 +210,24 @@ class FellowshipForm extends Component
             ]);
             $this->old_image = $path;
 
+        }
+
+        // Handle second image upload
+        if ($this->image2) {
+
+            // Hapus gambar lama image2
+            if ($this->old_image2 && Storage::disk('public')->exists($this->old_image2)) {
+                Storage::disk('public')->delete($this->old_image2);
+            }
+
+            // Simpan gambar baru image2
+            $filename2 = Str::slug($this->title_id).'-secondary-'.time().'.'.$this->image2->getClientOriginalExtension();
+            $path2 = $this->image2->storeAs('fellowship', $filename2, 'public');
+
+            $fellowship->update([
+                'image2' => $path2,
+            ]);
+            $this->old_image2 = $path2;
         }
 
         foreach (['id', 'en'] as $locale) {

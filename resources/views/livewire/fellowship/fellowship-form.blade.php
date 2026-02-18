@@ -93,7 +93,7 @@
 
                         {{-- Image --}}
                         <div>
-                            <label class="font-medium">Image</label>
+                            <label class="font-medium">Image (gambar untuk di content)</label>
                             <input type="file" wire:model="image" class="w-full border rounded-lg px-3 py-2 mt-1">
 
                             <div class="mt-3">
@@ -102,6 +102,22 @@
                                     class="w-20 h-20 rounded-lg object-cover border">
                                 @elseif (!empty($old_image))
                                 <img src="{{ asset('storage/'.$old_image) }}"
+                                    class="w-20 h-20 rounded-lg object-cover border">
+                                @endif
+                            </div>
+                        </div>
+
+                        {{-- Image 2 (secondary) --}}
+                        <div class="mt-4">
+                            <label class="font-medium">image card (gambar untuk di depan)</label>
+                            <input type="file" wire:model="image2" class="w-full border rounded-lg px-3 py-2 mt-1">
+
+                            <div class="mt-3">
+                                @if (is_object($image2) && $image2)
+                                <img src="{{ $image2->temporaryUrl() }}"
+                                    class="w-20 h-20 rounded-lg object-cover border">
+                                @elseif (!empty($old_image2))
+                                <img src="{{ asset('storage/'.$old_image2) }}"
                                     class="w-20 h-20 rounded-lg object-cover border">
                                 @endif
                             </div>

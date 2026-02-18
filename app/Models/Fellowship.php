@@ -13,6 +13,7 @@ class Fellowship extends Model
     protected $fillable = [
         'slug',
         'image',
+        'image2',
         'meta_image',
         'start_date',
         'end_date',
