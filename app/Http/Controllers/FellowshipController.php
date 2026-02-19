@@ -36,7 +36,7 @@ class FellowshipController extends Controller
         seo()->setLocale($locale)
             ->set('title', ['id' => $meta['title'], 'en' => $meta['title']])
             ->set('description', ['id' => $meta['description'], 'en' => $meta['description']])
-            ->set('image', $meta['image'])
+            ->set('image', ['id'=> $meta['image'], 'en'=> $meta['image']])
             ->set('type', $meta['type']);
 
         return view('front.page-fellowship', compact('fellowship', 'categories', 'locale'));

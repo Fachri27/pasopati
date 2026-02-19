@@ -10,46 +10,42 @@ trait HasSeoMeta
     {
         $translation = $this->translations->where('locale', $locale)->first();
 
-        // daftar kemungkinan nama field image
-        // $imageFields = ['featured_image', 'image'];
-
-        // $imagePath = null;
-
-        // // cari field pertama yang ada dan tidak null
-        // foreach ($imageFields as $field) {
-        //     if (! empty($this->{$field})) {
-        //         $imagePath = $this->{$field};
-        //         break;
-        //     }
-        // }
-
         return [
-            'title' => $translation->title ?? ($this->title ?? config('app.name')),
-            'description' => $translation->meta_description ?? Str::limit(strip_tags($translation->deskripsi ?? $translation->content ?? ''), 160),
-            // 'image' => isset($this->featured_image) ? asset('storage/' . $this->featured_image) : asset('img/image.png'),
-            'image' => $this->getSeoImage(),
+            'title' => $translation->title ?? config('app.name'),
+            'description' => $translation->meta_description 
+                ?? Str::limit(strip_tags($translation->deskripsi ?? $translation->content ?? ''), 160),
+            'image' => $this->getSeoImage($locale),
             'type' => 'article',
         ];
     }
 
 
-    protected function getSeoImage()
+    protected function getSeoImage(string $locale = 'id')
     {
-        if (empty($this->featured_image)) {
+        $translation = $this->translations->where('locale', $locale)->first();
+
+        $imagePath = 
+            $translation->image_cover ??
+            $translation->image ??
+            $this->featured_image ??
+            $this->image ??
+            null;
+
+        if (! $imagePath) {
             return asset('img/image.png');
         }
 
-        $filename = basename($this->featured_image);
+        $filename = basename($imagePath);
 
-        // cek meta image (1200x630)
+        // cek apakah ada versi meta 1200x630
         $metaPath = 'pages/meta/' . $filename;
 
         if (file_exists(storage_path('app/public/' . $metaPath))) {
             return asset('storage/' . $metaPath);
         }
 
-        // fallback ke original image
-        return asset('storage/' . $this->featured_image);
+        return asset('storage/' . $imagePath);
     }
+
 
 }

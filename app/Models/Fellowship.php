@@ -14,6 +14,8 @@ class Fellowship extends Model
         'slug',
         'image',
         'image2',
+        'image_id',
+        'image_en',
         'meta_image',
         'start_date',
         'end_date',

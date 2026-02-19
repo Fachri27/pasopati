@@ -54,8 +54,8 @@ Route::middleware(['auth', 'role:admin,editor'])->group(function () {
     // fellowship (admin)
     Route::get('/admin/fellowship', FellowshipTable::class)->name('fellowship.index');
     Route::get('/admin/fellowship/create', FellowshipForm::class)->name('fellowship.create');
-    Route::get('/admin/fellowship/{fellowshipId}/edit', FellowshipForm::class)->name('fellowship.edit');
-    Route::get('/admin/{locale}/{slug}/preview-fellowship', [FellowshipController::class, 'preview'])->name('fellowship.preview.admin');
+    Route::get('/admin/fellowship/edit/{fellowshipId}', FellowshipForm::class)->name('fellowship.edit');
+    Route::get('/admin/fellowship/preview/{locale}/{slug}', [FellowshipController::class, 'preview'])->name('fellowship.preview.admin');
 
     // Pages
     Route::get('/pages', PageTable::class)->name('pages.index');

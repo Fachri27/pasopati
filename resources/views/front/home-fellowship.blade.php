@@ -25,7 +25,7 @@
     <div class="md:flex gap-6 mb-10">
         <!-- Gambar -->
         <div class="bg-gray-200 md:w-[400px] w-full md:h-auto h-[200px] overflow-hidden flex-shrink-0">
-            <img src="{{ asset('storage/' . $fellowship->image2) }}" alt="Gambar 1"
+            <img src="{{ asset('storage/' . $translation->image) }}" alt="Gambar 1"
                 class="w-full h-full object-cover">
         </div>
 

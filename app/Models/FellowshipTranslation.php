@@ -12,6 +12,8 @@ class FellowshipTranslation extends Model
         'excerpt',
         'locale',
         'fellowship_id',
+        'image',
+        'image_cover',
     ];
 
     public function fellowship()
