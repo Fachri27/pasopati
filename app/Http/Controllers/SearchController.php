@@ -50,9 +50,7 @@ class SearchController extends Controller
                     ->whereHas('translations', function ($translationQuery) use ($locale, $query) {
                         $translationQuery->where('locale', $locale)
                             ->where(function ($q2) use ($query) {
-                                $q2->where('title', 'like', "%{$query}%")
-                                    ->orWhere('excerpt', 'like', "%{$query}%")
-                                    ->orWhere('content', 'like', "%{$query}%");
+                                $q2->where('title', 'like', "%{$query}%");
                             });
                     })
                     ->orderBy('published_at', 'desc')
@@ -74,9 +72,7 @@ class SearchController extends Controller
                     ->whereHas('translations', function ($translationQuery) use ($locale, $query) {
                         $translationQuery->where('locale', $locale)
                             ->where(function ($q2) use ($query) {
-                                $q2->where('title', 'like', "%{$query}%")
-                                    ->orWhere('sub_judul', 'like', "%{$query}%")
-                                    ->orWhere('excerpt', 'like', "%{$query}%");
+                                $q2->where('title', 'like', "%{$query}%");
                             });
                     })
                     ->orderBy('start_date', 'desc')
