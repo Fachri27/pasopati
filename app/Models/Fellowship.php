@@ -46,6 +46,13 @@ class Fellowship extends Model
         return $this->hasMany(FellowshipTranslation::class);
     }
 
+    public function translation($locale = null)
+    {
+        $locale = $locale ?? app()->getLocale();
+
+        return $this->translations->where('locale', $locale)->first();
+    }
+
     public function kategoris()
     {
         return $this->belongsToMany(

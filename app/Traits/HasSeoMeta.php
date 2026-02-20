@@ -25,7 +25,7 @@ trait HasSeoMeta
         $translation = $this->translations->where('locale', $locale)->first();
 
         $imagePath = 
-            $translation->image_cover ??
+            $translation->image ??
             $translation->image ??
             $this->featured_image ??
             $this->image ??

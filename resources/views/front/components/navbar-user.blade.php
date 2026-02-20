@@ -9,8 +9,8 @@
 
             {{-- Menu Hamburger --}}
             <div class="flex items-center space-x-3">
-                <form action="" method="get" class="md:flex hidden">
-                    <input type="text" value="{{ $search ?? '' }}" placeholder="Pencarian..." name="search">
+                <form action="{{ route('search', ['locale' => app()->getLocale()]) }}" method="get" class="md:flex hidden">
+                    <input type="text" id="search-input-desktop" value="{{ request('q') ?? request('search') ?? '' }}" placeholder="Pencarian..." name="q">
                     <div class="flex">
                         <button type="submit" class="bg-[#2B5343] p-3">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
@@ -64,8 +64,8 @@
                     </button>
                 </div>
                 <ul class="mt-6 space-y-3">
-                    <form action="" method="get" class="md:hidden flex w-full">
-                        <input type="text" value="{{ $search ?? '' }}" placeholder="Pencarian..." name="search">
+                    <form action="{{ route('search', ['locale' => app()->getLocale()]) }}" method="get" class="md:hidden flex w-full">
+                        <input type="text" id="search-input-mobile" value="{{ request('q') ?? request('search') ?? '' }}" placeholder="Pencarian..." name="q">
                         <div class="flex">
                             <button type="submit" class="bg-[#2B5343] p-3">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
@@ -200,3 +200,41 @@
         </div>
     </div>
 </nav>
+
+<script>
+    // Clear search input ketika kembali dari halaman search
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInputDesktop = document.getElementById('search-input-desktop');
+        const searchInputMobile = document.getElementById('search-input-mobile');
+        
+        // Function untuk clear input jika tidak di halaman search
+        function clearSearchInput() {
+            const isSearchPage = window.location.pathname.includes('/search');
+            
+            // Jika tidak di halaman search, clear input
+            if (!isSearchPage) {
+                if (searchInputDesktop) {
+                    searchInputDesktop.value = '';
+                }
+                if (searchInputMobile) {
+                    searchInputMobile.value = '';
+                }
+            }
+        }
+        
+        // Clear saat halaman dimuat (untuk handle back button)
+        clearSearchInput();
+        
+        // Handle browser back/forward button
+        window.addEventListener('popstate', function() {
+            setTimeout(clearSearchInput, 100);
+        });
+        
+        // Handle pageshow event (untuk back button dari cache)
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted) {
+                setTimeout(clearSearchInput, 100);
+            }
+        });
+    });
+</script>

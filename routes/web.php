@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\{EditorController, FellowshipController, PageController};
+use App\Http\Controllers\{EditorController, FellowshipController, PageController, SearchController};
 use App\Livewire\Auth\LoginForm;
 use App\Livewire\Fellowship\{FellowshipForm, FellowshipTable};
 use App\Livewire\{KategoriForm, KategoriTable};
@@ -37,6 +37,9 @@ Route::middleware(['setlocale'])->prefix('{locale}')->where(['locale' => 'id|en'
     Route::get('/cbi', function () {
         return view('front.cbi');
     })->name('cbi');
+
+    // Search route - harus sebelum catch-all route
+    Route::get('/search', [SearchController::class, 'search'])->name('search');
 
     // public catch-all page preview (at end)
     Route::get('/{page_type}/{slug}', [PageController::class, 'preview'])->name('show-page');
