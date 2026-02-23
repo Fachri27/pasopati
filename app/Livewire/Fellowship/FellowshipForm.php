@@ -168,6 +168,7 @@ class FellowshipForm extends Component
                 'start_date' => $this->start_date,
                 'end_date' => $this->end_date,
                 'status' => $this->status,
+                'slug' => Str::slug($this->title_id),
             ]);
         } else {
             $fellowship = Fellowship::create([

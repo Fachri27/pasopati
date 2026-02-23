@@ -27,7 +27,7 @@
             <div class="grid grid-cols-12 gap-6">
 
                 {{-- =====================================================
-                |  LEFT COLUMN
+                | LEFT COLUMN
                 ===================================================== --}}
                 <div class="col-span-12 lg:col-span-4">
 
@@ -45,13 +45,23 @@
 
 
                         {{-- ================= TITLE ID ================= --}}
-                        <div x-show="lang === 'id'">
-                            <label class="font-medium">Title (ID)</label>
+                        <div x-show="lang === 'id'" x-data="{
+                                title: @js(old('title_id', $title_id ?? '')),
+                                slug: @js(old('slugId', $slugId ?? '')),
+                                makeSlug(text) {
+                                    return text.toLowerCase()
+                                        .replace(/[^a-z0-9]+/g, '-')
+                                        .replace(/^-+|-+$/g, '');
+                                }
+                             }" x-init="if(title && !slug){ slug = makeSlug(title) }">
 
-                            <input
-                                type="text"
-                                wire:model="title_id"
+                            <label class="font-medium">Title (ID)</label>
+                            <input type="text" wire:model="title_id" x-model="title" @input="slug = makeSlug(title)"
                                 class="w-full border rounded-lg px-3 py-2 mt-1">
+
+                            <label class="text-sm mt-2 block">Slug</label>
+                            <input type="text" x-model="slug" readonly
+                                class="w-full bg-gray-100 border rounded-lg px-3 py-2">
                         </div>
 
 
@@ -59,10 +69,7 @@
                         <div x-show="lang === 'en'">
                             <label class="font-medium">Title (EN)</label>
 
-                            <input
-                                type="text"
-                                wire:model="title_en"
-                                class="w-full border rounded-lg px-3 py-2 mt-1">
+                            <input type="text" wire:model="title_en" class="w-full border rounded-lg px-3 py-2 mt-1">
                         </div>
 
 
@@ -108,7 +115,7 @@
 
 
                         {{-- =====================================================
-                        |  IMAGES (PER LOCALE)
+                        | IMAGES (PER LOCALE)
                         ===================================================== --}}
                         <div class="border-t pt-4 space-y-5">
 
@@ -123,16 +130,16 @@
                                     <label class="font-medium">Image (Indonesia)</label>
 
                                     <input type="file" wire:model="image_id"
-                                           class="w-full border rounded-lg px-3 py-2 mt-1">
+                                        class="w-full border rounded-lg px-3 py-2 mt-1">
 
                                     <div class="mt-3">
                                         @if ($image_id)
-                                            <img src="{{ $image_id->temporaryUrl() }}"
-                                                 class="w-24 h-24 object-cover rounded-lg border">
+                                        <img src="{{ $image_id->temporaryUrl() }}"
+                                            class="w-24 h-24 object-cover rounded-lg border">
 
                                         @elseif ($old_image_id)
-                                            <img src="{{ asset('storage/'.$old_image_id) }}"
-                                                 class="w-24 h-24 object-cover rounded-lg border">
+                                        <img src="{{ asset('storage/'.$old_image_id) }}"
+                                            class="w-24 h-24 object-cover rounded-lg border">
                                         @endif
                                     </div>
                                 </div>
@@ -143,16 +150,16 @@
                                     <label class="font-medium">Image Cover (Indonesia)</label>
 
                                     <input type="file" wire:model="image_cover_id"
-                                           class="w-full border rounded-lg px-3 py-2 mt-1">
+                                        class="w-full border rounded-lg px-3 py-2 mt-1">
 
                                     <div class="mt-3">
                                         @if ($image_cover_id)
-                                            <img src="{{ $image_cover_id->temporaryUrl() }}"
-                                                 class="w-24 h-24 object-cover rounded-lg border">
+                                        <img src="{{ $image_cover_id->temporaryUrl() }}"
+                                            class="w-24 h-24 object-cover rounded-lg border">
 
                                         @elseif ($old_image_cover_id)
-                                            <img src="{{ asset('storage/'.$old_image_cover_id) }}"
-                                                 class="w-24 h-24 object-cover rounded-lg border">
+                                        <img src="{{ asset('storage/'.$old_image_cover_id) }}"
+                                            class="w-24 h-24 object-cover rounded-lg border">
                                         @endif
                                     </div>
                                 </div>
@@ -169,16 +176,16 @@
                                     <label class="font-medium">Image (English)</label>
 
                                     <input type="file" wire:model="image_en"
-                                           class="w-full border rounded-lg px-3 py-2 mt-1">
+                                        class="w-full border rounded-lg px-3 py-2 mt-1">
 
                                     <div class="mt-3">
                                         @if ($image_en)
-                                            <img src="{{ $image_en->temporaryUrl() }}"
-                                                 class="w-24 h-24 object-cover rounded-lg border">
+                                        <img src="{{ $image_en->temporaryUrl() }}"
+                                            class="w-24 h-24 object-cover rounded-lg border">
 
                                         @elseif ($old_image_en)
-                                            <img src="{{ asset('storage/'.$old_image_en) }}"
-                                                 class="w-24 h-24 object-cover rounded-lg border">
+                                        <img src="{{ asset('storage/'.$old_image_en) }}"
+                                            class="w-24 h-24 object-cover rounded-lg border">
                                         @endif
                                     </div>
                                 </div>
@@ -189,16 +196,16 @@
                                     <label class="font-medium">Image Cover (English)</label>
 
                                     <input type="file" wire:model="image_cover_en"
-                                           class="w-full border rounded-lg px-3 py-2 mt-1">
+                                        class="w-full border rounded-lg px-3 py-2 mt-1">
 
                                     <div class="mt-3">
                                         @if ($image_cover_en)
-                                            <img src="{{ $image_cover_en->temporaryUrl() }}"
-                                                 class="w-24 h-24 object-cover rounded-lg border">
+                                        <img src="{{ $image_cover_en->temporaryUrl() }}"
+                                            class="w-24 h-24 object-cover rounded-lg border">
 
                                         @elseif ($old_image_cover_en)
-                                            <img src="{{ asset('storage/'.$old_image_cover_en) }}"
-                                                 class="w-24 h-24 object-cover rounded-lg border">
+                                        <img src="{{ asset('storage/'.$old_image_cover_en) }}"
+                                            class="w-24 h-24 object-cover rounded-lg border">
                                         @endif
                                     </div>
                                 </div>
@@ -213,7 +220,7 @@
 
 
                 {{-- =====================================================
-                |  RIGHT COLUMN
+                | RIGHT COLUMN
                 ===================================================== --}}
                 <div class="col-span-12 lg:col-span-8 space-y-6">
 
@@ -245,9 +252,7 @@
                 {{-- ================= SAVE BUTTON ================= --}}
                 <div class="col-span-12 sticky bottom-0 bg-white border-t p-4 flex justify-end">
 
-                    <button type="submit"
-                            wire:loading.attr="disabled"
-                            class="bg-blue-600 hover:bg-blue-700 disabled:opacity-60
+                    <button type="submit" wire:loading.attr="disabled" class="bg-blue-600 hover:bg-blue-700 disabled:opacity-60
                                    text-white px-6 py-2 rounded-lg font-medium">
 
                         {{ isset($fellowship) ? '💾 Update' : '🚀 Create' }}
