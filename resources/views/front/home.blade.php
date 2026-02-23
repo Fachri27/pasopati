@@ -9,7 +9,8 @@
     <div class="flex space-x-3 mt-6 px-3">
         <a
             href="{{ route('fellowship.preview', ['locale' => app()->getLocale(), 'slug' => $fellowship->slug ?? '#']) }}">
-            <img src="{{ asset('img/ban-1.png') }}" alt="" class="w-[350px]">
+            <img src="{{ $fellowship->image ? asset('storage/' . $fellowship->image) : asset('img/ban-1.png') }}" alt=""
+                class="w-[350px]">
         </a>
         <a href="{{ route('fellowship-user', ['locale' => app()->getLocale()]) }}">
             <img src="{{ asset('img/ban-2.png') }}" alt="" class="w-[350px]">

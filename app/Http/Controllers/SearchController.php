@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\{Page, Fellowship};
 use Illuminate\Pagination\LengthAwarePaginator;
+use App\Models\{Fellowship, Page};
 
 class SearchController extends Controller
 {
@@ -51,6 +51,8 @@ class SearchController extends Controller
                         $translationQuery->where('locale', $locale)
                             ->where(function ($q2) use ($query) {
                                 $q2->where('title', 'like', "%{$query}%");
+                                $q2->orWhere('excerpt', 'like', "%{$query}%");
+                                $q2->orWhere('content', 'like', "%{$query}%");
                             });
                     })
                     ->orderBy('published_at', 'desc')

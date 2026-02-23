@@ -48,7 +48,7 @@
             <p class="uppercase font-semibold tracking-wide">Follow :</p>
             <div class="flex gap-4">
                 <!-- Twitter/X -->
-                <a href="#" aria-label="Twitter" class="hover:opacity-75 transition">
+                <a href="https://x.com/AURIGA_ID" aria-label="Twitter" class="hover:opacity-75 transition" target="_blank">
                     <svg xmlns="http://www.w3.org/2000/svg" height="22" width="22" viewBox="0 0 640 640" fill="white">
                         <path
                             d="M160 96C124.7 96 96 124.7 96 160V480C96 515.3 124.7 544 160 544H480C515.3 544 544 515.3 544 480V160C544 124.7 515.3 96 480 96H160zM447.3 263.3C447.3 350 381.3 449.9 260.7 449.9C223.5 449.9 189 439.1 160 420.5C165.3 421.1 170.4 421.3 175.8 421.3C206.5 421.3 234.7 410.9 257.2 393.3C228.4 392.7 204.2 373.8 195.9 347.8C206 349.3 215.1 349.3 225.5 346.6C195.5 340.5 173 314.1 173 282.2L173 281.4C181.7 286.3 191.9 289.3 202.6 289.7C193.6 283.7 186.2 275.6 181.1 266.1C176 256.6 173.3 245.9 173.4 235.1C173.4 222.9 176.6 211.7 182.3 202C214.6 241.8 263.1 267.8 317.5 270.6C308.2 226.1 341.5 190 381.5 190C400.4 190 417.4 197.9 429.4 210.7C444.2 207.9 458.4 202.4 471 194.9C466.1 210.1 455.8 222.9 442.2 231C455.4 229.6 468.2 225.9 480 220.8C471.1 233.9 459.9 245.5 447.1 254.8C447.3 257.6 447.3 260.5 447.3 263.3z" />
@@ -56,7 +56,7 @@
                 </a>
 
                 <!-- Facebook -->
-                <a href="#" aria-label="Facebook" class="hover:opacity-75 transition">
+                <a href="https://www.facebook.com/nusantaraauriga/" aria-label="Facebook" class="hover:opacity-75 transition" target="_blank">
                     <svg xmlns="http://www.w3.org/2000/svg" height="22" width="22" viewBox="0 0 640 640" fill="white">
                         <path
                             d="M160 96C124.7 96 96 124.7 96 160V480C96 515.3 124.7 544 160 544H258.2V398.2H205.4V320H258.2V286.3C258.2 199.2 297.6 158.8 383.2 158.8C399.4 158.8 427.4 162 438.9 165.2V236C432.9 235.4 422.4 235 409.3 235C367.3 235 351.1 250.9 351.1 292.2V320H434.7L420.3 398.2H351V544H480C515.3 544 544 515.3 544 480V160C544 124.7 515.3 96 480 96H160z" />
@@ -64,7 +64,7 @@
                 </a>
 
                 <!-- Instagram -->
-                <a href="">
+                <a href="https://www.instagram.com/auriga_id/" aria-label="Instagram" class="hover:opacity-75 transition" target="_blank">
                     <svg xmlns="http://www.w3.org/2000/svg" height="25px" width="25px" viewBox="0 0 640 640">
                         <!--!Font Awesome Free v7.0.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.-->
                         <path fill="#ffffff"

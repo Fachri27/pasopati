@@ -9,8 +9,10 @@
 
             {{-- Menu Hamburger --}}
             <div class="flex items-center space-x-3">
-                <form action="{{ route('search', ['locale' => app()->getLocale()]) }}" method="get" class="md:flex hidden">
-                    <input type="text" id="search-input-desktop" value="{{ request('q') ?? request('search') ?? '' }}" placeholder="Pencarian..." name="q">
+                <form action="{{ route('search', ['locale' => app()->getLocale()]) }}" method="get"
+                    class="md:flex hidden">
+                    <input type="text" id="search-input-desktop" value="{{ request('q') ?? request('search') ?? '' }}"
+                        placeholder="Pencarian..." name="q">
                     <div class="flex">
                         <button type="submit" class="bg-[#2B5343] p-3">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
@@ -33,6 +35,9 @@
                     <span>|</span>
                     <a href="{{ $switchUrl }}"
                         class="hover:text-green-900 {{ app()->getLocale() === 'id' ? 'font-bold text-red-600' : '' }}">ID</a>
+
+                    <a href="https://forum.pasopati.id/" class="text-black hover:text-gray-600 font-bold ml-4" target="_blank">FORUM</a>
+
                 </div>
                 <button @click="open = !open" class="bg-[#2B5343] py-4 px-3">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24"
@@ -64,8 +69,10 @@
                     </button>
                 </div>
                 <ul class="mt-6 space-y-3">
-                    <form action="{{ route('search', ['locale' => app()->getLocale()]) }}" method="get" class="md:hidden flex w-full">
-                        <input type="text" id="search-input-mobile" value="{{ request('q') ?? request('search') ?? '' }}" placeholder="Pencarian..." name="q">
+                    <form action="{{ route('search', ['locale' => app()->getLocale()]) }}" method="get"
+                        class="md:hidden flex w-full">
+                        <input type="text" id="search-input-mobile"
+                            value="{{ request('q') ?? request('search') ?? '' }}" placeholder="Pencarian..." name="q">
                         <div class="flex">
                             <button type="submit" class="bg-[#2B5343] p-3">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
@@ -76,6 +83,10 @@
                             </button>
                         </div>
                     </form>
+                    <li>
+                        <a href="https://forum.pasopati.id/"
+                            class="text-black hover:text-gray-600 font-bold uppercase">FORUM</a>
+                    </li>
                     <li>
                         <a href="" class="block text-gray-800 font-semibold uppercase">Home</a>
                     </li>
