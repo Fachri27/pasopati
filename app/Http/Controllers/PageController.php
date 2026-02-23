@@ -31,6 +31,8 @@ class PageController extends Controller
         $fellowship = Fellowship::with(['translations' => function ($q) use ($locale) {
             $q->where('locale', $locale);
         }])
+            ->orderByDesc('start_date')
+            ->orderByDesc('created_at')
             ->first();
 
         // Ambil semua page dengan type ngopini

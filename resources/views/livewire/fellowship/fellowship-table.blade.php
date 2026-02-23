@@ -84,7 +84,7 @@
                         <td class="p-3"><span class="text-sm leading-snug text-gray-800 block max-w-xs">{{
                                 $idTranslation->title }}</span></td>
                         <td class="p-3">
-                            <img src="{{ asset('storage/' . $data->image) }}" alt="{{ $idTranslation->title }}"
+                            <img src="{{ asset('storage/' . $idTranslation->image) }}" alt="{{ $idTranslation->title }}"
                                 class="w-30 h-15">
                         </td>
                         <td class="p-3">{{ $data->start_date }}</td>
