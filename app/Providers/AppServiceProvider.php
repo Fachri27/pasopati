@@ -26,6 +26,7 @@ class AppServiceProvider extends ServiceProvider
         view()->composer('layouts.app', function ($view) {
             $yearPosts = Fellowship::with('translations')
                 ->selectRaw('YEAR(start_date) as year, id, slug')
+                ->where('status', 'active')
                 ->orderBy('year', 'desc')
                 ->get()
                 ->groupBy('year');

@@ -31,6 +31,7 @@ class PageController extends Controller
         $fellowship = Fellowship::with(['translations' => function ($q) use ($locale) {
             $q->where('locale', $locale);
         }])
+            ->where('status', 'active')
             ->orderByDesc('start_date')
             ->orderByDesc('created_at')
             ->first();

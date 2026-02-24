@@ -7,11 +7,17 @@
     {{-- <p>Current Locale: {{ app()->getLocale() }}</p> --}}
     {{-- <p>{{ __('messages.welcome') }}</p> --}}
     <div class="flex space-x-3 mt-6 px-3">
+        @if($fellowship)
         <a
             href="{{ route('fellowship.preview', ['locale' => app()->getLocale(), 'slug' => $fellowship->slug ?? '#']) }}">
-            <img src="{{ $fellowship->translations->first()?->image_cover ? asset('storage/' . $fellowship->translations->first()->image_cover) : asset('img/ban-1.png') }}" alt=""
-                class="w-[350px]">
+            <img src="{{ $fellowship->translations->first()?->image_cover ? asset('storage/' . $fellowship->translations->first()->image_cover) : asset('img/ban-1.png') }}"
+                alt="" class="w-[350px]">
         </a>
+        @else
+        <a href="#">
+            <img src="{{ asset('img/ban-1.png') }}" alt="" class="w-[350px]">
+        </a>
+        @endif
         <a href="{{ route('fellowship-user', ['locale' => app()->getLocale()]) }}">
             <img src="{{ asset('img/ban-2.png') }}" alt="" class="w-[350px]">
         </a>
