@@ -14,7 +14,7 @@ class PageSeeder extends Seeder
      */
     public function run(): void
     {
-        for ($i = 1; $i <= 10; $i++) {
+        for ($i = 1; $i <= 20; $i++) {
 
             // Insert ke tabel pages
             $pageId = DB::table('pages')->insertGetId([

@@ -21,5 +21,12 @@ class DatabaseSeeder extends Seeder
             'name' => 'Test User',
             'email' => 'test@example.com',
         ]);
+
+        $this->call([
+            ExposePageSeeder::class,
+            NgopiniPageSeeder::class,
+            FellowshipSeeder::class,
+            PageSeeder::class,
+        ]);
     }
 }

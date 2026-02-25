@@ -118,6 +118,7 @@
     {{-- Footer --}}
     @include('front.components.footer')
     @livewireScripts
+    @stack('scripts')
 </body>
 <script>
 document.addEventListener('click', function (e) {

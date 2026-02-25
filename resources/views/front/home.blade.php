@@ -24,14 +24,14 @@
     </div>
 </section>
 
-<!-- Card List -->
+<!-- Card List (atas, tanpa loading) -->
 @include('front.components.card-list', ['limit' => 6, 'offset' => 0])
 
 <!-- Ngopini-Hutan -->
 @include('front.landing-ngopini')
 
-<!-- Card List -->
-@include('front.components.card-list', ['limit' => null, 'offset' => 6])
+<!-- Card List (bawah, pakai loading/infinite scroll) -->
+@include('front.components.card-list', ['limit' => 6, 'offset' => 6, 'infinite' => true])
 
 @include('front.components.floating')
 

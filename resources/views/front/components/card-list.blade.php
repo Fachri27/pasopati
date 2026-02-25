@@ -1,67 +1,85 @@
 @php
-$limit = $limit ?? null;
-$offset = $offset ?? 0;
+    $limit = $limit ?? null;
+    $offset = $offset ?? 0;
+    $infinite = $infinite ?? false;
+    $allPages = $pages ?? collect();
 
-$pages = $limit
-? $pages->skip($offset)->take($limit)
-: $pages->skip($offset);
+    if (!is_null($limit)) {
+        $displayPages = $allPages->slice($offset, $limit);
+    } else {
+        $displayPages = $allPages->slice($offset);
+    }
+
+    // Offset global untuk JS (dipakai hanya jika infinite scroll aktif)
+    $initialOffset = $offset + $displayPages->count();
 @endphp
 
-<div
+<div @if($infinite) id="card-list" @endif
     class="max-w-screen-xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-y-20 px-5">
+    @include('front.components.card-items', ['pages' => $displayPages])
+</div>
 
-    @foreach ($pages as $page)
-
-    <!-- WRAPPER ITEM -->
-    <div class="flex flex-col gap-2">
-
-        <!-- TANGGAL (DI LUAR CARD) -->
-        <time class="text-xs text-gray-500">
-            {{ \Carbon\Carbon::parse($page->published_at)->translatedFormat('d F Y') }}
-        </time>
-
-        <!-- CARD -->
-        <article class="group bg-[#e3061c] shadow-sm hover:shadow-xl flex flex-col min-h-[28rem]">
-
-            <!-- GAMBAR -->
-            <div class="overflow-hidden aspect-[16/9]">
-                @if ($page->featured_image)
-                <img src="{{ asset('storage/'. $page->featured_image) }}"
-                    alt="{{ $page->translations->first()->title ?? '' }}"
-                    class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105">
-                @else
-                <div class="h-full w-full bg-gray-200 flex items-center justify-center text-gray-500">
-                    No Image
-                </div>
-                @endif
-            </div>
-
-            <!-- KONTEN -->
-            <div class="p-4 flex flex-col flex-grow text-white">
-
-                <a
-                    href="{{ route('show-page', ['locale' => app()->getLocale(), 'page_type' => $page->page_type, 'slug' => $page->slug]) }}">
-                    <h3 class="text-xl font-semibold mb-2 leading-snug font-sans">
-                        {{ $page->translations->first()->title ?? '' }}
-                    </h3>
-                </a>
-
-                <div class="
-                        prose prose-sm text-white max-w-none opacity-90
-                        prose-p:leading-snug
-                        prose-p:my-1
-                        font-open
-                        flex-grow
-                    ">
-                    {!! $page->translations->first()->excerpt ?? '' !!}
-                </div>
-
-            </div>
-
-        </article>
-
+@if($infinite)
+    <div id="loading-spinner" class="w-full flex justify-center py-6 hidden">
+        <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
     </div>
 
-    @endforeach
+    @push('scripts')
+        <script>
+            let loading = false;
+            let offset = {{ $initialOffset }};
+            const limit = 6;
+            let finished = false;
 
-</div>
+            const loadMoreUrl = "{{ route('articles.load-more', ['locale' => app()->getLocale()]) }}";
+
+            window.addEventListener('scroll', function () {
+                const spinner = document.getElementById('loading-spinner');
+                const cardList = document.getElementById('card-list');
+
+                if (!spinner || !cardList) return;
+                if (finished || loading) return;
+
+                if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 200) {
+                    loading = true;
+                    spinner.classList.remove('hidden');
+
+                    const url = `${loadMoreUrl}?offset=${offset}&limit=${limit}`;
+
+                    // Tambah sedikit delay supaya animasi loading terlihat
+                    setTimeout(() => {
+                        fetch(url)
+                            .then(res => res.text())
+                            .then(html => {
+                                const trimmed = html.trim();
+
+                                if (trimmed !== '') {
+                                    cardList.insertAdjacentHTML('beforeend', trimmed);
+
+                                    const tempDiv = document.createElement('div');
+                                    tempDiv.innerHTML = trimmed;
+                                    const newCards = tempDiv.querySelectorAll('.flex.flex-col.gap-2');
+
+                                    offset += newCards.length;
+
+                                    if (newCards.length < limit) {
+                                        finished = true;
+                                        spinner.classList.add('hidden');
+                                    }
+                                } else {
+                                    finished = true;
+                                    spinner.classList.add('hidden');
+                                }
+
+                                loading = false;
+                            })
+                            .catch(() => {
+                                spinner.classList.add('hidden');
+                                loading = false;
+                            });
+                    }, 700); // 0.7 detik, bisa diubah sesuai selera
+                }
+            });
+        </script>
+    @endpush
+@endif

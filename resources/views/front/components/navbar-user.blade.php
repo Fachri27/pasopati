@@ -8,13 +8,13 @@
             </a>
 
             {{-- Menu Hamburger --}}
-            <div class="flex items-center space-x-3">
+            <div class="flex items-center space-x-3 ml-5 md:ml-0">
                 <form action="{{ route('search', ['locale' => app()->getLocale()]) }}" method="get"
                     class="md:flex hidden">
                     <input type="text" id="search-input-desktop" value="{{ request('q') ?? request('search') ?? '' }}"
-                        placeholder="Pencarian..." name="q">
+                        placeholder="Pencarian..." name="q" class="outline-none focus:outline-none focus:ring-0 border-none">
                     <div class="flex">
-                        <button type="submit" class="bg-[#2B5343] p-3">
+                        <button type="submit" class="bg-[#2B5343] p-3 outline-none">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                                 stroke="currentColor" class="size-4 text-white">
                                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -72,7 +72,7 @@
                     <form action="{{ route('search', ['locale' => app()->getLocale()]) }}" method="get"
                         class="md:hidden flex w-full">
                         <input type="text" id="search-input-mobile"
-                            value="{{ request('q') ?? request('search') ?? '' }}" placeholder="Pencarian..." name="q">
+                            value="{{ request('q') ?? request('search') ?? '' }}" placeholder="Pencarian..." name="q" class="outline-none focus:outline-none focus:ring-0 border-none">
                         <div class="flex">
                             <button type="submit" class="bg-[#2B5343] p-3">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"

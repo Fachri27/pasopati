@@ -12,6 +12,9 @@ Route::middleware(['setlocale'])->prefix('{locale}')->where(['locale' => 'id|en'
     // home (no locale in URL)
     Route::get('/', [PageController::class, 'indexUser'])->name('home');
 
+    // load more articles (infinite scroll)
+    Route::get('/load-more-articles', [PageController::class, 'loadMoreArticles'])->name('articles.load-more');
+
     Route::get('/artikel/{expose_type}', [PageController::class, 'artikel'])->name('artikel.expose');
 
     Route::get('/fellowship', [FellowshipController::class, 'indexUser'])->name('fellowship-user');

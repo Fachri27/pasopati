@@ -7,13 +7,38 @@ use App\Models\{Fellowship, Page};
 
 class PageController extends Controller
 {
+    public function loadMoreArticles(Request $request)
+    {
+        $offset = (int) $request->input('offset', 0);
+        $limit = (int) $request->input('limit', 6);
+        $locale = app()->getLocale();
+
+        $pages = Page::with(['translations' => function ($q) use ($locale) {
+                $q->where('locale', $locale);
+            }])
+            ->where('page_type', 'expose')
+            ->where('status', 'active')
+            ->orderBy('published_at', 'desc')
+            ->skip($offset)
+            ->take($limit)
+            ->get();
+
+        if ($pages->isEmpty()) {
+            return response('');
+        }
+
+        return view('front.components.card-items', [
+            'pages' => $pages,
+        ])->render();
+    }
+
     public function indexUser(Request $request, $locale)
     {
         $locale = app()->getLocale();
         $search = $request->input('search');
         $pages = Page::with(['translations' => function ($q) use ($locale) {
-            $q->where('locale', $locale);
-        }])
+                $q->where('locale', $locale);
+            }])
             ->when($search, function ($query, $search) use ($locale) {
                 $query->whereHas('translations', function ($q) use ($locale, $search) {
                     $q->where('locale', $locale)
@@ -26,6 +51,7 @@ class PageController extends Controller
             ->where('page_type', 'expose')
             ->where('status', 'active')
             ->orderBy('published_at', 'desc')
+            ->take(12) // batasi awal supaya halaman pertama tidak berat
             ->get();
 
         $fellowship = Fellowship::with(['translations' => function ($q) use ($locale) {
