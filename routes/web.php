@@ -92,7 +92,7 @@ Route::group(['prefix' => 'laravel-filemanager', 'middleware' => ['web', 'auth']
     \UniSharp\LaravelFilemanager\Lfm::routes();
 });
 
-Route::post('/upload-editor-image', [EditorController::class, 'uploadEditorImage']);
+// Route::post('/upload-editor-image', [EditorController::class, 'uploadEditorImage']);
 
 Route::fallback(function () {
     return redirect('/');

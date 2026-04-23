@@ -1,4 +1,6 @@
 <div x-show="lang === 'en'" x-data="{
+    convert_urls: false,      // ← INI YANG PALING PENTING
+    relative_urls: false,
                     content_en: @entangle('content_en'),
                     initEditor() {
                         let self = this;
