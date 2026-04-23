@@ -1,11 +1,11 @@
 <div x-show="lang === 'id'" x-data="{
-    convert_urls: false,      // ← INI YANG PALING PENTING
-    relative_urls: false,
                     content_id: @entangle('content_id'),
                     initEditor() {
                         let self = this;
                         if (tinymce.get('editor_id')) tinymce.get('editor_id').remove();
                         tinymce.init({
+                            convert_urls: false,      // ← INI YANG PALING PENTING
+                            relative_urls: false,
                             target: this.$refs.editor_id,
                             plugins: 'advlist anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount code fullscreen insertdatetime help preview',
                             toolbar: 'undo redo | styles | addImage | addVideo | addBorderMerah | addSlider | bold italic underline strikethrough forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image media table | code removeformat | fullscreen preview',
