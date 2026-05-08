@@ -83,7 +83,7 @@ $translation = $page->translations->where('locale', $locale)->first();
       px-5
       poppins-regular
 
-      md:text-md sm:text-base text-sm
+      md:text-md sm:text-base text-[16px]
       text-left
 
       prose-p:leading-relaxed md:prose-p:leading-relaxed
