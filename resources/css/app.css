@@ -170,3 +170,7 @@ figure.media-caption figcaption {
 .tmce-controls button:hover {
     background: #ddd;
 }
+
+.prose p {
+    line-height: 1.6;
+}

@@ -86,7 +86,7 @@ $translation = $page->translations->where('locale', $locale)->first();
       md:text-md sm:text-base text-[16px]
       text-left
 
-      prose-p:leading-relaxed md:prose-p:leading-relaxed
+      {{-- prose-p:leading-[1.6] md:prose-p:leading-[1.6] --}}
       prose-p:tracking-[0.020em]
       prose-p:my-[1em]
 
@@ -95,6 +95,7 @@ $translation = $page->translations->where('locale', $locale)->first();
 
       prose-h3:text-[21px]
       prose-h3:mt-6 prose-h3:mb-3 prose-h3:font-semibold
+      
     ">
     {!! $translation->content ?? '' !!}
 </div>
