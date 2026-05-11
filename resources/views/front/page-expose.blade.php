@@ -46,7 +46,7 @@ $translation = $page->translations->where('locale', $locale)->first();
 
         @if ($page->featured_image)
         <img src="{{ asset('storage/' . $page->featured_image) }}" alt="{{ $page->slug }}"
-            class="w-full max-h-[400px] object-cover shadow mx-auto mt-5">
+            class="w-full max-h-[600px] object-cover shadow mx-auto mt-5">
         @endif
     </div>
     @endif
