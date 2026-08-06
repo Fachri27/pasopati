@@ -12,12 +12,19 @@ use Illuminate\Database\Eloquent\Model;
  * Menyimpan title/excerpt/image untuk id + en sekaligus. toCardArray($locale)
  * mengembalikan shape {slug, category, year, image, title, excerpt} sesuai
  * locale (fallback ke 'id') — shape yang sama yang dipakai view/livewire.
+ *
+ * `uuid`: identifier stabil & portabel antar environment (id auto-increment beda
+ * dev vs produksi; slug bisa berubah saat title berubah). UUID DIMILIKI & DIKIRIM
+ * caller (web lain) — BUKAN di-auto-generate server. Jadi uuid jadi key upsert
+ * di POST /cards dan address di PUT /cards/{uuid}. Masuk $fillable karena
+ * memang berasal dari input caller.
  */
 class DeforestoryCard extends Model
 {
     protected $table = 'deforestory_cards';
 
     protected $fillable = [
+        'uuid',
         'slug',
         'category',
         'year',

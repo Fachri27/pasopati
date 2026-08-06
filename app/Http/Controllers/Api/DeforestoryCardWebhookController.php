@@ -8,19 +8,27 @@ use App\Models\DeforestoryCard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 /**
  * Terima push daftar kartu kasus Deforestory dari web lain (inbound webhook).
  *
- * Web lain POST card ke CMS. Tiap POST **menambah / memperbarui** card by slug
- * (upsert) — gak menghapus card lain yang sudah ada. Jadi web lain tinggal
- * kirim card baru/berubah; card yang sudah tersimpan tetap utuh. Idempotensi
- * lewat X-Deforestory-Delivery supaya kirim ulang aman.
+ * Web lain POST card ke CMS. Tiap POST **menambah / memperbarui** card (upsert)
+ * — gak menghapus card lain yang sudah ada. Jadi web lain tinggal kirim card
+ * baru/berubah; card yang sudah tersimpan tetap utuh. Idempotensi lewat
+ * X-Deforestory-Delivery supaya kirim ulang aman.
+ *
+ * Key upsert: `uuid` kalau dikirim caller (stabil & portabel antar env), fallback
+ * `slug` kalau uuid gak ada (payload lama tetap jalan). uuid DIMILIKI caller —
+ * BUKAN di-auto-generate server. slug jadi field biasa yang boleh berubah saat
+ * title berubah. PUT /cards/{uuid} alamat by uuid — jadi caller dianjurkan
+ * kirim uuid tiap push supaya card bisa di-PUT by uuid (card yang di-push tanpa
+ * uuid punya uuid null & gak bisa di-PUT by uuid sampai di-push ulang dgn uuid).
  *
  * Catatan: penghapusan card TIDAK ditangani endpoint ini. Kalau nanti perlu
  * hapus, tambahkan field event=deleted per card (atau endpoint DELETE terpisah).
  *
- * Tiap card BARU (slug belum pernah ada) memicu DeforestoryCardNotificationJob
+ * Tiap card BARU (key belum pernah ada) memicu DeforestoryCardNotificationJob
  * (queue) → email subscriber aktif type `all` lewat DeforestoryCardMail. Update
  * card yang sudah ada gak memicu email (biar gak spam). Butuh `queue:work` jalan.
  *
@@ -50,38 +58,66 @@ class DeforestoryCardWebhookController extends Controller
             return response()->json(['message' => 'Invalid payload: cards required'], 422);
         }
 
-        // Upsert by slug: tambah kalau slug baru, update kalau sudah ada.
-        // Gak hapus card lain (mode tambah/update, bukan full-list replace).
-        // Card yang BARU (wasRecentlyCreated) dikumpulkan untuk di-email ke subscriber.
+        // Upsert: key = uuid kalau dikirim caller (stabil & portabel), fallback slug
+        // kalau uuid gak ada (payload lama tetap jalan). slug wajib (kolom NOT NULL
+        // unique) & jadi field biasa. Gak hapus card lain (mode tambah/update, bukan
+        // full-list replace). Card BARU (wasRecentlyCreated) dikumpulkan utk email.
         $stored = 0;
         $seen = [];
         $newCards = [];
-        DB::transaction(function () use ($cards, &$stored, &$seen, &$newCards) {
+        $storedCards = [];
+        DB::transaction(function () use ($cards, &$stored, &$seen, &$newCards, &$storedCards) {
             foreach ($cards as $card) {
+                $uuid = $card['uuid'] ?? null;
                 $slug = $card['slug'] ?? null;
-                if (! is_string($slug) || $slug === '' || isset($seen[$slug])) {
+                $hasUuid = is_string($uuid) && $uuid !== '';
+
+                // slug wajib (NOT NULL unique). Tanpa slug → gak bisa simpan.
+                if (! is_string($slug) || $slug === '') {
                     continue;
                 }
-                $seen[$slug] = true;
 
-                $model = DeforestoryCard::updateOrCreate(
-                    ['slug' => $slug],
-                    [
-                        'category'   => $card['category']   ?? null,
-                        'year'       => $card['year']       ?? null,
-                        'image_id'   => $card['image_id']   ?? null,
-                        'image_en'   => $card['image_en']   ?? null,
-                        'title_id'   => $card['title_id']   ?? null,
-                        'title_en'   => $card['title_en']   ?? null,
-                        'excerpt_id' => $card['excerpt_id'] ?? null,
-                        'excerpt_en' => $card['excerpt_en'] ?? null,
-                        'sort'       => $card['sort']       ?? 0,
-                    ]
-                );
+                // Key upsert: uuid kalau ada, fallback slug. Dedup per key.
+                $seenKey = $hasUuid ? "u:{$uuid}" : "s:{$slug}";
+                if (isset($seen[$seenKey])) {
+                    continue;
+                }
+                $seen[$seenKey] = true;
+
+                // Upsert by uuid: pastikan slug gak dipakai card lain (uuid beda /
+                // null) → hindari pelanggaran unique slug. Skip bila bentrok.
+                if ($hasUuid && DeforestoryCard::where('slug', $slug)
+                        ->where(fn ($q) => $q->where('uuid', '!=', $uuid)->orWhereNull('uuid'))
+                        ->exists()) {
+                    continue;
+                }
+
+                $key = $hasUuid ? ['uuid' => $uuid] : ['slug' => $slug];
+                $attributes = [
+                    'slug'       => $slug,
+                    'category'   => $card['category']   ?? null,
+                    'year'       => $card['year']       ?? null,
+                    'image_id'   => $card['image_id']   ?? null,
+                    'image_en'   => $card['image_en']   ?? null,
+                    'title_id'   => $card['title_id']   ?? null,
+                    'title_en'   => $card['title_en']   ?? null,
+                    'excerpt_id' => $card['excerpt_id'] ?? null,
+                    'excerpt_en' => $card['excerpt_en'] ?? null,
+                    'sort'       => $card['sort']       ?? 0,
+                ];
+                if ($hasUuid) {
+                    $attributes['uuid'] = $uuid;
+                }
+
+                $model = DeforestoryCard::updateOrCreate($key, $attributes);
 
                 if ($model->wasRecentlyCreated) {
                     $newCards[] = $model;
                 }
+
+                // Echo balik slug + uuid tiap card tersimpan (uuid null bila
+                // caller gak kirim — card itu gak bisa di-PUT by uuid).
+                $storedCards[] = ['slug' => $model->slug, 'uuid' => $model->uuid];
 
                 $stored++;
             }
@@ -94,27 +130,30 @@ class DeforestoryCardWebhookController extends Controller
         }
 
         if ($stored === 0) {
-            return response()->json(['message' => 'Invalid payload: no card slugs'], 422);
+            return response()->json(['message' => 'Invalid payload: no card uuids or slugs'], 422);
         }
 
         return response()->json([
             'received' => true,
             'stored' => $stored,
             'notified' => count($newCards),
+            'cards' => $storedCards,
         ], 200);
     }
 
     /**
-     * Perbarui satu kartu kasus by ID (update murni — tidak membuat baru).
-     * PUT|PATCH /api/deforestory/cards/{id}
+     * Perbarui satu kartu kasus by UUID (update murni — tidak membuat baru).
+     * PUT|PATCH /api/deforestory/cards/{uuid}
      *
-     * Pakai ID (primary key) — BUKAN slug — sebagai identifier, karena slug
-     * boleh berubah (mis. diturunkan dari title). Kalau slug dipakai sebagai
-     * address, address jadi stale begitu title/slug berubah. ID stabil.
+     * Pakai UUID — BUKAN slug dan BUKAN id auto-increment — sebagai identifier.
+     * slug boleh berubah (mis. diturunkan dari title), jadi kalau dipakai sebagai
+     * address jadi stale begitu title berubah. id auto-increment stabil di satu
+     * DB, tapi beda antara dev & produksi (gak portable). UUID stabil DAN portabel
+     * antar environment — pilihan yang aman untuk identifier keluar.
      *
      * Berbeda dari POST /cards yang upsert (buat + update) sekaligus memicu
      * email untuk card BARU: endpoint ini HANYA meng-update card yang sudah
-     * ada. Bila id belum pernah ada → 404 (tidak dibuat, tidak ada notifikasi).
+     * ada. Bila uuid belum pernah ada → 404 (tidak dibuat, tidak ada notifikasi).
      * Update tidak pernah memicu email supaya tidak spam (sama seperti POST
      * ketika meng-update card yang sudah ada).
      *
@@ -128,25 +167,33 @@ class DeforestoryCardWebhookController extends Controller
      * {title, excerpt} dari toCardArray() bisa PUT balik apa adanya. Bila tidak
      * ada field yang dikenali sama sekali → 422 (bukan silent success).
      *
+     * AUTO-SLUG: bila title_id (atau alias `title`) BERUBAH dan slug tidak dikirim
+     * eksplisit, slug otomatis = Str::slug(title_id) — slug mengikuti title terbaru
+     * (konsisten dengan form Page/Fellowship/Petition). Kirim `slug` eksplisit
+     * (flat, tanpa title) bila mau paksa rename slug tertentu. Update field lain
+     * (mis. category saja) TIDAK mengubah slug. Bentrok slug → 422.
+     *
      * Mendukung DUA bentuk body, biar konsisten dengan POST /cards:
      *   1. Flat:     {"title_id": "...", "category": "..."}   (field di top level)
      *   2. Wrapped:  {"cards": [{ "slug": "...", ... }]}     (shape sama dengan POST)
-     * Bentuk wrapped: pakai entry pertama — card target ditentukan oleh {id} di
-     * URL, bukan slug di body.
+     * Bentuk wrapped: pakai entry pertama — card target ditentukan oleh {uuid} di
+     * URL. slug di entry DIABAIKAN bila entry membawa title (slug di POST =
+     * identifier, bukan intent set slug) supaya slug mengikuti title; slug dihormati
+     * hanya bila entry TANPA title (rename eksplisit).
      *
      * NOTE: auth sementara DIMATIKAN untuk testing — sejajar dengan POST /cards.
      * Nyalakan `->middleware('deforestory.api')` (Bearer = DEFORESTORY_API_KEY)
      * sebelum dipakai beneran di produksi.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, string $uuid)
     {
-        $card = DeforestoryCard::where('id', $id)->first();
+        $card = DeforestoryCard::where('uuid', $uuid)->first();
 
         if (! $card) {
             return response()->json(['message' => 'Card not found'], 404);
         }
 
-        // Field yang boleh diubah. identifier = id di URL; slug kini updatable
+        // Field yang boleh diubah. identifier = uuid di URL; slug kini updatable
         // (slug boleh ikut berubah saat title berubah).
         $fields = ['slug', 'category', 'year', 'image_id', 'image_en', 'title_id', 'title_en', 'excerpt_id', 'excerpt_en', 'sort'];
 
@@ -155,7 +202,17 @@ class DeforestoryCardWebhookController extends Controller
         // Bentuk wrapped {"cards": [...]} (shape sama dengan POST). Pakai entry
         // pertama — card target ditentukan oleh {id} di URL.
         if (isset($input['cards']) && is_array($input['cards'])) {
-            $input = $input['cards'][0] ?? [];
+            $entry = $input['cards'][0] ?? [];
+
+            // slug di wrapped POST-shape adalah IDENTIFIER (untuk upsert POST),
+            // bukan intent "set slug" di PUT-by-id. Kalau entry juga membawa
+            // title, ignore slug-nya supaya slug mengikuti title terbaru. Kalau
+            // entry HANYA bawa slug (tanpa title) → anggap rename eksplisit.
+            if (array_key_exists('title_id', $entry) || array_key_exists('title', $entry)) {
+                unset($entry['slug']);
+            }
+
+            $input = $entry;
         }
 
         // Pakai array_key_exists supaya nilai `null` eksplisit tetap diterapkan
@@ -174,6 +231,17 @@ class DeforestoryCardWebhookController extends Controller
         }
         if (array_key_exists('excerpt', $input) && ! array_key_exists('excerpt_id', $input)) {
             $updates['excerpt_id'] = $input['excerpt'];
+        }
+
+        // AUTO-SLUG: bila title_id BERUBAH (nilai baru ≠ title_id lama) dan slug
+        // tidak dikirim eksplisit, slug mengikuti title terbaru = Str::slug(title_id),
+        // konsisten dengan form Page/Fellowship/Petition. Kirim `slug` eksplisit
+        // (flat) bila mau paksa slug tertentu. Update field lain (mis. category
+        // saja) TIDAK mengubah slug.
+        if (array_key_exists('title_id', $updates)
+            && ! array_key_exists('slug', $updates)
+            && $updates['title_id'] !== $card->title_id) {
+            $updates['slug'] = Str::slug($updates['title_id']);
         }
 
         // slug unik & NOT NULL — validasi sebelum update supaya gak 500.
@@ -206,7 +274,7 @@ class DeforestoryCardWebhookController extends Controller
             'received' => true,
             'updated' => true,
             'card' => $card->fresh()->only([
-                'id', 'slug', 'category', 'year', 'image_id', 'image_en',
+                'id', 'uuid', 'slug', 'category', 'year', 'image_id', 'image_en',
                 'title_id', 'title_en', 'excerpt_id', 'excerpt_en',
                 'sort', 'updated_at',
             ]),

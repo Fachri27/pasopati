@@ -30,7 +30,7 @@ use Illuminate\Support\Facades\Route;
 |
 | Inbound webhook (auth sementara DIMATIKAN — publik untuk testing):
 |   POST /api/deforestory/cards                              push daftar kartu kasus dari web lain
-|   PUT|PATCH /api/deforestory/cards/{id}                    perbarui satu kartu by id (slug boleh ikut berubah)
+|   PUT|PATCH /api/deforestory/cards/{uuid}                  perbarui satu kartu by uuid (slug boleh ikut berubah)
 |
 */
 
@@ -40,10 +40,10 @@ use Illuminate\Support\Facades\Route;
 // sebelum dipakai beneran di produksi.
 Route::post('/deforestory/cards', [DeforestoryCardWebhookController::class, 'handle']);
 
-// Update satu card by ID (bukan slug — slug bisa berubah, ID stabil). Tidak
-// membuat baru, tidak kirim notifikasi. Sejajar dengan POST /cards di atas:
-// auth dimatikan untuk testing.
-Route::match(['put', 'patch'], '/deforestory/cards/{id}', [DeforestoryCardWebhookController::class, 'update']);
+// Update satu card by UUID (bukan slug — slug bisa berubah; bukan id — id
+// auto-increment gak portable antar env). Tidak membuat baru, tidak kirim
+// notifikasi. Sejajar dengan POST /cards di atas: auth dimatikan untuk testing.
+Route::match(['put', 'patch'], '/deforestory/cards/{uuid}', [DeforestoryCardWebhookController::class, 'update']);
 
 Route::prefix('deforestory')
     ->controller(DeforestoryApiController::class)
