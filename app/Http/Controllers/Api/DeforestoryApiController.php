@@ -146,6 +146,63 @@ class DeforestoryApiController extends Controller
         ]);
     }
 
+    /**
+     * Satu laporan + translations id & en sekaligus (satu GET, dua locale).
+     * GET /api/deforestory/cases/{slug}/laporan/{laporanSlug}/translations
+     *
+     * Shape mirror payload webhook keluar (DeforestoryWebhookJob::payload):
+     * translations.{id|en} = {title, excerpt, link}.
+     */
+    public function laporanTranslations(Request $request, string $slug, string $laporanSlug)
+    {
+        $case = DeforestoryCase::where('slug', $slug)->where('status', 'active')->first();
+
+        if (! $case) {
+            return response()->json(['message' => 'Case not found'], 404);
+        }
+
+        // Load semua translations (id + en) sekali.
+        $laporan = $case->laporans()
+            ->where('status', 'active')
+            ->where('slug', $laporanSlug)
+            ->with('translations')
+            ->first();
+
+        if (! $laporan) {
+            return response()->json(['message' => 'Laporan not found'], 404);
+        }
+
+        $translations = [];
+        foreach (['id', 'en'] as $locale) {
+            $t = $laporan->translation($locale);
+            $translations[$locale] = [
+                'title' => $t?->title,
+                'excerpt' => $t?->excerpt,
+                'image' => $this->laporanImage($laporan, $case, $locale),
+                'link' => route('deforestory.case.laporan', [
+                    'locale' => $locale,
+                    'slug' => $case->slug,
+                    'laporanSlug' => $laporan->slug,
+                ]),
+            ];
+        }
+
+        return response()->json([
+            'data' => [
+                'slug' => $laporan->slug,
+                'sort' => $laporan->sort,
+                'date' => ($laporan->published_at ?? $laporan->created_at)?->toDateString(),
+                'image' => $this->laporanImage($laporan, $case, 'id'),
+                'case' => [
+                    'slug' => $case->slug,
+                    'category' => $case->category,
+                    'year' => $case->year,
+                ],
+                'translations' => $translations,
+            ],
+        ]);
+    }
+
     // ---- Shaping helpers -------------------------------------------------
 
     protected function locale(Request $request): string
@@ -190,7 +247,7 @@ class DeforestoryApiController extends Controller
             'sort' => $laporan->sort,
             'title' => $t?->title,
             'date' => ($laporan->published_at ?? $laporan->created_at)?->toDateString(),
-            'image' => $this->imageUrl($laporan->image ?: $case->featured_image),
+            'image' => $this->laporanImage($laporan, $case, $locale),
             'desc' => $t?->excerpt,
             'link' => route('deforestory.case.laporan', [
                 'locale' => $locale,
@@ -198,6 +255,19 @@ class DeforestoryApiController extends Controller
                 'laporanSlug' => $laporan->slug,
             ]),
         ];
+    }
+
+    /**
+     * Image laporan per-locale. Fallback: translation($locale)->image →
+     * laporan->image (legacy) → case->featured_image.
+     */
+    protected function laporanImage(DeforestoryLaporan $laporan, DeforestoryCase $case, string $locale): ?string
+    {
+        $image = $laporan->translation($locale)?->image
+            ?: $laporan->image
+            ?: $case->featured_image;
+
+        return $this->imageUrl($image);
     }
 
     /**

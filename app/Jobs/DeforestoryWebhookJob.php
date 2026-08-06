@@ -94,13 +94,14 @@ class DeforestoryWebhookJob implements ShouldQueue
         $image = $this->laporan->image ?: $this->case->featured_image;
         $date = ($this->laporan->published_at ?? $this->laporan->created_at)?->toDateString();
 
-        // Bangun per-locale: title, excerpt, link (link locale-spesifik).
+        // Bangun per-locale: title, excerpt, image (per-locale), link (locale-spesifik).
         $translations = [];
         foreach (['id', 'en'] as $locale) {
             $t = $this->laporan->translation($locale);
             $translations[$locale] = [
                 'title' => $t?->title,
                 'excerpt' => $t?->excerpt,
+                'image' => $this->imageUrl($t?->image ?: $this->laporan->image ?: $image),
                 'link' => route('deforestory.case.laporan', [
                     'locale' => $locale,
                     'slug' => $this->case->slug,
@@ -124,7 +125,7 @@ class DeforestoryWebhookJob implements ShouldQueue
                 'slug' => $this->laporan->slug,
                 'sort' => $this->laporan->sort,
                 'date' => $date,
-                'image' => $this->imageUrl($image),
+                'image' => $default['image'],
                 // backward compatible (versi id)
                 'title' => $default['title'],
                 'desc' => $default['excerpt'],

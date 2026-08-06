@@ -29,7 +29,8 @@ class DeforestoryCardWebhookTest extends TestCase
                     'slug' => 'mayawana',
                     'category' => 'pulp',
                     'year' => '2021–2025',
-                    'image' => 'https://pasopati.id/storage/deforestory/mayawana.jpg',
+                    'image_id' => 'https://pasopati.id/storage/deforestory/mayawana-id.jpg',
+                    'image_en' => 'https://pasopati.id/storage/deforestory/mayawana-en.jpg',
                     'title_id' => 'Mayawana: jejak deforestasi',
                     'title_en' => 'Mayawana: deforestation trail',
                     'excerpt_id' => 'Analisis spasial Mayawana.',
@@ -40,7 +41,8 @@ class DeforestoryCardWebhookTest extends TestCase
                     'slug' => 'pulau-laut',
                     'category' => 'sawit',
                     'year' => '2022–2024',
-                    'image' => 'https://pasopati.id/storage/deforestory/pulau-laut.jpg',
+                    'image_id' => 'https://pasopati.id/storage/deforestory/pulau-laut-id.jpg',
+                    'image_en' => 'https://pasopati.id/storage/deforestory/pulau-laut-en.jpg',
                     'title_id' => 'Pulau Laut: sawit di balik hutan lindung',
                     'title_en' => 'Pulau Laut: palm oil behind protected forest',
                     'excerpt_id' => 'Pembukaan lahan sawit Pulau Laut.',
@@ -102,7 +104,7 @@ class DeforestoryCardWebhookTest extends TestCase
                     'slug' => 'mayawana',
                     'category' => 'mining',
                     'year' => '2021–2025',
-                    'image' => null,
+                    'image_id' => null,
                     'title_id' => 'Mayawana (baru)',
                     'title_en' => 'Mayawana (new)',
                     'excerpt_id' => 'x',
@@ -221,6 +223,255 @@ class DeforestoryCardWebhookTest extends TestCase
 
         // Total job = 2 (push 1) + 1 (push 2, hanya card baru) = 3.
         Queue::assertPushed(DeforestoryCardNotificationJob::class, 3);
+    }
+
+    /** PUT/PATCH satu card by ID — partial update, hanya field yang dikirim. */
+    private function updateCard($id, array $payload, ?string $key = self::KEY)
+    {
+        $server = ['CONTENT_TYPE' => 'application/json'];
+        if ($key) {
+            $server['HTTP_AUTHORIZATION'] = 'Bearer ' . $key;
+        }
+
+        return $this->call(
+            'PUT', self::ENDPOINT . '/' . $id, [], [], [], $server,
+            json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+        );
+    }
+
+    /** Ambil id card by slug (helper biar test pakai identifier stabil). */
+    private function cardId(string $slug): int
+    {
+        return (int) DeforestoryCard::where('slug', $slug)->value('id');
+    }
+
+    public function test_update_endpoint_updates_existing_card_fields(): void
+    {
+        config(['services.deforestory_api.key' => self::KEY]);
+
+        $this->postCards($this->cardsPayload(), Str::uuid()->toString())->assertStatus(200);
+
+        $id = $this->cardId('mayawana');
+
+        // Partial update: kirim hanya category + title_id. Field lain tetap.
+        $response = $this->updateCard($id, [
+            'category' => 'mining',
+            'title_id' => 'Mayawana (revisi)',
+        ]);
+
+        $response->assertStatus(200)->assertJson(['received' => true, 'updated' => true]);
+
+        $card = DeforestoryCard::find($id);
+        $this->assertSame('mining', $card->category);
+        $this->assertSame('Mayawana (revisi)', $card->title_id);
+        // Field yang tidak dikirim tetap utuh.
+        $this->assertSame('Mayawana: deforestation trail', $card->title_en);
+        $this->assertSame('Analisis spasial Mayawana.', $card->excerpt_id);
+        $this->assertSame('2021–2025', $card->year); // tidak diubah
+
+        // Response mengembalikan field yang sudah di-update.
+        $response->assertJsonPath('card.id', $id);
+        $response->assertJsonPath('card.category', 'mining');
+    }
+
+    public function test_update_endpoint_allows_setting_field_to_null(): void
+    {
+        config(['services.deforestory_api.key' => self::KEY]);
+
+        $this->postCards($this->cardsPayload(), Str::uuid()->toString())->assertStatus(200);
+
+        $id = $this->cardId('mayawana');
+
+        // image_id dikirim null eksplisit → harus benar-benar ter-set null, bukan
+        // diabaikan.
+        $this->updateCard($id, ['image_id' => null])->assertStatus(200);
+
+        $this->assertNull(DeforestoryCard::find($id)->image_id);
+    }
+
+    public function test_update_endpoint_accepts_singular_title_alias(): void
+    {
+        config(['services.deforestory_api.key' => self::KEY]);
+
+        $this->postCards($this->cardsPayload(), Str::uuid()->toString())->assertStatus(200);
+
+        $id = $this->cardId('mayawana');
+
+        // Kirim `title` (singular — shape yang dilihat caller dari toCardArray)
+        // tanpa suffix _id. Harus tertulis ke title_id, DB berubah.
+        $this->updateCard($id, ['title' => 'Mayawana via alias'])->assertStatus(200);
+
+        $this->assertSame('Mayawana via alias', DeforestoryCard::find($id)->title_id);
+        // title_en tidak ikut terisi (alias hanya ke _id).
+        $this->assertSame('Mayawana: deforestation trail', DeforestoryCard::find($id)->title_en);
+    }
+
+    public function test_update_endpoint_singular_excerpt_alias_writes_excerpt_id(): void
+    {
+        config(['services.deforestory_api.key' => self::KEY]);
+
+        $this->postCards($this->cardsPayload(), Str::uuid()->toString())->assertStatus(200);
+
+        $id = $this->cardId('mayawana');
+
+        $this->updateCard($id, ['excerpt' => 'Ringkasan via alias'])->assertStatus(200);
+
+        $this->assertSame('Ringkasan via alias', DeforestoryCard::find($id)->excerpt_id);
+    }
+
+    public function test_update_endpoint_explicit_title_id_wins_over_alias(): void
+    {
+        config(['services.deforestory_api.key' => self::KEY]);
+
+        $this->postCards($this->cardsPayload(), Str::uuid()->toString())->assertStatus(200);
+
+        $id = $this->cardId('mayawana');
+
+        // Keduanya dikirim: title_id eksplisit menang, alias title diabaikan.
+        $this->updateCard($id, ['title' => 'dari alias', 'title_id' => 'dari eksplisit'])->assertStatus(200);
+
+        $this->assertSame('dari eksplisit', DeforestoryCard::find($id)->title_id);
+    }
+
+    public function test_update_endpoint_rejects_when_no_updatable_fields(): void
+    {
+        config(['services.deforestory_api.key' => self::KEY]);
+
+        $this->postCards($this->cardsPayload(), Str::uuid()->toString())->assertStatus(200);
+        $id = $this->cardId('mayawana');
+        $before = DeforestoryCard::find($id)->title_id;
+
+        // Field tidak dikenali → 422, bukan silent success. DB tetap.
+        $response = $this->updateCard($id, ['unknown_field' => 'x']);
+        $response->assertStatus(422)->assertJson(['message' => 'No updatable fields provided']);
+        $this->assertSame($before, DeforestoryCard::find($id)->title_id);
+        $this->assertSame('mayawana', DeforestoryCard::find($id)->slug);
+    }
+
+    public function test_update_endpoint_returns_404_for_unknown_id(): void
+    {
+        config(['services.deforestory_api.key' => self::KEY]);
+
+        // ID belum pernah ada → 404, tidak membuat card baru.
+        $response = $this->updateCard(999999, ['category' => 'mining']);
+
+        $response->assertStatus(404);
+        $this->assertDatabaseMissing('deforestory_cards', ['id' => 999999]);
+    }
+
+    public function test_update_endpoint_does_not_dispatch_notification_job(): void
+    {
+        Queue::fake();
+
+        config(['services.deforestory_api.key' => self::KEY]);
+
+        $this->postCards($this->cardsPayload(), Str::uuid()->toString())->assertStatus(200);
+        Queue::assertPushed(DeforestoryCardNotificationJob::class, 2);
+
+        $id = $this->cardId('mayawana');
+
+        // Update card yang sudah ada → tidak boleh dispatch job baru.
+        $this->updateCard($id, ['category' => 'mining'])->assertStatus(200);
+
+        Queue::assertPushed(DeforestoryCardNotificationJob::class, 2);
+    }
+
+    public function test_update_endpoint_works_without_auth(): void
+    {
+        // Auth sementara dimatikan — update tanpa token pun harus sukses.
+        $this->postCards($this->cardsPayload(), Str::uuid()->toString(), key: null)->assertStatus(200);
+
+        $id = $this->cardId('mayawana');
+
+        $this->updateCard($id, ['category' => 'mining'], key: null)
+            ->assertStatus(200)
+            ->assertJson(['updated' => true]);
+    }
+
+    public function test_update_endpoint_accepts_patch_method(): void
+    {
+        config(['services.deforestory_api.key' => self::KEY]);
+
+        $this->postCards($this->cardsPayload(), Str::uuid()->toString())->assertStatus(200);
+
+        $id = $this->cardId('mayawana');
+
+        $server = ['CONTENT_TYPE' => 'application/json', 'HTTP_AUTHORIZATION' => 'Bearer ' . self::KEY];
+        $response = $this->call(
+            'PATCH', self::ENDPOINT . '/' . $id, [], [], [], $server,
+            json_encode(['category' => 'pulp-paper'], JSON_UNESCAPED_UNICODE)
+        );
+
+        $response->assertStatus(200)->assertJson(['updated' => true]);
+        $this->assertSame('pulp-paper', DeforestoryCard::find($id)->category);
+    }
+
+    public function test_update_endpoint_accepts_wrapped_cards_shape(): void
+    {
+        // Shape sama dengan POST /cards: {"cards":[{...}]}. Entry pertama dipakai
+        // (card target ditentukan oleh {id} di URL, bukan slug di body).
+        config(['services.deforestory_api.key' => self::KEY]);
+
+        $this->postCards($this->cardsPayload(), Str::uuid()->toString())->assertStatus(200);
+
+        $id = $this->cardId('mayawana');
+
+        $payload = ['cards' => [
+            ['slug' => 'mayawana', 'category' => 'pulp', 'title_id' => 'Mayawana via wrapped'],
+        ]];
+
+        $response = $this->updateCard($id, $payload);
+        $response->assertStatus(200)->assertJson(['updated' => true]);
+
+        $this->assertSame('Mayawana via wrapped', DeforestoryCard::find($id)->title_id);
+        $this->assertSame('pulp', DeforestoryCard::find($id)->category);
+    }
+
+    public function test_update_endpoint_can_change_slug_by_id_and_still_addressed_by_id(): void
+    {
+        // Inti permintaan: slug boleh berubah, tapi address by id tetap valid.
+        config(['services.deforestory_api.key' => self::KEY]);
+
+        $this->postCards($this->cardsPayload(), Str::uuid()->toString())->assertStatus(200);
+        $id = $this->cardId('mayawana');
+
+        // Update title + slug baru (mis. slug diturunkan dari title baru).
+        $this->updateCard($id, ['title_id' => 'Mayawana Baru', 'slug' => 'mayawana-baru'])->assertStatus(200);
+
+        $card = DeforestoryCard::find($id);
+        $this->assertSame('mayawana-baru', $card->slug);
+        $this->assertSame('Mayawana Baru', $card->title_id);
+        // Slug lama hilang.
+        $this->assertDatabaseMissing('deforestory_cards', ['slug' => 'mayawana']);
+
+        // Masih bisa di-update lagi lewat id (meski slug sudah berubah).
+        $this->updateCard($id, ['category' => 'mining'])->assertStatus(200)->assertJson(['updated' => true]);
+        $this->assertSame('mining', DeforestoryCard::find($id)->category);
+    }
+
+    public function test_update_endpoint_rejects_duplicate_slug(): void
+    {
+        config(['services.deforestory_api.key' => self::KEY]);
+
+        $this->postCards($this->cardsPayload(), Str::uuid()->toString())->assertStatus(200);
+        $id = $this->cardId('mayawana');
+
+        // Pulau-laut sudah pakai slug 'pulau-laut' → mayawana gak boleh pakai itu.
+        $response = $this->updateCard($id, ['slug' => 'pulau-laut']);
+        $response->assertStatus(422)->assertJson(['message' => 'Slug already in use']);
+        $this->assertSame('mayawana', DeforestoryCard::find($id)->slug);
+    }
+
+    public function test_update_endpoint_rejects_empty_slug(): void
+    {
+        config(['services.deforestory_api.key' => self::KEY]);
+
+        $this->postCards($this->cardsPayload(), Str::uuid()->toString())->assertStatus(200);
+        $id = $this->cardId('mayawana');
+
+        $response = $this->updateCard($id, ['slug' => '']);
+        $response->assertStatus(422)->assertJson(['message' => 'Slug cannot be empty']);
+        $this->assertSame('mayawana', DeforestoryCard::find($id)->slug);
     }
 
     public function test_card_notification_job_emails_all_subscribers_only(): void

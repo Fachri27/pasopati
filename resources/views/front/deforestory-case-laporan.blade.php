@@ -19,7 +19,7 @@
     $laporanTitle = $laporanTrans->title ?? '';
     $laporanExcerpt = $laporanTrans->excerpt ?? '';
     $laporanContent = $laporanTrans->content ?? '';
-    $cover = $imageUrl($laporan->image ?: $case->featured_image);
+    $cover = $imageUrl($laporanTrans->image ?? $laporan->image ?? $case->featured_image);
 
     $caseUrl = route('deforestory.case', ['locale' => $locale, 'slug' => $case->slug]);
     $archiveUrl = route('deforestory', ['locale' => $locale]);

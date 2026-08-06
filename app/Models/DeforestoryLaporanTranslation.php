@@ -15,6 +15,7 @@ class DeforestoryLaporanTranslation extends Model
         'title',
         'excerpt',
         'content',
+        'image',
     ];
 
     public function laporan(): BelongsTo

@@ -97,19 +97,36 @@
                                 <p class="text-xs text-gray-400 mt-1">Tanggal terbit laporan (tampil di API &amp; halaman detail).</p>
                             </div>
 
-                            {{-- Image --}}
+                            {{-- Image (per-locale: id + en) --}}
                             <div>
-                                <label class="font-medium">Gambar Laporan</label>
-                                <input type="file" wire:model="image"
-                                    class="w-full border rounded-lg px-2 py-2 mt-1">
-                                <div class="mt-3">
-                                    @if ($image)
-                                        <img src="{{ $image->temporaryUrl() }}"
-                                            class="w-20 h-20 rounded-lg object-cover border">
-                                    @elseif ($old_image)
-                                        <img src="{{ asset('storage/' . $old_image) }}"
-                                            class="w-20 h-20 rounded-lg object-cover border">
-                                    @endif
+                                <label class="font-medium">Gambar Laporan (per bahasa)</label>
+
+                                <div x-show="lang === 'id'">
+                                    <input type="file" wire:model="image_id"
+                                        class="w-full border rounded-lg px-2 py-2 mt-1">
+                                    <div class="mt-3">
+                                        @if ($image_id)
+                                            <img src="{{ $image_id->temporaryUrl() }}"
+                                                class="w-20 h-20 rounded-lg object-cover border">
+                                        @elseif ($old_image_id)
+                                            <img src="{{ asset('storage/' . $old_image_id) }}"
+                                                class="w-20 h-20 rounded-lg object-cover border">
+                                        @endif
+                                    </div>
+                                </div>
+
+                                <div x-show="lang === 'en'">
+                                    <input type="file" wire:model="image_en"
+                                        class="w-full border rounded-lg px-2 py-2 mt-1">
+                                    <div class="mt-3">
+                                        @if ($image_en)
+                                            <img src="{{ $image_en->temporaryUrl() }}"
+                                                class="w-20 h-20 rounded-lg object-cover border">
+                                        @elseif ($old_image_en)
+                                            <img src="{{ asset('storage/' . $old_image_en) }}"
+                                                class="w-20 h-20 rounded-lg object-cover border">
+                                        @endif
+                                    </div>
                                 </div>
                             </div>
 

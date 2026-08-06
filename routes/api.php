@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Route;
 |   GET  /api/deforestory/cases/{slug}/laporan             daftar laporan sebuah kasus
 |   GET  /api/deforestory/cases/{slug}/laporan/latest      laporan terkini (metadata)
 |   GET  /api/deforestory/cases/{slug}/laporan/{laporan}   satu laporan (metadata)
+|   GET  /api/deforestory/cases/{slug}/laporan/{laporan}/translations  satu laporan + translations id & en
 |
 | Integrasi internal:
 |   GET  /api/deforestory/queue-length                      jumlah job pending
@@ -29,6 +30,7 @@ use Illuminate\Support\Facades\Route;
 |
 | Inbound webhook (auth sementara DIMATIKAN — publik untuk testing):
 |   POST /api/deforestory/cards                              push daftar kartu kasus dari web lain
+|   PUT|PATCH /api/deforestory/cards/{id}                    perbarui satu kartu by id (slug boleh ikut berubah)
 |
 */
 
@@ -37,6 +39,11 @@ use Illuminate\Support\Facades\Route;
 // lagi `->middleware('deforestory.api')` (Bearer token = DEFORESTORY_API_KEY)
 // sebelum dipakai beneran di produksi.
 Route::post('/deforestory/cards', [DeforestoryCardWebhookController::class, 'handle']);
+
+// Update satu card by ID (bukan slug — slug bisa berubah, ID stabil). Tidak
+// membuat baru, tidak kirim notifikasi. Sejajar dengan POST /cards di atas:
+// auth dimatikan untuk testing.
+Route::match(['put', 'patch'], '/deforestory/cards/{id}', [DeforestoryCardWebhookController::class, 'update']);
 
 Route::prefix('deforestory')
     ->controller(DeforestoryApiController::class)
@@ -48,6 +55,7 @@ Route::prefix('deforestory')
         Route::get('/cases/{slug}/laporan', 'laporanIndex');
         Route::get('/cases/{slug}/laporan/latest', 'laporanLatest');
         Route::get('/cases/{slug}/laporan/{laporanSlug}', 'laporanShow');
+        Route::get('/cases/{slug}/laporan/{laporanSlug}/translations', 'laporanTranslations');
 
         // Monitoring (perlu Bearer token).
         Route::get('/queue-length', 'queueLength');

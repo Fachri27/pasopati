@@ -37,8 +37,10 @@ class DeforestoryLaporanForm extends Component
     public $excerpt_en;
     public $laporan_content_id = '';
     public $laporan_content_en = '';
-    public $image;
-    public $old_image;
+    public $image_id;
+    public $image_en;
+    public $old_image_id;
+    public $old_image_en;
     public $status = 'draft';
     public $sort = 0;
     public $published_at;
@@ -69,10 +71,12 @@ class DeforestoryLaporanForm extends Component
                 'status' => $this->laporan->status,
                 'sort' => $this->laporan->sort ?? 0,
                 'published_at' => $this->laporan->published_at?->format('Y-m-d'),
-                'old_image' => $this->laporan->image,
+                'old_image_id' => $idTrans->image ?? null,
+                'old_image_en' => $enTrans->image ?? null,
             ]);
 
-            $this->image = null;
+            $this->image_id = null;
+            $this->image_en = null;
         } else {
             // Buat laporan baru: kasus harus sudah ada (di-auto-create oleh
             // halaman daftar laporan). Ambil caseSlug dari URL.
@@ -81,6 +85,27 @@ class DeforestoryLaporanForm extends Component
             $this->caseSlug = $case->slug;
             $this->published_at = now()->format('Y-m-d');
         }
+    }
+
+    /**
+     * Upload gambar laporan untuk satu locale. Kalau gak ada upload baru, pakai
+     * path lama (old_image_<locale>) supaya gambar gak hilang saat edit field lain.
+     */
+    private function storeLaporanImage(string $locale, string $slug): ?string
+    {
+        $upload = $locale === 'id' ? $this->image_id : $this->image_en;
+        $old = $locale === 'id' ? $this->old_image_id : $this->old_image_en;
+
+        if ($upload instanceof TemporaryUploadedFile) {
+            if ($old && Storage::disk('public')->exists($old)) {
+                Storage::disk('public')->delete($old);
+            }
+            $filename = $slug . '-' . $locale . '-' . time() . '.' . $upload->getClientOriginalExtension();
+
+            return $upload->storeAs('deforestory/laporans', $filename, 'public');
+        }
+
+        return $old;
     }
 
     public function save()
@@ -99,7 +124,8 @@ class DeforestoryLaporanForm extends Component
             'status' => 'required|in:draft,active,inactive',
             'sort' => 'nullable|integer',
             'published_at' => 'nullable|date',
-            'image' => 'nullable|image',
+            'image_id' => 'nullable|image',
+            'image_en' => 'nullable|image',
             'excerpt_id' => 'nullable|string',
             'excerpt_en' => 'nullable|string',
             'laporan_content_id' => 'nullable|string',
@@ -111,21 +137,14 @@ class DeforestoryLaporanForm extends Component
         // Slug diturunkan dari judul ID bila kosong.
         $slug = $this->slug ?: \Illuminate\Support\Str::slug($this->title_id);
 
-        // Upload gambar laporan.
-        if ($this->image instanceof TemporaryUploadedFile) {
-            if ($this->old_image && Storage::disk('public')->exists($this->old_image)) {
-                Storage::disk('public')->delete($this->old_image);
-            }
-            $filename = $slug . '-' . time() . '.' . $this->image->getClientOriginalExtension();
-            $imagePath = $this->image->storeAs('deforestory/laporans', $filename, 'public');
-        } else {
-            $imagePath = $this->old_image;
-        }
+        // Upload gambar laporan per-locale (id + en). Image legacy (laporan.image)
+        // gak lagi ditulis form; cuma dipakai sebagai fallback baca data lama.
+        $imagePathId = $this->storeLaporanImage('id', $slug);
+        $imagePathEn = $this->storeLaporanImage('en', $slug);
 
         $data = [
             'case_id' => $this->caseId,
             'slug' => $slug,
-            'image' => $imagePath,
             'sort' => (int) $this->sort,
             'status' => $this->status,
             'published_at' => $this->published_at ?: null,
@@ -145,6 +164,7 @@ class DeforestoryLaporanForm extends Component
                     'title' => $locale === 'id' ? $this->title_id : $this->title_en,
                     'excerpt' => $locale === 'id' ? $this->excerpt_id : $this->excerpt_en,
                     'content' => $locale === 'id' ? $this->laporan_content_id : $this->laporan_content_en,
+                    'image' => $locale === 'id' ? $imagePathId : $imagePathEn,
                 ]
             );
         }

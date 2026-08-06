@@ -59,7 +59,7 @@
                 $lt = $laporan->translation($locale) ?? $laporan->translation('id');
                 $lTitle = $lt->title ?? '';
                 $lExcerpt = $lt->excerpt ?? '';
-                $lImg = $imageUrl($laporan->image ?: $case->featured_image);
+                $lImg = $imageUrl($laporan->translation($locale)?->image ?? $laporan->image ?? $case->featured_image);
                 $lHref = route('deforestory.case.laporan', [
                     'locale' => $locale,
                     'slug' => $case->slug,

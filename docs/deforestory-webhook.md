@@ -59,11 +59,13 @@ membaca bagian **§1** (apa yang dikirim) dan **§3** (cara menerima). Bagian
       "id": {
         "title": "Jejak deforestasi di Mayawana",
         "excerpt": "Analisis spasial deforestasi di Mayawana dan keterkaitannya dengan rantai pasok grup RGE.",
+        "image": "https://pasopati.id/storage/deforestory/laporans/jejak-id.jpg",
         "link": "https://pasopati.id/id/deforestory/mayawana/jejak-deforestasi-mayawana"
       },
       "en": {
         "title": "The deforestation trail in Mayawana",
         "excerpt": "Spatial analysis of deforestation in Mayawana and its links to the RGE group supply chain.",
+        "image": "https://pasopati.id/storage/deforestory/laporans/jejak-en.jpg",
         "link": "https://pasopati.id/en/deforestory/mayawana/jejak-deforestasi-mayawana"
       }
     }
@@ -75,14 +77,19 @@ membaca bagian **§1** (apa yang dikirim) dan **§3** (cara menerima). Bagian
 
 - **`laporan.translations`** berisi **`id` + `en`** sekaligus. Web lain cukup pilih
   `laporan.translations[<locale subscriber>]` sesuai bahasa subscriber-nya.
-  Setiap locale punya `title`, `excerpt`, dan `link` (link locale-spesifik: `/id/...`
-  atau `/en/...`).
+  Setiap locale punya `title`, `excerpt`, `image`, dan `link` (link locale-spesifik:
+  `/id/...` atau `/en/...`).
+- **`image` per-locale** sekarang ada di `translations.<locale>.image` — tiap
+  locale bisa pakai file gambar yang beda. Fallback: `translation($locale).image`
+  → `laporan.image` (legacy) → `case.featured_image`. Bila tidak ada image
+  per-locale, kedua locale pakai fallback yang sama. Field top-level
+  `laporan.image` tetap diisi image `id` (backward compatible).
 - **Field top-level** `laporan.title` / `laporan.desc` / `laporan.link` tetap
   diisi versi `id` demi **backward compatible** — receiver lama yang belum baca
   `translations` tetap jalan. Receiver baru **disarankan pakai `translations`**.
-- `laporan.image` dan `laporan.date` sama untuk semua locale (gak ada di
-  `translations`). Image absolut URL (`https://...`) bila CMS simpan begitu,
-  atau `https://pasopati.id/storage/...` bila relatif.
+- `laporan.date` sama untuk semua locale (gak ada di `translations`). Image
+  absolut URL (`https://...`) bila CMS simpan begitu, atau
+  `https://pasopati.id/storage/...` bila relatif.
 - `laporan.link` / `translations[*].link` menunjuk ke **laporan asli di CMS**.
   Email ke subscriber web lain sebaiknya pakai link ini (subscriber dibawa ke
   sumber asli, bukan ke salinan di web lain).
@@ -577,7 +584,8 @@ mengirim seluruh daftar setiap kali.
       "slug": "mayawana",
       "category": "pulp",
       "year": "2021–2025",
-      "image": "https://pasopati.id/storage/deforestory/mayawana.jpg",
+      "image_id": "https://pasopati.id/storage/deforestory/mayawana-id.jpg",
+      "image_en": "https://pasopati.id/storage/deforestory/mayawana-en.jpg",
       "title_id": "Mayawana: jejak deforestasi",
       "title_en": "Mayawana: deforestation trail",
       "excerpt_id": "Analisis spasial Mayawana.",
@@ -588,7 +596,8 @@ mengirim seluruh daftar setiap kali.
       "slug": "pulau-laut",
       "category": "sawit",
       "year": "2022–2024",
-      "image": "https://pasopati.id/storage/deforestory/pulau-laut.jpg",
+      "image_id": "https://pasopati.id/storage/deforestory/pulau-laut-id.jpg",
+      "image_en": "https://pasopati.id/storage/deforestory/pulau-laut-en.jpg",
       "title_id": "Pulau Laut: sawit di balik hutan lindung",
       "title_en": "Pulau Laut: palm oil behind protected forest",
       "excerpt_id": "Pembukaan lahan sawit Pulau Laut.",
@@ -602,7 +611,9 @@ mengirim seluruh daftar setiap kali.
 Catatan:
 - `slug` wajib & unik (jadi kunci upsert). Sisanya nullable.
 - `sort` opsional (default 0) → dipakai urutan kartu di index.
-- `image` idealnya absolut URL (`https://...`).
+- **`image_id` / `image_en`** — image per-locale (absolut URL `https://...`).
+  Kedua locale bisa pakai file gambar yang beda. Bila salah satu kosong, konsumen
+  fallback ke field `image_id`. (Kolom legacy tunggal `image` sudah dihapus.)
 - Key `cards` juga menerima `data` sebagai alias (`{ "data": [...] }`).
 
 ### 8d. Ekspektasi balasan dari CMS
@@ -676,7 +687,61 @@ tanpa CSRF).
 | `app/Jobs/DeforestoryCardNotificationJob.php` | Job queue: email subscriber type `all` saat card baru masuk (via `DeforestoryCardMail`) |
 | `app/Mail/DeforestoryCardMail.php` | Mailable email "kasus baru" berbasis data card |
 | `resources/views/emails/deforestory-card.blade.php` | Template email "kasus baru" card |
-| `app/Models/DeforestoryCard.php` | Model card lokal + `toCardArray($locale)` |
+| `app/Models/DeforestoryCard.php` | Model card lokal + `toCardArray($locale)` (image per-locale `image_id`/`image_en`) |
 | `app/Services/DeforestoryApiService.php` | Baca card dari tabel lokal (getCases / cardBySlug) |
 | `database/migrations/2026_08_06_000001_create_deforestory_cards_table.php` | Tabel `deforestory_cards` |
-| `routes/api.php` | `POST /api/deforestory/cards` (middleware `api`; `deforestory.api` sementara dimatikan) |
+| `database/migrations/2026_08_06_000003_add_image_id_en_to_deforestory_cards_table.php` | Tambah `image_id`/`image_en` per-locale ke card |
+| `database/migrations/2026_08_06_000004_drop_image_from_deforestory_cards_table.php` | Hapus kolom legacy `image` dari card (sekarang per-locale) |
+| `routes/api.php` | `POST /api/deforestory/cards` + `PUT|PATCH /api/deforestory/cards/{slug}` (middleware `api`; `deforestory.api` sementara dimatikan) |
+---
+
+## 9. Endpoint GET sindikasi (web lain GET data dari CMS)
+
+Read-only endpoints buat web lain mengambil data case + laporan dari CMS. Semua di
+prefix `/api/deforestory`, **wajib Bearer token** `DEFORESTORY_API_KEY` (header
+`Authorization: Bearer <key>` atau `?token=<key>`), terima `?locale=id|en` (default `id`).
+Diatur di `routes/api.php` group `deforestory.api` → `DeforestoryApiController`.
+
+| Method | Endpoint | Untuk apa |
+|---|---|---|
+| GET | `/api/deforestory/cases` | daftar kasus aktif |
+| GET | `/api/deforestory/cases/{slug}` | satu kasus + daftar laporannya |
+| GET | `/api/deforestory/cases/{slug}/laporan` | daftar laporan satu kasus |
+| GET | `/api/deforestory/cases/{slug}/laporan/latest` | laporan terbaru satu kasus |
+| GET | `/api/deforestory/cases/{slug}/laporan/{laporanSlug}` | satu laporan (satu locale) |
+| GET | `/api/deforestory/cases/{slug}/laporan/{laporanSlug}/translations` | **satu laporan + translations id & en + image per-locale** |
+| GET | `/api/deforestory/queue-length` | jumlah job pending di queue CMS |
+
+### 9a. `/translations` — laporan dua bahasa sekali GET
+
+Balikin satu laporan lengkap dengan **translations id & en sekaligus**, termasuk
+**`image` per-locale** — tiap locale bisa pakai file gambar yang beda. Shape mirror
+payload webhook keluar (`DeforestoryWebhookJob`), jadi web lain bisa pakai logic yang
+sama.
+
+```http
+GET /api/deforestory/cases/mayawana/laporan/jejak-deforestasi-mayawana/translations
+Authorization: Bearer <DEFORESTORY_API_KEY>
+```
+```json
+{
+  "data": {
+    "slug": "jejak-deforestasi-mayawana",
+    "sort": 1,
+    "date": "2024-11-12",
+    "image": "https://.../laporans/...-id.jpg",
+    "case": { "slug": "mayawana", "category": "pulp", "year": "2021–2025" },
+    "translations": {
+      "id": { "title": "...", "excerpt": "...", "image": "https://.../laporans/...-id.jpg", "link": "https://.../id/deforestory/mayawana/..." },
+      "en": { "title": "...", "excerpt": "...", "image": "https://.../laporans/...-en.jpg", "link": "https://.../en/deforestory/mayawana/..." }
+    }
+  }
+}
+```
+404 kalau case/laporan gak aktif. Catatan soal image:
+- **Image per-locale** disimpan di `deforestory_laporan_translations.image` (kolom
+  per locale). `translations.id.image` dan `translations.en.image` **bisa beda**.
+- **Fallback** saat baca image per-locale: `translation($locale).image` →
+  `laporan.image` (legacy, `deforestory_laporans.image`) → `case.featured_image`.
+  Bila tidak ada image per-locale, kedua locale pakai fallback yang sama.
+- Field top-level `data.image` = image `id` (backward compat).
