@@ -2,9 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\Jobs\DeforestoryCardNotificationJob;
+use App\Mail\DeforestoryCardMail;
 use App\Models\DeforestoryCard;
+use App\Models\DeforestorySubscriber;
 use App\Services\DeforestoryApiService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -180,5 +185,94 @@ class DeforestoryCardWebhookTest extends TestCase
         $this->assertSame('Pulau Laut: palm oil behind protected forest', $found['title']);
 
         $this->assertNull($api->cardBySlug('id', 'tidak-ada'));
+    }
+
+    public function test_new_card_dispatches_notification_job(): void
+    {
+        Queue::fake();
+
+        // Push 2 card baru → 2 job di-dispatch.
+        $this->postCards($this->cardsPayload(), Str::uuid()->toString())
+            ->assertStatus(200)
+            ->assertJson(['received' => true, 'stored' => 2, 'notified' => 2]);
+
+        Queue::assertPushed(DeforestoryCardNotificationJob::class, 2);
+    }
+
+    public function test_existing_card_update_does_not_dispatch_job(): void
+    {
+        Queue::fake();
+
+        // Push pertama: 2 card baru → 2 job.
+        $this->postCards($this->cardsPayload(), Str::uuid()->toString())->assertStatus(200);
+        Queue::assertPushed(DeforestoryCardNotificationJob::class, 2);
+
+        // Push kedua: mayawana di-update (slug sama), 1 card baru. Hanya card baru
+        // yang dispatch job. Delivery beda supaya gak kena dedup.
+        $updated = ['cards' => [
+            ['slug' => 'mayawana', 'category' => 'mining', 'title_id' => 'Mayawana (baru)',
+             'title_en' => 'Mayawana (new)', 'excerpt_id' => 'x', 'excerpt_en' => 'y', 'sort' => 1],
+            ['slug' => 'baru-lagi', 'title_id' => 'Baru', 'title_en' => 'New2',
+             'excerpt_id' => 'a', 'excerpt_en' => 'b', 'sort' => 2],
+        ]];
+        $this->postCards($updated, Str::uuid()->toString())
+            ->assertStatus(200)
+            ->assertJson(['stored' => 2, 'notified' => 1]);
+
+        // Total job = 2 (push 1) + 1 (push 2, hanya card baru) = 3.
+        Queue::assertPushed(DeforestoryCardNotificationJob::class, 3);
+    }
+
+    public function test_card_notification_job_emails_all_subscribers_only(): void
+    {
+        Mail::fake();
+
+        // 2 subscriber type=all aktif (id + en), 1 subscriber type=case (harus di-skip).
+        $all = DeforestorySubscriber::create(['email' => 'all-id@x.com', 'type' => 'all', 'locale' => 'id', 'active' => true]);
+        $all2 = DeforestorySubscriber::create(['email' => 'all-en@x.com', 'type' => 'all', 'locale' => 'en', 'active' => true]);
+        $caseSub = DeforestorySubscriber::create(['email' => 'case@x.com', 'type' => 'case', 'locale' => 'id', 'active' => true, 'case_id' => null]);
+
+        // Dispatch job manual (mirip yang controller lakukan).
+        $card = DeforestoryCard::create([
+            'slug' => 'mayawana', 'title_id' => 'Mayawana', 'title_en' => 'Mayawana (en)',
+            'excerpt_id' => 'Ringkasan id', 'excerpt_en' => 'Summary en', 'sort' => 1,
+        ]);
+        DeforestoryCardNotificationJob::dispatchSync($card);
+
+        // Hanya 2 email (type=all) yang terkirim; type=case di-skip.
+        Mail::assertQueued(DeforestoryCardMail::class, 2);
+
+        Mail::assertQueued(DeforestoryCardMail::class, function ($mail) use ($all) {
+            return $mail->hasTo($all->email) && $mail->subscriberLocale === 'id';
+        });
+        Mail::assertQueued(DeforestoryCardMail::class, function ($mail) use ($all2) {
+            return $mail->hasTo($all2->email) && $mail->subscriberLocale === 'en';
+        });
+    }
+
+    public function test_card_mail_uses_card_locale_fields(): void
+    {
+        Mail::fake();
+
+        $en = DeforestorySubscriber::create(['email' => 'en@x.com', 'type' => 'all', 'locale' => 'en', 'active' => true]);
+        $id = DeforestorySubscriber::create(['email' => 'id@x.com', 'type' => 'all', 'locale' => 'id', 'active' => true]);
+
+        $card = DeforestoryCard::create([
+            'slug' => 'pulau-laut',
+            'title_id' => 'Judul ID', 'title_en' => 'Title EN',
+            'excerpt_id' => 'Excerpt ID', 'excerpt_en' => 'Excerpt EN',
+            'sort' => 1,
+        ]);
+        DeforestoryCardNotificationJob::dispatchSync($card);
+
+        // Subscriber en: subject pakai title_en; id: pakai title_id.
+        Mail::assertQueued(DeforestoryCardMail::class, function ($mail) use ($en) {
+            return $mail->hasTo($en->email)
+                && $mail->envelope()->subject === 'New Deforestory case: Title EN';
+        });
+        Mail::assertQueued(DeforestoryCardMail::class, function ($mail) use ($id) {
+            return $mail->hasTo($id->email)
+                && $mail->envelope()->subject === 'Kasus Deforestory baru: Judul ID';
+        });
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\DeforestoryCardNotificationJob;
 use App\Models\DeforestoryCard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -18,6 +19,10 @@ use Illuminate\Support\Facades\DB;
  *
  * Catatan: penghapusan card TIDAK ditangani endpoint ini. Kalau nanti perlu
  * hapus, tambahkan field event=deleted per card (atau endpoint DELETE terpisah).
+ *
+ * Tiap card BARU (slug belum pernah ada) memicu DeforestoryCardNotificationJob
+ * (queue) → email subscriber aktif type `all` lewat DeforestoryCardMail. Update
+ * card yang sudah ada gak memicu email (biar gak spam). Butuh `queue:work` jalan.
  *
  * Endpoint: POST /api/deforestory/cards (route di routes/api.php, middleware
  * `api` saja). NOTE: auth sementara DIMATIKAN untuk testing — endpoint publik.
@@ -47,9 +52,11 @@ class DeforestoryCardWebhookController extends Controller
 
         // Upsert by slug: tambah kalau slug baru, update kalau sudah ada.
         // Gak hapus card lain (mode tambah/update, bukan full-list replace).
+        // Card yang BARU (wasRecentlyCreated) dikumpulkan untuk di-email ke subscriber.
         $stored = 0;
         $seen = [];
-        DB::transaction(function () use ($cards, &$stored, &$seen) {
+        $newCards = [];
+        DB::transaction(function () use ($cards, &$stored, &$seen, &$newCards) {
             foreach ($cards as $card) {
                 $slug = $card['slug'] ?? null;
                 if (! is_string($slug) || $slug === '' || isset($seen[$slug])) {
@@ -57,7 +64,7 @@ class DeforestoryCardWebhookController extends Controller
                 }
                 $seen[$slug] = true;
 
-                DeforestoryCard::updateOrCreate(
+                $model = DeforestoryCard::updateOrCreate(
                     ['slug' => $slug],
                     [
                         'category'   => $card['category']   ?? null,
@@ -71,14 +78,28 @@ class DeforestoryCardWebhookController extends Controller
                     ]
                 );
 
+                if ($model->wasRecentlyCreated) {
+                    $newCards[] = $model;
+                }
+
                 $stored++;
             }
         });
+
+        // Dispatch job notifikasi SETELAH commit (biar worker gak jalan sebelum
+        // data tersimpan). Hanya card baru; update gak memicu email.
+        foreach ($newCards as $newCard) {
+            DeforestoryCardNotificationJob::dispatch($newCard);
+        }
 
         if ($stored === 0) {
             return response()->json(['message' => 'Invalid payload: no card slugs'], 422);
         }
 
-        return response()->json(['received' => true, 'stored' => $stored], 200);
+        return response()->json([
+            'received' => true,
+            'stored' => $stored,
+            'notified' => count($newCards),
+        ], 200);
     }
 }

@@ -607,7 +607,8 @@ Catatan:
 
 ### 8d. Ekspektasi balasan dari CMS
 
-- Sukses → `200 {"received": true, "stored": <N>}` (N = jumlah card yang ditambah/diubah).
+- Sukses → `200 {"received": true, "stored": <N>, "notified": <M>}` (N = jumlah card
+  yang ditambah/diubah; M = jumlah card BARU yang memicu email subscriber).
 - Token salah / hilang → saat ini **tidak error** (auth dimatikan). Normalnya `401 {"message":"Unauthorized"}`.
 - Payload tidak valid (tidak ada `cards` / tidak ada slug) → `422`.
 - Kirim ulang dengan `X-Deforestory-Delivery` sama → `200 {"received": true, "dedup": true}`
@@ -615,6 +616,23 @@ Catatan:
 
 Catatan: **penghapusan card tidak ditangani** endpoint ini. Kalau perlu hapus card
 dari CMS, tambahkan field `event=deleted` per card (atau endpoint DELETE terpisah).
+
+### 8d-bis. Notifikasi subscriber (card BARU → email)
+
+Tiap card **BARU** (slug belum pernah ada di DB) yang tersimpan lewat endpoint ini
+memicu `DeforestoryCardNotificationJob` (queue async) → mengirim email
+`DeforestoryCardMail` ke subscriber CMS aktif **type `all`**. Card yang di-update
+(slug sudah ada) **tidak** memicu email (biar gak spam subscriber tiap perubahan).
+Subscriber type `case` gak di-email lewat jalur ini (mereka di-email lewat jalur
+laporan-publish, `DeforestoryNotificationJob`).
+
+**Konsekuensi operasional:** job async → butuh worker `php artisan queue:work`
+jalan di CMS (sama kayak webhook keluar). Tanpa worker, job numpuk di tabel `jobs`
+dan email gak terkirim. Lihat §3a (worker wajib jalan).
+
+Email `DeforestoryCardMail` pakai data card (judul/excerpt per locale, link ke
+halaman kasus, link unsubscribe) — berbeda dari `DeforestoryUpdateMail` (yang
+berbasis `DeforestoryCase` + dipicu saat laporan publish). Dua jalur independent.
 
 ### 8e. Contoh kirim dari web lain
 
@@ -654,7 +672,10 @@ tanpa CSRF).
 
 | File | Peran |
 |---|---|
-| `app/Http/Controllers/Api/DeforestoryCardWebhookController.php` | Idempotensi + upsert (tambah/update, gak hapus) card by slug |
+| `app/Http/Controllers/Api/DeforestoryCardWebhookController.php` | Idempotensi + upsert (tambah/update, gak hapus) card by slug; dispatch notifikasi untuk card baru |
+| `app/Jobs/DeforestoryCardNotificationJob.php` | Job queue: email subscriber type `all` saat card baru masuk (via `DeforestoryCardMail`) |
+| `app/Mail/DeforestoryCardMail.php` | Mailable email "kasus baru" berbasis data card |
+| `resources/views/emails/deforestory-card.blade.php` | Template email "kasus baru" card |
 | `app/Models/DeforestoryCard.php` | Model card lokal + `toCardArray($locale)` |
 | `app/Services/DeforestoryApiService.php` | Baca card dari tabel lokal (getCases / cardBySlug) |
 | `database/migrations/2026_08_06_000001_create_deforestory_cards_table.php` | Tabel `deforestory_cards` |
