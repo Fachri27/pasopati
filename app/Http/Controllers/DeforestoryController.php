@@ -12,7 +12,8 @@ class DeforestoryController extends Controller
     public function __construct(protected DeforestoryApiService $api) {}
 
     /**
-     * Arsip index: daftar kartu kasus dari API eksternal (mock untuk now).
+     * Arsip index: daftar kartu kasus dari tabel lokal (didorong web lain
+     * via inbound webhook /api/deforestory/cards).
      * GET /{locale}/deforestory
      */
     public function index($locale)
@@ -146,18 +147,13 @@ class DeforestoryController extends Controller
     }
 
     /**
-     * Cari kartu kasus di API (mock) berdasarkan slug. Mengembalikan array
-     * kartu {slug, title, excerpt, image, category, year} atau null.
+     * Cari kartu kasus di tabel lokal (didorong web lain via webhook) berdasarkan
+     * slug. Mengembalikan array kartu {slug, title, excerpt, image, category,
+     * year} atau null.
      */
     protected function findApiCard(string $locale, string $slug): ?array
     {
-        foreach ($this->api->getCases($locale) as $card) {
-            if (($card['slug'] ?? null) === $slug) {
-                return $card;
-            }
-        }
-
-        return null;
+        return $this->api->cardBySlug($locale, $slug);
     }
 
     /**

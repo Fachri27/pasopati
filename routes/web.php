@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\{DeforestoryController, DeforestoryMockApiController, EditorController, FellowshipController, PageController, PetitionController, SearchController};
+use App\Http\Controllers\{DeforestoryController, EditorController, FellowshipController, PageController, PetitionController, SearchController};
 use App\Http\Controllers\Admin\PetitionExportController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Livewire\Auth\LoginForm;
@@ -67,10 +67,6 @@ Route::middleware(['setlocale'])->prefix('{locale}')->where(['locale' => 'id|en'
 });
 
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware('auth')->name('dashboard');
-
-// MOCK API daftar kartu kasus Deforestory (lihat DeforestoryMockApiController).
-// Hapus saat API eksternal sudah dipakai (ganti DEFORESTORY_API_URL).
-Route::get('/api/deforestory-cases', [DeforestoryMockApiController::class, 'index']);
 
 Route::middleware(['auth', 'role:admin,editor'])->group(function () {
     Route::get('/kategori', KategoriTable::class)->name('kategori.index');

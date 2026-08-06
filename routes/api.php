@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\DeforestoryApiController;
+use App\Http\Controllers\Api\DeforestoryCardWebhookController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -26,7 +27,15 @@ use Illuminate\Support\Facades\Route;
 |
 | Semua endpoint terima ?locale=id|en (default id).
 |
+| Inbound webhook (tanpa Bearer token — autentikasi via HMAC signature):
+|   POST /api/deforestory/cards                              push daftar kartu kasus dari web lain
+|
 */
+
+// Inbound: web lain POST daftar card ke CMS. Autentikasi = HMAC signature
+// (X-Deforestory-Signature), bukan Bearer token → ditaruh di luar group
+// deforestory.api. Middleware `api` saja (throttle, tanpa CSRF).
+Route::post('/deforestory/cards', [DeforestoryCardWebhookController::class, 'handle']);
 
 Route::prefix('deforestory')
     ->controller(DeforestoryApiController::class)

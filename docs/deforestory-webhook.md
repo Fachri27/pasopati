@@ -527,5 +527,133 @@ pakai layanan request-bin publik untuk data produksi.
 |---|---|
 | `app/Jobs/DeforestoryWebhookJob.php` | Job kirim webhook keluar (POST + HMAC signature + translations id/en) |
 | `app/Livewire/Deforestory/DeforestoryLaporanForm.php` | Dispatch job saat `$justPublished` |
-| `config/services.php` (`deforestory_api`) | Konfigurasi URL/secret/timeout webhook |
-| `.env` | `DEFORESTORY_WEBHOOK_URL`, `DEFORESTORY_WEBHOOK_SECRET`, `DEFORESTORY_WEBHOOK_TIMEOUT` |
+| `config/services.php` (`deforestory_api`) | Konfigurasi secret webhook keluar & masuk + API key |
+| `.env` | `DEFORESTORY_WEBHOOK_URL`, `DEFORESTORY_WEBHOOK_SECRET`, `DEFORESTORY_WEBHOOK_TIMEOUT`, `DEFORESTORY_CARD_WEBHOOK_SECRET`, `DEFORESTORY_API_KEY` |
+
+---
+
+## 8. Webhook inbound — kartu kasus (web lain → CMS)
+
+Bagian §1–§6 di atas = webhook **keluar** (CMS POST laporan ke web lain). Bagian ini
+kebalikannya: webhook **masuk**, di mana **web lain POST daftar kartu kasus ke CMS**
+supaya halaman `/deforestory` (dan admin case table) langsung dapat card terbaru
+tanpa CMS nge-GET ke web lain. Sebelumnya CMS nge-GET card dari web lain (mock
+`/api/deforestory-cases`); mekanisme itu sudah dihapus dan diganti push ini.
+
+### 8a. Permintaan HTTP
+
+| Atribut | Nilai |
+|---|---|
+| Method | `POST` |
+| URL | `https://pasopati.id/api/deforestory/cards` |
+| Content-Type | `application/json` |
+| Body | JSON (UTF-8, raw) — lihat §8c |
+| Autentikasi | **HMAC signature** (bukan Bearer token) — lihat §8b |
+
+### 8b. Headers
+
+| Header | Isi | Wajib? |
+|---|---|---|
+| `X-Deforestory-Signature` | `sha256=<HMAC_SHA256(raw_body, DEFORESTORY_CARD_WEBHOOK_SECRET)>` | **wajib** (inbound harus ditandatangani) |
+| `X-Deforestory-Delivery` | UUID pengiriman — **pakai untuk idempotensi** | wajib |
+| `Content-Type` | `application/json` | selalu |
+
+### 8c. Body (JSON) — full-list sync
+
+Web lain POST **seluruh daftar card** sekaligus. CMS lalu **replace** tabel lokal:
+card yang tidak ada di payload dihapus, sisanya upsert by slug. Kedua locale
+(`id` + `en`) dikirim sekaligus.
+
+```json
+{
+  "cards": [
+    {
+      "slug": "mayawana",
+      "category": "pulp",
+      "year": "2021–2025",
+      "image": "https://pasopati.id/storage/deforestory/mayawana.jpg",
+      "title_id": "Mayawana: jejak deforestasi",
+      "title_en": "Mayawana: deforestation trail",
+      "excerpt_id": "Analisis spasial Mayawana.",
+      "excerpt_en": "Spatial analysis of Mayawana.",
+      "sort": 1
+    },
+    {
+      "slug": "pulau-laut",
+      "category": "sawit",
+      "year": "2022–2024",
+      "image": "https://pasopati.id/storage/deforestory/pulau-laut.jpg",
+      "title_id": "Pulau Laut: sawit di balik hutan lindung",
+      "title_en": "Pulau Laut: palm oil behind protected forest",
+      "excerpt_id": "Pembukaan lahan sawit Pulau Laut.",
+      "excerpt_en": "Palm land clearing in Pulau Laut.",
+      "sort": 2
+    }
+  ]
+}
+```
+
+Catatan:
+- `slug` wajib & unik (jadi kunci upsert). Sisanya nullable.
+- `sort` opsional (default 0) → dipakai urutan kartu di index.
+- `image` idealnya absolut URL (`https://...`).
+- Key `cards` juga menerima `data` sebagai alias (`{ "data": [...] }`).
+
+### 8d. Ekspektasi balasan dari CMS
+
+- Sukses → `200 {"received": true, "stored": <N>}`.
+- Signature salah / secret belum dikonfigurasi → `401`.
+- Payload tidak valid (tidak ada `cards` / tidak ada slug) → `422`.
+- Kirim ulang dengan `X-Deforestory-Delivery` sama → `200 {"received": true, "dedup": true}`
+  (tidak diproses ulang). Gunakan UUID berbeda tiap pengiriman baru.
+
+### 8e. Contoh kirim dari web lain
+
+**Laravel:**
+```php
+$secret = config('services.deforestory_api.card_webhook_secret'); // sama dgn CMS
+$body = json_encode(['cards' => $cards], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+Http::withHeaders([
+    'X-Deforestory-Signature' => 'sha256='.hash_hmac('sha256', $body, $secret),
+    'X-Deforestory-Delivery'  => (string) Str::uuid(),
+])->withBody($body, 'application/json')
+  ->post('https://pasopati.id/api/deforestory/cards');
+```
+
+**Express (Node):**
+```js
+import crypto from 'crypto';
+const body = JSON.stringify({ cards });
+const sig = 'sha256=' + crypto.createHmac('sha256', process.env.DEFORESTORY_CARD_WEBHOOK_SECRET).update(body).digest('hex');
+await fetch('https://pasopati.id/api/deforestory/cards', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-Deforestory-Signature': sig,
+    'X-Deforestory-Delivery': crypto.randomUUID(),
+  },
+  body,
+});
+```
+
+### 8f. Setup di sisi CMS
+
+`.env`:
+```env
+# HARUS sama persis dengan secret di web lain
+DEFORESTORY_CARD_WEBHOOK_SECRET=rahasia-card-bersama
+```
+
+Tidak perlu CSRF exception — endpoint ada di `routes/api.php` (middleware `api`
+saja, tanpa CSRF, tanpa Bearer token).
+
+### 8g. Referensi file inbound di CMS
+
+| File | Peran |
+|---|---|
+| `app/Http/Controllers/Api/DeforestoryCardWebhookController.php` | Verifikasi signature + idempotensi + full-list replace |
+| `app/Models/DeforestoryCard.php` | Model card lokal + `toCardArray($locale)` |
+| `app/Services/DeforestoryApiService.php` | Baca card dari tabel lokal (getCases / cardBySlug) |
+| `database/migrations/2026_08_06_000001_create_deforestory_cards_table.php` | Tabel `deforestory_cards` |
+| `routes/api.php` | `POST /api/deforestory/cards` |

@@ -2,101 +2,54 @@
 
 namespace App\Services;
 
-use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
+use App\Models\DeforestoryCard;
 
 /**
- * Mengambil daftar kartu kasus Deforestory dari API eksternal.
+ * Menyediakan daftar kartu kasus Deforestory ke halaman publik & admin.
  *
- * Hanya halaman index (/deforestory) yang memakai API ini. Konten arsip
- * dan laporan (/{slug} & /{slug}/laporan) tetap di CMS lokal, di-match via slug.
+ * Sebelumnya service ini nge-GET card dari web lain (mock /api/deforestory-cases,
+ * atau HTTP ke DEFORESTORY_API_URL). Sekarang card DIDORONG web lain ke CMS via
+ * inbound webhook (POST /api/deforestory/cards, lihat DeforestoryCardWebhookController)
+ * lalu disimpan di tabel deforestory_cards. Service ini cukup baca dari tabel
+ * lokal — real-time, no polling, no HTTP keluar.
  *
- * - URL relatif (default "/api/deforestory-cases") → mock lokal, dipanggil
- *   via sub-request internal (tanpa network) supaya tidak butuh server jalan.
- * - URL absolut (http://...) → panggilan HTTP biasa ke web lain.
- *   Ganti DEFORESTORY_API_URL untuk pakai API asli.
+ * Shape card tetap sama: {slug, category, year, image, title, excerpt} per
+ * locale, supaya view/livewire yang memakai getCases() tidak berubah.
  */
 class DeforestoryApiService
 {
+    /**
+     * Daftar kartu kasus sesuai locale, urut sort lalu slug.
+     */
     public function getCases(string $locale = 'id'): array
     {
-        $cacheKey = 'deforestory_api_cases:' . $locale;
-        $minutes = (int) config('services.deforestory_api.cache_minutes', 10);
-
-        return Cache::remember($cacheKey, now()->addMinutes($minutes), function () use ($locale) {
-            return $this->fetch($locale);
-        });
+        return DeforestoryCard::query()
+            ->orderBy('sort')
+            ->orderBy('slug')
+            ->get()
+            ->map(fn (DeforestoryCard $card) => $card->toCardArray($locale))
+            ->all();
     }
 
+    /**
+     * Cari satu kartu kasus by slug. Mengembalikan shape card sesuai locale
+     * atau null bila tidak ada.
+     */
+    public function cardBySlug(string $locale, string $slug): ?array
+    {
+        $card = DeforestoryCard::where('slug', $slug)->first();
+
+        return $card?->toCardArray($locale);
+    }
+
+    /**
+     * No-op sekarang. Sebelumnya memaksa refresh dari API eksternal; di model
+     * push, card diperbarui oleh webhook web lain → tidak ada yang di-pull.
+     * Dipertahankan agar pemanggil lama (mis. tombol "refresh" di admin) tidak
+     * rusak; sekadar kembalikan data lokal.
+     */
     public function refresh(string $locale = 'id'): array
     {
-        Cache::forget('deforestory_api_cases:' . $locale);
         return $this->getCases($locale);
-    }
-
-    protected function fetch(string $locale): array
-    {
-        $url = (string) config('services.deforestory_api.url', '/api/deforestory-cases');
-
-        try {
-            $payload = preg_match('#^https?://#', $url)
-                ? $this->fetchHttp($url, $locale)
-                : $this->fetchInternal($url, $locale);
-
-            return $this->normalize($payload);
-        } catch (ConnectionException $e) {
-            Log::warning('Deforestory API unreachable: ' . $e->getMessage());
-            return [];
-        } catch (\Throwable $e) {
-            Log::warning('Deforestory API error: ' . $e->getMessage());
-            return [];
-        }
-    }
-
-    /** Panggilan HTTP ke API eksternal (web lain). */
-    protected function fetchHttp(string $url, string $locale): ?array
-    {
-        $timeout = (int) config('services.deforestory_api.timeout', 8);
-
-        $response = Http::timeout($timeout)->get($url, ['locale' => $locale]);
-
-        if (! $response->successful()) {
-            Log::warning('Deforestory API non-2xx', ['status' => $response->status(), 'url' => $url]);
-            return null;
-        }
-
-        return $response->json();
-    }
-
-    /** Sub-request internal ke mock lokal (tanpa network). */
-    protected function fetchInternal(string $path, string $locale): ?array
-    {
-        $kernel = app(\Illuminate\Contracts\Http\Kernel::class);
-        $request = Request::create('/' . ltrim($path, '/') . '?locale=' . $locale, 'GET');
-
-        $response = $kernel->handle($request);
-        $kernel->terminate($request, $response);
-
-        if (! $response->isSuccessful()) {
-            Log::warning('Deforestory mock non-2xx', ['status' => $response->status(), 'path' => $path]);
-            return null;
-        }
-
-        return json_decode($response->getContent(), true);
-    }
-
-    /** Normalisasi berbagai bentuk respons → list card. */
-    protected function normalize(?array $payload): array
-    {
-        if (! is_array($payload)) {
-            return [];
-        }
-
-        $list = $payload['data'] ?? $payload['cases'] ?? $payload;
-
-        return is_array($list) ? array_values($list) : [];
     }
 }

@@ -10,8 +10,9 @@ use Livewire\WithPagination;
 /**
  * Daftar kasus Deforestory di admin.
  *
- * Kartu (identitas kasus) datang dari API eksternal — sama dengan halaman
- * publik /deforestory. Di sini editor tidak "membuat kartu", melainkan
+ * Kartu (identitas kasus) datang dari tabel lokal deforestory_cards — didorong
+ * web lain via inbound webhook (POST /api/deforestory/cards), sama dengan
+ * halaman publik /deforestory. Di sini editor tidak "membuat kartu", melainkan
  * mengisi konten halaman DETAIL (arsip + laporan) per slug. Tiap baris
  * menunjukkan apakah detail sudah diisi di CMS.
  */
@@ -24,6 +25,8 @@ class DeforestoryCaseTable extends Component
 
     public function refreshList()
     {
+        // Model push: card diperbarui via webhook dari web lain, bukan di-pull.
+        // refresh() sekarang no-op; panggil sekadar re-render list.
         app(DeforestoryApiService::class)->refresh($this->locale);
     }
 
