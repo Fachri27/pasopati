@@ -54,11 +54,6 @@ return [
         'webhook_url' => env('DEFORESTORY_WEBHOOK_URL'),
         'webhook_secret' => env('DEFORESTORY_WEBHOOK_SECRET'),
         'webhook_timeout' => env('DEFORESTORY_WEBHOOK_TIMEOUT', 10),
-
-        // Webhook masuk: web lain POST daftar kartu kasus ke CMS
-        // (POST /api/deforestory/cards). Signature HMAC SHA256 diverifikasi
-        // pakai secret ini — HARUS sama dengan secret di sisi web lain.
-        'card_webhook_secret' => env('DEFORESTORY_CARD_WEBHOOK_SECRET'),
     ],
 
 ];

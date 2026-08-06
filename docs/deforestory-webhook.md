@@ -547,15 +547,15 @@ tanpa CMS nge-GET ke web lain. Sebelumnya CMS nge-GET card dari web lain (mock
 | Method | `POST` |
 | URL | `https://pasopati.id/api/deforestory/cards` |
 | Content-Type | `application/json` |
-| Body | JSON (UTF-8, raw) — lihat §8c |
-| Autentikasi | **HMAC signature** (bukan Bearer token) — lihat §8b |
+| Body | JSON (UTF-8) — lihat §8c |
+| Autentikasi | **Bearer token** `DEFORESTORY_API_KEY` (sama dengan endpoint GET sindikasi) — lihat §8b |
 
 ### 8b. Headers
 
 | Header | Isi | Wajib? |
 |---|---|---|
-| `X-Deforestory-Signature` | `sha256=<HMAC_SHA256(raw_body, DEFORESTORY_CARD_WEBHOOK_SECRET)>` | **wajib** (inbound harus ditandatangani) |
-| `X-Deforestory-Delivery` | UUID pengiriman — **pakai untuk idempotensi** | wajib |
+| `Authorization` | `Bearer <DEFORESTORY_API_KEY>` | **wajib** (token bisa juga via `?token=`) |
+| `X-Deforestory-Delivery` | UUID pengiriman — **pakai untuk idempotensi** | opsional (tanpa ini, dedup dimatikan) |
 | `Content-Type` | `application/json` | selalu |
 
 ### 8c. Body (JSON) — full-list sync
@@ -602,7 +602,7 @@ Catatan:
 ### 8d. Ekspektasi balasan dari CMS
 
 - Sukses → `200 {"received": true, "stored": <N>}`.
-- Signature salah / secret belum dikonfigurasi → `401`.
+- Token salah / hilang → `401 {"message":"Unauthorized"}`.
 - Payload tidak valid (tidak ada `cards` / tidak ada slug) → `422`.
 - Kirim ulang dengan `X-Deforestory-Delivery` sama → `200 {"received": true, "dedup": true}`
   (tidak diproses ulang). Gunakan UUID berbeda tiap pengiriman baru.
@@ -611,49 +611,41 @@ Catatan:
 
 **Laravel:**
 ```php
-$secret = config('services.deforestory_api.card_webhook_secret'); // sama dgn CMS
-$body = json_encode(['cards' => $cards], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+$key = config('services.deforestory_api.key'); // DEFORESTORY_API_KEY, sama dgn CMS
 
-Http::withHeaders([
-    'X-Deforestory-Signature' => 'sha256='.hash_hmac('sha256', $body, $secret),
-    'X-Deforestory-Delivery'  => (string) Str::uuid(),
-])->withBody($body, 'application/json')
-  ->post('https://pasopati.id/api/deforestory/cards');
+Http::withToken($key) // → Authorization: Bearer <key>
+    ->withHeaders(['X-Deforestory-Delivery' => (string) Str::uuid()])
+    ->post('https://pasopati.id/api/deforestory/cards', ['cards' => $cards]);
 ```
 
 **Express (Node):**
 ```js
-import crypto from 'crypto';
-const body = JSON.stringify({ cards });
-const sig = 'sha256=' + crypto.createHmac('sha256', process.env.DEFORESTORY_CARD_WEBHOOK_SECRET).update(body).digest('hex');
 await fetch('https://pasopati.id/api/deforestory/cards', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
-    'X-Deforestory-Signature': sig,
+    'Authorization': `Bearer ${process.env.DEFORESTORY_API_KEY}`,
     'X-Deforestory-Delivery': crypto.randomUUID(),
   },
-  body,
+  body: JSON.stringify({ cards }),
 });
 ```
 
 ### 8f. Setup di sisi CMS
 
-`.env`:
-```env
-# HARUS sama persis dengan secret di web lain
-DEFORESTORY_CARD_WEBHOOK_SECRET=rahasia-card-bersama
-```
+Tidak perlu konfigurasi tambahan — endpoint pakai `DEFORESTORY_API_KEY` yang sudah
+ada (sama dengan endpoint GET sindikasi). Jadi cukup pastikan `DEFORESTORY_API_KEY`
+di `.env` CMS terisi, dan kasih nilai itu ke web lain.
 
-Tidak perlu CSRF exception — endpoint ada di `routes/api.php` (middleware `api`
-saja, tanpa CSRF, tanpa Bearer token).
+Tidak perlu CSRF exception — endpoint ada di `routes/api.php` (middleware `api` +
+`deforestory.api`, tanpa CSRF).
 
 ### 8g. Referensi file inbound di CMS
 
 | File | Peran |
 |---|---|
-| `app/Http/Controllers/Api/DeforestoryCardWebhookController.php` | Verifikasi signature + idempotensi + full-list replace |
+| `app/Http/Controllers/Api/DeforestoryCardWebhookController.php` | Idempotensi + full-list replace (auth via middleware `deforestory.api`) |
 | `app/Models/DeforestoryCard.php` | Model card lokal + `toCardArray($locale)` |
 | `app/Services/DeforestoryApiService.php` | Baca card dari tabel lokal (getCases / cardBySlug) |
 | `database/migrations/2026_08_06_000001_create_deforestory_cards_table.php` | Tabel `deforestory_cards` |
-| `routes/api.php` | `POST /api/deforestory/cards` |
+| `routes/api.php` | `POST /api/deforestory/cards` (middleware `deforestory.api`) |

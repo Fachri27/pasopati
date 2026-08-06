@@ -12,7 +12,7 @@ class DeforestoryCardWebhookTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const SECRET = 'card-webhook-secret';
+    private const KEY = 'card-api-key';
     private const ENDPOINT = '/api/deforestory/cards';
 
     /** Payload contoh: 2 card (id + en lengkap). */
@@ -46,34 +46,34 @@ class DeforestoryCardWebhookTest extends TestCase
         ];
     }
 
-    private function signedPost(array $payload, ?string $secret = self::SECRET, ?string $delivery = null, ?string $signatureOverride = null)
+    private function postCards(array $payload, ?string $delivery = null, ?string $key = self::KEY)
     {
-        $body = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-        $sig = $signatureOverride ?? ('sha256=' . hash_hmac('sha256', $body, $secret));
-
-        $headers = [
-            'X-Deforestory-Signature' => $sig,
-            'Content-Type' => 'application/json',
-        ];
+        $headers = ['Content-Type' => 'application/json'];
+        $server = ['CONTENT_TYPE' => 'application/json'];
+        if ($key) {
+            $server['HTTP_AUTHORIZATION'] = 'Bearer ' . $key;
+        }
         if ($delivery) {
-            $headers['X-Deforestory-Delivery'] = $delivery;
+            $server['HTTP_X_DEFORESTORY_DELIVERY'] = $delivery;
         }
 
-        return $this->call('POST', self::ENDPOINT, [], [], [], $this->transformHeadersToServerVars($headers), $body);
+        return $this->call(
+            'POST', self::ENDPOINT, [], [], [], $server,
+            json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+        );
     }
 
-    public function test_valid_signature_stores_cards_full_list_replace(): void
+    public function test_valid_api_key_stores_cards_full_list_replace(): void
     {
-        config(['services.deforestory_api.card_webhook_secret' => self::SECRET]);
+        config(['services.deforestory_api.key' => self::KEY]);
 
         // Seed card lama yang TIDAK ada di payload → harus terhapus (full-list replace).
         DeforestoryCard::create(['slug' => 'lama-dihapus', 'sort' => 0]);
 
-        $response = $this->signedPost($this->cardsPayload(), delivery: Str::uuid()->toString());
+        $response = $this->postCards($this->cardsPayload(), Str::uuid()->toString());
 
         $response->assertStatus(200)->assertJson(['received' => true, 'stored' => 2]);
 
-        // Card lama terhapus; 2 card baru tersimpan by slug.
         $this->assertDatabaseMissing('deforestory_cards', ['slug' => 'lama-dihapus']);
         $this->assertSame(2, DeforestoryCard::count());
 
@@ -85,10 +85,9 @@ class DeforestoryCardWebhookTest extends TestCase
 
     public function test_upsert_updates_existing_card_by_slug(): void
     {
-        config(['services.deforestory_api.card_webhook_secret' => self::SECRET]);
+        config(['services.deforestory_api.key' => self::KEY]);
 
-        // Push pertama.
-        $this->signedPost($this->cardsPayload(), delivery: Str::uuid()->toString());
+        $this->postCards($this->cardsPayload(), Str::uuid()->toString());
 
         // Push kedua: ubah category mayawana, hapus pulau-laut dari payload.
         $updated = [
@@ -107,36 +106,31 @@ class DeforestoryCardWebhookTest extends TestCase
             ],
         ];
 
-        $response = $this->signedPost($updated, delivery: Str::uuid()->toString());
+        $response = $this->postCards($updated, Str::uuid()->toString());
 
         $response->assertStatus(200)->assertJson(['stored' => 1]);
-
-        // mayawana di-update, pulau-laut di-hapus (tidak ada di payload kedua).
         $this->assertSame(1, DeforestoryCard::count());
         $this->assertSame('mining', DeforestoryCard::where('slug', 'mayawana')->value('category'));
         $this->assertSame('Mayawana (baru)', DeforestoryCard::where('slug', 'mayawana')->value('title_id'));
         $this->assertDatabaseMissing('deforestory_cards', ['slug' => 'pulau-laut']);
     }
 
-    public function test_invalid_signature_returns_401(): void
+    public function test_missing_api_key_returns_401(): void
     {
-        config(['services.deforestory_api.card_webhook_secret' => self::SECRET]);
+        config(['services.deforestory_api.key' => self::KEY]);
 
-        $response = $this->signedPost(
-            $this->cardsPayload(),
-            signatureOverride: 'sha256=' . str_repeat('0', 64),
-            delivery: Str::uuid()->toString()
-        );
+        // Kirim tanpa Bearer token.
+        $response = $this->postCards($this->cardsPayload(), Str::uuid()->toString(), key: null);
 
         $response->assertStatus(401);
         $this->assertSame(0, DeforestoryCard::count());
     }
 
-    public function test_missing_secret_returns_401(): void
+    public function test_invalid_api_key_returns_401(): void
     {
-        config(['services.deforestory_api.card_webhook_secret' => null]);
+        config(['services.deforestory_api.key' => self::KEY]);
 
-        $response = $this->signedPost($this->cardsPayload(), delivery: Str::uuid()->toString());
+        $response = $this->postCards($this->cardsPayload(), Str::uuid()->toString(), key: 'salah');
 
         $response->assertStatus(401);
         $this->assertSame(0, DeforestoryCard::count());
@@ -144,45 +138,39 @@ class DeforestoryCardWebhookTest extends TestCase
 
     public function test_idempotency_same_delivery_dedup(): void
     {
-        config(['services.deforestory_api.card_webhook_secret' => self::SECRET]);
+        config(['services.deforestory_api.key' => self::KEY]);
 
         $delivery = Str::uuid()->toString();
 
-        // Push pertama: 2 card.
-        $this->signedPost($this->cardsPayload(), delivery: $delivery)->assertStatus(200);
+        $this->postCards($this->cardsPayload(), $delivery)->assertStatus(200);
         $this->assertSame(2, DeforestoryCard::count());
 
-        // Push kedua dengan delivery SAMA tapi payload berbeda → dedup, tidak diproses.
+        // Push kedua dengan delivery SAMA tapi payload berbeda → dedup.
         $second = ['cards' => [
             ['slug' => 'lain', 'title_id' => 'Lain', 'title_en' => 'Other', 'excerpt_id' => 'a', 'excerpt_en' => 'b', 'sort' => 9],
         ]];
-        $response = $this->signedPost($second, delivery: $delivery);
+        $response = $this->postCards($second, $delivery);
 
         $response->assertStatus(200)->assertJson(['received' => true, 'dedup' => true]);
-
-        // Tabel tetap hasil push pertama (2 card mayawana + pulau-laut), 'lain' tidak masuk.
         $this->assertSame(2, DeforestoryCard::count());
         $this->assertDatabaseMissing('deforestory_cards', ['slug' => 'lain']);
     }
 
     public function test_getcases_reads_local_cards_after_push(): void
     {
-        config(['services.deforestory_api.card_webhook_secret' => self::SECRET]);
+        config(['services.deforestory_api.key' => self::KEY]);
 
-        $this->signedPost($this->cardsPayload(), delivery: Str::uuid()->toString())->assertStatus(200);
+        $this->postCards($this->cardsPayload(), Str::uuid()->toString())->assertStatus(200);
 
         $idCases = app(DeforestoryApiService::class)->getCases('id');
         $enCases = app(DeforestoryApiService::class)->getCases('en');
 
-        // Urut sort asc → mayawana (sort 1) dulu.
         $this->assertSame('mayawana', $idCases[0]['slug']);
         $this->assertSame('Mayawana: jejak deforestasi', $idCases[0]['title']);
         $this->assertSame('Analisis spasial Mayawana.', $idCases[0]['excerpt']);
-
         $this->assertSame('Mayawana: deforestation trail', $enCases[0]['title']);
         $this->assertSame('Spatial analysis of Mayawana.', $enCases[0]['excerpt']);
 
-        // Shape card lengkap.
         $this->assertSame(
             ['slug', 'category', 'year', 'image', 'title', 'excerpt'],
             array_keys($idCases[0])
@@ -191,9 +179,9 @@ class DeforestoryCardWebhookTest extends TestCase
 
     public function test_cardbyslug_returns_match_or_null(): void
     {
-        config(['services.deforestory_api.card_webhook_secret' => self::SECRET]);
+        config(['services.deforestory_api.key' => self::KEY]);
 
-        $this->signedPost($this->cardsPayload(), delivery: Str::uuid()->toString())->assertStatus(200);
+        $this->postCards($this->cardsPayload(), Str::uuid()->toString())->assertStatus(200);
 
         $api = app(DeforestoryApiService::class);
 
