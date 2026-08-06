@@ -38,6 +38,9 @@ use Illuminate\Support\Str;
  */
 class DeforestoryCardWebhookController extends Controller
 {
+    /** Nilai `status` yang dikenal. 'publish' = tampil di publik, 'draft' = sembunyi. */
+    private const STATUSES = ['publish', 'draft'];
+
     public function handle(Request $request)
     {
         // Autentikasi (Bearer token = DEFORESTORY_API_KEY) sudah divalidasi oleh
@@ -108,6 +111,12 @@ class DeforestoryCardWebhookController extends Controller
                 if ($hasUuid) {
                     $attributes['uuid'] = $uuid;
                 }
+                // status opsional di POST: kirim hanya kalau caller minta & valid.
+                // Kalau gak dikirim → create dapat default 'publish', update mempertahankan
+                // status lama (visibility gak ke-reset oleh push konten biasa).
+                if (array_key_exists('status', $card) && in_array($card['status'], self::STATUSES, true)) {
+                    $attributes['status'] = $card['status'];
+                }
 
                 $model = DeforestoryCard::updateOrCreate($key, $attributes);
 
@@ -160,10 +169,12 @@ class DeforestoryCardWebhookController extends Controller
      * Partial update: hanya field yang dikirim yang ditimpa; field yang tidak
      * dikirim tetap. Kirim `null` eksplisit untuk mengosongkan sebuah field.
      *
-     * Field yang diterima: slug, category, year, image_id, image_en, title_id,
-     * title_en, excerpt_id, excerpt_en, sort. slug sekarang updatable (identifier
-     * = id, bukan slug). Alias singkat `title` → title_id dan `excerpt` →
-     * excerpt_id (locale default 'id'), supaya caller yang membaca shape
+     * Field yang diterima: slug, status, category, year, image_id, image_en,
+     * title_id, title_en, excerpt_id, excerpt_en, sort. slug sekarang updatable
+     * (identifier = uuid, bukan slug). status kendalikan visibilitas ('publish' /
+     * 'draft') — PUT inilah jalur utama publish/unpublish card. Alias singkat
+     * `title` → title_id dan `excerpt` → excerpt_id (locale default 'id'), supaya
+     * caller yang membaca shape
      * {title, excerpt} dari toCardArray() bisa PUT balik apa adanya. Bila tidak
      * ada field yang dikenali sama sekali → 422 (bukan silent success).
      *
@@ -194,8 +205,8 @@ class DeforestoryCardWebhookController extends Controller
         }
 
         // Field yang boleh diubah. identifier = uuid di URL; slug kini updatable
-        // (slug boleh ikut berubah saat title berubah).
-        $fields = ['slug', 'category', 'year', 'image_id', 'image_en', 'title_id', 'title_en', 'excerpt_id', 'excerpt_en', 'sort'];
+        // (slug boleh ikut berubah saat title berubah). status kendalikan visibilitas.
+        $fields = ['slug', 'status', 'category', 'year', 'image_id', 'image_en', 'title_id', 'title_en', 'excerpt_id', 'excerpt_en', 'sort'];
 
         $input = $request->input();
 
@@ -255,12 +266,21 @@ class DeforestoryCardWebhookController extends Controller
             }
         }
 
+        // status harus nilai yang dikenal (active/inactive) — cegah typo sembunyiin
+        // card tanpa sengaja.
+        if (array_key_exists('status', $updates) && ! in_array($updates['status'], self::STATUSES, true)) {
+            return response()->json([
+                'message' => 'Invalid status',
+                'accepted' => self::STATUSES,
+            ], 422);
+        }
+
         // Tidak ada field yang dikenali → tolak keras, jangan pura-pura sukses.
         if (! $updates) {
             return response()->json([
                 'message' => 'No updatable fields provided',
                 'accepted' => [
-                    'slug', 'category', 'year', 'image_id', 'image_en',
+                    'slug', 'status', 'category', 'year', 'image_id', 'image_en',
                     'title', 'title_id', 'title_en',
                     'excerpt', 'excerpt_id', 'excerpt_en',
                     'sort',
@@ -274,7 +294,7 @@ class DeforestoryCardWebhookController extends Controller
             'received' => true,
             'updated' => true,
             'card' => $card->fresh()->only([
-                'id', 'uuid', 'slug', 'category', 'year', 'image_id', 'image_en',
+                'id', 'uuid', 'slug', 'status', 'category', 'year', 'image_id', 'image_en',
                 'title_id', 'title_en', 'excerpt_id', 'excerpt_en',
                 'sort', 'updated_at',
             ]),

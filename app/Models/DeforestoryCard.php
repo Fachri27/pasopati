@@ -26,6 +26,7 @@ class DeforestoryCard extends Model
     protected $fillable = [
         'uuid',
         'slug',
+        'status',
         'category',
         'year',
         'image_id',

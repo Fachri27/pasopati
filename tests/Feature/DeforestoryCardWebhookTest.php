@@ -271,6 +271,117 @@ class DeforestoryCardWebhookTest extends TestCase
         $this->assertNull($api->cardBySlug('id', 'tidak-ada'));
     }
 
+    public function test_put_status_draft_hides_card_from_public(): void
+    {
+        config(['services.deforestory_api.key' => self::KEY]);
+
+        $this->postCards($this->cardsPayload(), Str::uuid()->toString())->assertStatus(200);
+        $uuid = $this->cardUuid('mayawana');
+        $api = app(DeforestoryApiService::class);
+
+        // Awalnya publish → tampil di getCases & cardBySlug.
+        $this->assertTrue(collect($api->getCases('id'))->contains(fn ($c) => $c['slug'] === 'mayawana'));
+        $this->assertNotNull($api->cardBySlug('id', 'mayawana'));
+
+        // Set draft via PUT → hilang dari publik.
+        $this->updateCard($uuid, ['status' => 'draft'])
+            ->assertStatus(200)
+            ->assertJsonPath('card.status', 'draft');
+
+        $this->assertFalse(collect($api->getCases('id'))->contains(fn ($c) => $c['slug'] === 'mayawana'));
+        $this->assertNull($api->cardBySlug('id', 'mayawana'));
+
+        // Card lain (pulau-laut) tetap tampil — filter per-card, bukan global.
+        $this->assertTrue(collect($api->getCases('id'))->contains(fn ($c) => $c['slug'] === 'pulau-laut'));
+    }
+
+    public function test_put_status_publish_restores_hidden_card(): void
+    {
+        config(['services.deforestory_api.key' => self::KEY]);
+
+        $this->postCards($this->cardsPayload(), Str::uuid()->toString())->assertStatus(200);
+        $uuid = $this->cardUuid('mayawana');
+        $api = app(DeforestoryApiService::class);
+
+        // Draft dulu → tersembunyi.
+        $this->updateCard($uuid, ['status' => 'draft'])->assertStatus(200);
+        $this->assertNull($api->cardBySlug('id', 'mayawana'));
+
+        // Publish balik → muncul lagi.
+        $this->updateCard($uuid, ['status' => 'publish'])->assertStatus(200);
+        $this->assertNotNull($api->cardBySlug('id', 'mayawana'));
+        $this->assertTrue(collect($api->getCases('id'))->contains(fn ($c) => $c['slug'] === 'mayawana'));
+    }
+
+    public function test_put_invalid_status_returns_422(): void
+    {
+        config(['services.deforestory_api.key' => self::KEY]);
+
+        $this->postCards($this->cardsPayload(), Str::uuid()->toString())->assertStatus(200);
+        $uuid = $this->cardUuid('mayawana');
+
+        // 'active' (nilai lama) harus ditolak — cuma 'publish'/'draft' yang valid.
+        $this->updateCard($uuid, ['status' => 'active'])
+            ->assertStatus(422)
+            ->assertJson(['message' => 'Invalid status', 'accepted' => ['publish', 'draft']]);
+
+        // Status card gak berubah (tetap default publish).
+        $this->assertSame('publish', DeforestoryCard::where('uuid', $uuid)->value('status'));
+    }
+
+    public function test_post_without_status_defaults_to_publish_visible(): void
+    {
+        config(['services.deforestory_api.key' => self::KEY]);
+
+        // Payload TANPA field status → card baru dapat default 'publish' (tampil).
+        $this->postCards($this->cardsPayload(), Str::uuid()->toString())->assertStatus(200);
+        $uuid = $this->cardUuid('mayawana');
+
+        $this->assertSame('publish', DeforestoryCard::where('uuid', $uuid)->value('status'));
+
+        $api = app(DeforestoryApiService::class);
+        $this->assertTrue(collect($api->getCases('id'))->contains(fn ($c) => $c['slug'] === 'mayawana'));
+    }
+
+    public function test_post_with_status_draft_creates_hidden_card(): void
+    {
+        config(['services.deforestory_api.key' => self::KEY]);
+
+        // Push card baru dgn status='draft' → tersimpan tapi tersembunyi dari publik.
+        $payload = ['cards' => [[
+            'uuid' => self::UUID_MAYAWANA,
+            'slug' => 'mayawana-draft',
+            'title_id' => 'Mayawana draft',
+            'status' => 'draft',
+            'sort' => 1,
+        ]]];
+        $this->postCards($payload, Str::uuid()->toString())->assertStatus(200);
+
+        $this->assertSame('draft', DeforestoryCard::where('uuid', self::UUID_MAYAWANA)->value('status'));
+
+        $api = app(DeforestoryApiService::class);
+        $this->assertFalse(collect($api->getCases('id'))->contains(fn ($c) => $c['slug'] === 'mayawana-draft'));
+        $this->assertNull($api->cardBySlug('id', 'mayawana-draft'));
+    }
+
+    public function test_post_status_not_reset_on_update_when_absent(): void
+    {
+        config(['services.deforestory_api.key' => self::KEY]);
+
+        // Push awal → publish.
+        $this->postCards($this->cardsPayload(), Str::uuid()->toString())->assertStatus(200);
+        $uuid = $this->cardUuid('mayawana');
+
+        // Set draft via PUT.
+        $this->updateCard($uuid, ['status' => 'draft'])->assertStatus(200);
+        $this->assertSame('draft', DeforestoryCard::where('uuid', $uuid)->value('status'));
+
+        // Push ulang (POST) TANPA status → status lama DIPERTAHANKAN, bukan di-reset
+        // ke default 'publish'. Update konten biasa gak bolehubah visibilitas.
+        $this->postCards($this->cardsPayload(), Str::uuid()->toString())->assertStatus(200);
+        $this->assertSame('draft', DeforestoryCard::where('uuid', $uuid)->value('status'));
+    }
+
     public function test_new_card_dispatches_notification_job(): void
     {
         Queue::fake();

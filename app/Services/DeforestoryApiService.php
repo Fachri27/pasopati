@@ -19,11 +19,13 @@ use App\Models\DeforestoryCard;
 class DeforestoryApiService
 {
     /**
-     * Daftar kartu kasus sesuai locale, urut sort lalu slug.
+     * Daftar kartu kasus sesuai locale, urut sort lalu slug. Hanya card
+     * `status = 'publish'` — card 'draft' disembunyi dari publik.
      */
     public function getCases(string $locale = 'id'): array
     {
         return DeforestoryCard::query()
+            ->where('status', 'publish')
             ->orderBy('sort')
             ->orderBy('slug')
             ->get()
@@ -33,11 +35,11 @@ class DeforestoryApiService
 
     /**
      * Cari satu kartu kasus by slug. Mengembalikan shape card sesuai locale
-     * atau null bila tidak ada.
+     * atau null bila tidak ada / ber-status 'draft' (tersembunyi).
      */
     public function cardBySlug(string $locale, string $slug): ?array
     {
-        $card = DeforestoryCard::where('slug', $slug)->first();
+        $card = DeforestoryCard::where('slug', $slug)->where('status', 'publish')->first();
 
         return $card?->toCardArray($locale);
     }
