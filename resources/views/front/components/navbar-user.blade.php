@@ -40,9 +40,6 @@
                         class="hidden md:inline-block text-black hover:text-gray-600 font-bold ml-4"
                         target="_blank">FORUM</a>
 
-                    <a href="{{ route('deforestory', ['locale' => app()->getLocale()]) }}"
-                        class="hidden md:inline-block text-black hover:text-gray-600 font-bold ml-4">DEFORESTORY</a>
-
                 </div>
                 <button @click="open = !open" class="bg-[#2B5343] py-4 px-3">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24"
@@ -91,10 +88,6 @@
                     <li>
                         <a href="https://forum.pasopati.id/"
                             class="text-black hover:text-gray-600 font-bold uppercase">FORUM</a>
-                    </li>
-                    <li>
-                        <a href="{{ route('deforestory', ['locale' => app()->getLocale()]) }}"
-                            class="text-black hover:text-gray-600 font-bold uppercase">DEFORESTORY</a>
                     </li>
                     <li>
                         <a href="" class="block text-gray-800 font-semibold uppercase">Home</a>
