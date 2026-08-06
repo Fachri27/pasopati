@@ -71,11 +71,19 @@ class DeforestorySyncJob implements ShouldQueue
         // Endpoint simontini: POST /api/deforestory/sync/{uuid}.
         $endpoint = rtrim($url, '/') . '/' . rawurlencode($card->uuid);
 
+        // PENTING: jangan ikuti redirect. Simontini balas 202 Accepted untuk uuid
+        // deforestory yang terdaftar, tapi balas 302 redirect ke homepage untuk uuid
+        // yang GAK terdaftar di simontini. Kalau redirect diikuti (default Http::post),
+        // 302 → home (200) → kelihatan sukses padahal simontini gak nerima apa-apa
+        // (false-positive). Dengan redirect dimatikan, 302 tetap 302 → gagal 2xx →
+        // throw → retry, jadi uuid gak-terdaftar keluar sebagai failure beneran.
         $response = Http::timeout($timeout)
+            ->withOptions(['allow_redirects' => false])
             ->withToken($token)
             ->post($endpoint, $payload);
 
-        // Lempar supaya Laravel retry (tries=3) kalau simontini gagal 2xx.
+        // Lempar supaya Laravel retry (tries=3) kalau simontini gagal 2xx (termasuk
+        // 302 = uuid gak terdaftar, atau 401/500 dll).
         if (! $response->successful()) {
             throw new \RuntimeException(
                 "Sync laporan ke simontini ({$endpoint}) gagal: HTTP {$response->status()}"

@@ -193,6 +193,23 @@ class DeforestorySyncTest extends TestCase
         (new DeforestorySyncJob($case, $laporan))->handle();
     }
 
+    public function test_sync_fails_when_target_redirects_unregistered_uuid(): void
+    {
+        // Simontini balas 302 redirect ke homepage untuk uuid yang gak terdaftar
+        // (deforestory belum dibuat di sisi simontini). Job HARUS gak ngikutin
+        // redirect — 302 harus keluar sebagai failure, bukan 302→200 false-success.
+        $this->configSync();
+        $this->makeCard();
+        [$case, $laporan] = $this->makeLaporan();
+
+        Http::fake([
+            $this->syncEndpoint() => Http::response('', 302, ['Location' => 'https://simontini.example/']),
+        ]);
+
+        $this->expectException(\RuntimeException::class);
+        (new DeforestorySyncJob($case, $laporan))->handle();
+    }
+
     public function test_publishing_via_form_dispatches_sync_job(): void
     {
         $this->configSync();
