@@ -12,8 +12,8 @@ trait HasSeoMeta
 
         return [
             'title' => $translation->title ?? config('app.name'),
-            'description' => $translation->meta_description 
-                ?? Str::limit(strip_tags($translation->deskripsi ?? $translation->content ?? ''), 160),
+            'description' => $translation->meta_description
+                ?? Str::limit($translation->plainText(), 160),
             'image' => $this->getSeoImage($locale),
             'type' => 'article',
         ];

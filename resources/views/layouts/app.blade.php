@@ -91,6 +91,7 @@
         rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -99,6 +100,7 @@
 
 
     <style>
+        html.preloader-active { overflow: hidden; }
         body {
             font-family: 'Inter', sans-serif;
         }
@@ -114,9 +116,17 @@
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
+
+    @if (! empty(config('services.turnstile.site_key')))
+        <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+    @endif
 </head>
 
 <body class="flex flex-col min-h-screen bg-white">
+    @if (request()->routeIs('home'))
+        @include('front.partials.preloader')
+    @endif
+
     {{-- Navbar --}}
     @include('front.components.navbar-user')
 

@@ -31,6 +31,21 @@ return new class extends Migration
             $table->string('locale', 5); // id, en, dll
             $table->string('title');
             $table->text('excerpt')->nullable();
+            // SARAN: Ganti atau tambahkan kolom content_blocks (JSON):
+            //   $table->json('content_blocks')->nullable();
+            //
+            // content_blocks menyimpan array of objects, misal:
+            // [
+            //   { "type": "paragraph", "data": { "html": "<p>...</p>" } },
+            //   { "type": "image",     "data": { "src": "path.jpg", "caption": "...", "alignment": "center" } },
+            //   { "type": "event_info_box", "data": { "format": "online", "date": "2025-12-01", "time": "10:00", "venue": "Zoom", "registration_links": [{"day":"1","url":"https://..."}], "notes": "..." } },
+            //   { "type": "agenda_day", "data": { "day": "2025-12-01", "sessions": [{"time":"09:00","title":"...","description":"...","moderator":"...","commentator":"...","speakers":["...","..."]}] } },
+            //   { "type": "speaker_bio", "data": { "photo": "path.jpg", "name": "...", "title": "...", "bio": "..." } },
+            //   { "type": "quote", "data": { "text": "...", "source": "..." } }
+            // ]
+            //
+            // Keuntungan: setiap block bisa di-render dengan partial/view sendiri di frontend,
+            // tidak perlu hardcode HTML di TinyMCE. Tim bisa drag-and-drop / reorder block.
             $table->longText('content')->nullable();
             $table->timestamps();
 

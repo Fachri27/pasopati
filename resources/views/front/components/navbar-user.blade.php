@@ -36,7 +36,12 @@
                     <a href="{{ $switchUrl }}"
                         class="hover:text-green-900 {{ app()->getLocale() === 'id' ? 'font-bold text-red-600' : '' }}">ID</a>
 
-                    <a href="https://forum.pasopati.id/" class="text-black hover:text-gray-600 font-bold ml-4" target="_blank">FORUM</a>
+                    <a href="https://forum.pasopati.id/"
+                        class="hidden md:inline-block text-black hover:text-gray-600 font-bold ml-4"
+                        target="_blank">FORUM</a>
+
+                    <a href="{{ route('deforestory', ['locale' => app()->getLocale()]) }}"
+                        class="hidden md:inline-block text-black hover:text-gray-600 font-bold ml-4">DEFORESTORY</a>
 
                 </div>
                 <button @click="open = !open" class="bg-[#2B5343] py-4 px-3">
@@ -86,6 +91,10 @@
                     <li>
                         <a href="https://forum.pasopati.id/"
                             class="text-black hover:text-gray-600 font-bold uppercase">FORUM</a>
+                    </li>
+                    <li>
+                        <a href="{{ route('deforestory', ['locale' => app()->getLocale()]) }}"
+                            class="text-black hover:text-gray-600 font-bold uppercase">DEFORESTORY</a>
                     </li>
                     <li>
                         <a href="" class="block text-gray-800 font-semibold uppercase">Home</a>
@@ -146,6 +155,21 @@
                             </li>
                             @endforeach
                             @endforeach
+                        </ul>
+                    </li>
+
+                    <li class="border-b border-black pb-4">
+                        <span class="uppercase text-sm font-semibold block mb-2">
+                            Petisi
+                        </span>
+                        <ul>
+                            <li class="flex items-center gap-2">
+                                <span class="text-red-700 text-xl leading-none">•</span>
+                                <a href="{{ route('petition.index', ['locale' => app()->getLocale()]) }}"
+                                    class="hover:underline">
+                                    {{ app()->getLocale() === 'id' ? 'Petisi Aktif' : 'Active Petitions' }}
+                                </a>
+                            </li>
                         </ul>
                     </li>
 

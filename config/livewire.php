@@ -157,6 +157,4 @@ return [
     */
 
     'pagination_theme' => 'tailwind',
-
-    'sanitize_html' => false,
 ];

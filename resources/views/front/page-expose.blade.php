@@ -77,6 +77,11 @@ $translation = $page->translations->where('locale', $locale)->first();
 
     {!! $translation->content !!}
 </div> --}}
+@if ($translation->content_blocks && count($translation->content_blocks) > 0)
+    @foreach ($translation->content_blocks as $block)
+        @include('front.blocks.' . ($block['type'] ?? 'paragraph'), ['data' => $block['data'] ?? []])
+    @endforeach
+@else
 <div class="
       prose
       max-w-2xl mx-auto
@@ -86,7 +91,6 @@ $translation = $page->translations->where('locale', $locale)->first();
       md:text-md sm:text-base text-[16px]
       text-left
 
-      {{-- prose-p:leading-[1.6] md:prose-p:leading-[1.6] --}}
       prose-p:tracking-[0.020em]
       prose-p:my-[1em]
 
@@ -95,11 +99,16 @@ $translation = $page->translations->where('locale', $locale)->first();
 
       prose-h3:text-[21px]
       prose-h3:mt-6 prose-h3:mb-3 prose-h3:font-semibold
-      
     ">
     {!! $translation->content ?? '' !!}
 </div>
+@endif
 
+<section class="bg-paper border-t border-line px-5 py-12 sm:py-16" aria-label="Komentar">
+    <div class="max-w-[720px] mx-auto">
+        <livewire:comment-section :commentable="$page" wire:key="comments-{{ $page->id }}" />
+    </div>
+</section>
 
 @include('front.components.otherArtikel')
 @include('front.components.floating')

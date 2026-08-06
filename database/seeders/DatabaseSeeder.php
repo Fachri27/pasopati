@@ -26,7 +26,10 @@ class DatabaseSeeder extends Seeder
             ExposePageSeeder::class,
             NgopiniPageSeeder::class,
             FellowshipSeeder::class,
+            DeforestoryCaseSeeder::class,
             PageSeeder::class,
+            ContentBlocksDummySeeder::class,
+            ExposeEudrDummySeeder::class,
         ]);
     }
 }

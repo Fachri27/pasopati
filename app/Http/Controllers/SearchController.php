@@ -53,6 +53,7 @@ class SearchController extends Controller
                                 $q2->where('title', 'like', "%{$query}%");
                                 $q2->orWhere('excerpt', 'like', "%{$query}%");
                                 $q2->orWhere('content', 'like', "%{$query}%");
+                                $q2->orWhere('content_blocks', 'like', "%{$query}%");
                             });
                     })
                     ->orderBy('published_at', 'desc')

@@ -44,7 +44,8 @@ class PageController extends Controller
                     $q->where('locale', $locale)
                         ->where(function ($q2) use ($search) {
                             $q2->where('title', 'like', "%{$search}%")
-                                ->orWhere('content', 'like', "%{$search}%");
+                                ->orWhere('content', 'like', "%{$search}%")
+                                ->orWhere('content_blocks', 'like', "%{$search}%");
                         });
                 });
             })

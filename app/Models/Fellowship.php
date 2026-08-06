@@ -24,6 +24,10 @@ class Fellowship extends Model
         'user_id',
     ];
 
+    protected $casts = [
+        'start_date' => 'date',
+    ];
+
     protected static function boot()
     {
         parent::boot();

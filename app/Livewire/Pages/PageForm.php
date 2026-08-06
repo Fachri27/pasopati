@@ -8,6 +8,7 @@ use App\Models\{Page, PageTranslation};
 use App\Services\ImportToHtmlService;
 use Intervention\Image\ImageManager;
 use Livewire\{Component, WithFileUploads};
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class PageForm extends Component
 {
@@ -49,6 +50,12 @@ class PageForm extends Component
 
     public $file_import_en;
 
+    public $content_blocks_id = [];
+
+    public $content_blocks_en = [];
+
+    public $blocksVersion = 0;
+
     // 🔥 WAJIB agar Livewire tidak membersihkan HTML
     protected $rules = [
         'title_id' => 'required|string|max:255',
@@ -58,12 +65,14 @@ class PageForm extends Component
         'featured_image' => 'nullable|image|mimes:jpg,jpeg,png,PNG|max:5048',
         'published_at' => 'nullable|date',
         'status' => 'required|in:draft,active,inactive',
-        'file_import_id' => 'nullable|file|mimes:docx|max:10240',
-        'file_import_en' => 'nullable|file|mimes:docx|max:10240',
+        'file_import_id' => 'nullable|file|mimes:docx,doc,pdf|max:10240',
+        'file_import_en' => 'nullable|file|mimes:docx,doc,pdf|max:10240',
         'expose_type' => 'nullable|array',
         'expose_type.*' => 'string|in:deforestasi,kebakaran,pulp,mining',
 
         // 🔥 konten HTML jangan difilter
+        // SARAN: Saat migrasi ke content_blocks, hapus validasi manual ini
+        // dan ganti dengan validasi per-block.
         'content_id' => 'nullable|string',
         'content_en' => 'nullable|string',
     ];
@@ -73,6 +82,9 @@ class PageForm extends Component
         'content_en' => 'string',
     ];
 
+    // SARAN: Dengan content_blocks (data terstruktur JSON, bukan HTML mentah),
+    // $sanitizeHtml tidak perlu diset false karena kita tidak lagi menyimpan HTML
+    // sembarangan — setiap block dirender oleh partial view sendiri di frontend.
     // 🔥 Matikan sanitasi internal Livewire (iframe tidak terhapus)
     public static $sanitizeHtml = false;
 
@@ -101,11 +113,101 @@ class PageForm extends Component
                 'excerpt_en' => $enTranslation->excerpt ?? '',
                 'content_id' => $idTranslation->content ?? '',
                 'content_en' => $enTranslation->content ?? '',
+                'content_blocks_id' => $idTranslation->content_blocks ?? [],
+                'content_blocks_en' => $enTranslation->content_blocks ?? [],
             ]);
 
             $this->old_featured_image = $this->page->featured_image;
             $this->featured_image = null;
         }
+    }
+
+    public function addBlock($locale, $type)
+    {
+        $prop = 'content_blocks_' . $locale;
+        $defaults = [
+            'paragraph' => ['html' => '', 'mt' => null, 'mb' => null],
+            'image' => ['src' => '', 'caption' => '', 'alignment' => 'center', 'mt' => null, 'mb' => null],
+            'event_info_box' => ['format' => '', 'date' => '', 'time' => '', 'venue' => '', 'registration_links' => [], 'notes' => '', 'mt' => null, 'mb' => null],
+            'agenda_day' => ['day' => '', 'sessions' => [], 'mt' => null, 'mb' => null],
+            'speaker_bio' => ['photo' => '', 'name' => '', 'title' => '', 'bio' => '', 'mt' => null, 'mb' => null],
+            'quote' => ['text' => '', 'source' => '', 'mt' => null, 'mb' => null],
+        ];
+        $blocks = $this->$prop;
+        $blocks[] = ['type' => $type, 'data' => $defaults[$type] ?? []];
+        $this->$prop = $blocks;
+        $this->blocksVersion++;
+    }
+
+    public function removeBlock($locale, $index)
+    {
+        $prop = 'content_blocks_' . $locale;
+        $blocks = $this->$prop;
+        unset($blocks[$index]);
+        $this->$prop = array_values($blocks);
+        $this->blocksVersion++;
+    }
+
+    public function moveBlockUp($locale, $index)
+    {
+        if ($index === 0) return;
+        $prop = 'content_blocks_' . $locale;
+        $blocks = $this->$prop;
+        $tmp = $blocks[$index - 1];
+        $blocks[$index - 1] = $blocks[$index];
+        $blocks[$index] = $tmp;
+        $this->$prop = array_values($blocks);
+        $this->blocksVersion++;
+    }
+
+    public function moveBlockDown($locale, $index)
+    {
+        $prop = 'content_blocks_' . $locale;
+        $blocks = $this->$prop;
+        if ($index >= count($blocks) - 1) return;
+        $tmp = $blocks[$index + 1];
+        $blocks[$index + 1] = $blocks[$index];
+        $blocks[$index] = $tmp;
+        $this->$prop = array_values($blocks);
+        $this->blocksVersion++;
+    }
+
+    public function addRegLink($locale, $blockIndex)
+    {
+        $prop = 'content_blocks_' . $locale;
+        $blocks = $this->$prop;
+        $links = $blocks[$blockIndex]['data']['registration_links'] ?? [];
+        $links[] = ['day' => '', 'url' => ''];
+        $blocks[$blockIndex]['data']['registration_links'] = $links;
+        $this->$prop = $blocks;
+    }
+
+    public function removeRegLink($locale, $blockIndex, $linkIndex)
+    {
+        $prop = 'content_blocks_' . $locale;
+        $blocks = $this->$prop;
+        unset($blocks[$blockIndex]['data']['registration_links'][$linkIndex]);
+        $blocks[$blockIndex]['data']['registration_links'] = array_values($blocks[$blockIndex]['data']['registration_links'] ?? []);
+        $this->$prop = $blocks;
+    }
+
+    public function addSession($locale, $blockIndex)
+    {
+        $prop = 'content_blocks_' . $locale;
+        $blocks = $this->$prop;
+        $sessions = $blocks[$blockIndex]['data']['sessions'] ?? [];
+        $sessions[] = ['time' => '', 'title' => '', 'description' => '', 'moderator' => '', 'commentator' => '', 'speakers' => ''];
+        $blocks[$blockIndex]['data']['sessions'] = $sessions;
+        $this->$prop = $blocks;
+    }
+
+    public function removeSession($locale, $blockIndex, $sessionIndex)
+    {
+        $prop = 'content_blocks_' . $locale;
+        $blocks = $this->$prop;
+        unset($blocks[$blockIndex]['data']['sessions'][$sessionIndex]);
+        $blocks[$blockIndex]['data']['sessions'] = array_values($blocks[$blockIndex]['data']['sessions'] ?? []);
+        $this->$prop = $blocks;
     }
 
     public function updateTitleId($value)
@@ -190,14 +292,27 @@ class PageForm extends Component
         $page->fill($data)->save();
         $page->refresh();
 
-        // 🔥 simpan iframe apa adanya tanpa pemotongan HTML
         foreach (['id', 'en'] as $locale) {
+            $contentBlocksProp = 'content_blocks_' . $locale;
+            $blocks = $this->$contentBlocksProp;
+            if (is_array($blocks)) {
+                foreach ($blocks as $i => $block) {
+                    foreach (['src', 'photo'] as $field) {
+                        if (isset($block['data'][$field]) && $block['data'][$field] instanceof TemporaryUploadedFile) {
+                            $path = $block['data'][$field]->store('pages/blocks', 'public');
+                            $blocks[$i]['data'][$field] = $path;
+                        }
+                    }
+                }
+                $this->$contentBlocksProp = $blocks;
+            }
             PageTranslation::updateOrCreate(
                 ['page_id' => $page->id, 'locale' => $locale],
                 [
                     'title' => $locale === 'id' ? $this->title_id : $this->title_en,
                     'excerpt' => $locale === 'id' ? $this->excerpt_id : $this->excerpt_en,
                     'content' => $locale === 'id' ? $this->content_id : $this->content_en,
+                    'content_blocks' => !empty($this->$contentBlocksProp) ? $this->$contentBlocksProp : null,
                 ]
             );
         }

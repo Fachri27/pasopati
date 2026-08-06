@@ -136,7 +136,7 @@
         </table>
         <!-- Pagination -->
         <div class="mt-4">
-            {{ $pages->links() }}
+            {{ $pages->links('vendor.pagination.custom') }}
         </div>
     </div>
     @if (session('success'))

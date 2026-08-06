@@ -58,6 +58,15 @@ $translation = $page->translations->where('locale', $locale)->first();
                 prose-h3:text-[21px]
                 prose-h3:mt-6 prose-h3:mb-3 prose-h3:font-semibold
                 ">
+                {{-- SARAN: Sama seperti page-expose, ganti dengan block renderer:
+                     @if ($translation->content_blocks)
+                         @foreach ($translation->content_blocks as $block)
+                             @include('front.blocks.' . $block['type'], ['data' => $block['data']])
+                         @endforeach
+                     @else
+                         {!! $translation->content !!}
+                     @endif
+                --}}
                 {!! $translation->content ?? '' !!}
             </div>
 
@@ -101,5 +110,9 @@ $translation = $page->translations->where('locale', $locale)->first();
         </div>
 
     </div>
+</div>
+
+<div class="max-w-2xl mx-auto px-5 mb-10">
+    <livewire:comment-section :commentable="$page" wire:key="comments-{{ $page->id }}" />
 </div>
 @endsection

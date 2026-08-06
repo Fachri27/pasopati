@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Traits\HasSeoMeta;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 class Page extends Model
@@ -12,6 +13,7 @@ class Page extends Model
     use HasFactory;
     use HasSeoMeta;
 
+    // SARAN: tambahkan 'content_blocks' jika migration kolom JSON sudah ditambahkan
     protected $fillable = [
         'slug',
         'type',
@@ -23,6 +25,7 @@ class Page extends Model
         'user_id',
     ];
 
+    // SARAN: tambahkan 'content_blocks' => 'array' jika migration JSON sudah ditambahkan
     protected $casts = [
         'expose_type' => 'array',
     ];
@@ -59,5 +62,10 @@ class Page extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function comments(): HasMany
+    {
+        return $this->hasMany(Comment::class)->whereNull('parent_id')->where('is_approved', true)->latest();
     }
 }

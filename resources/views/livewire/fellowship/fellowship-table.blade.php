@@ -134,7 +134,7 @@
         </div>
         <!-- Pagination -->
         <div class="mt-4">
-            {{ $fellowship->links() }}
+            {{ $fellowship->links('vendor.pagination.custom') }}
         </div>
     </div>
     @if (session('success'))

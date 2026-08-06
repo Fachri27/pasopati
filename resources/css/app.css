@@ -7,11 +7,55 @@
 @theme {
     --font-sans: 'Poppins', 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
     /* --font-open: 'Open Sans', ui-sans-serif, system-ui, sans-serif; */
-    /* --font-serif: 'Source Serif 4', ui-serif, Georgia, serif; */
+    --font-serif: 'Source Serif 4', ui-serif, Georgia, serif;
     /* --font-serif: 'Libre Baskerville', ui-serif, Georgia, serif; */
     /* --loader-red: #ef4444; */
     /* merah */
+
+    /* Palet editorial Auriga — dipakai halaman arsip Deforestory dan
+       komponen lain. Token additif: tidak mengubah style yang sudah ada. */
+    --color-paper: #FFFFFF;
+    --color-surface: #F9FAFB;
+    --color-soft: #F3F4F6;
+    --color-line: #E5E7EB;
+    --color-line-d: #D1D5DB;
+
+    --color-ink: #111827;
+    --color-ink-2: #4B5563;
+    --color-ink-3: #9CA3AF;
+
+    --color-pasopati: #DC2626;
+    --color-pasopati-d: #B91C1C;
+
+    --color-forest: #2B5343;
+    --color-forest-d: #1f3d31;
+
+    --color-link: #2563EB;
+    --color-link-d: #1D4ED8;
+
+    /* Palet editorial Auriga untuk kolom komentar & halaman arsip. */
+    --color-auriga-red: #bc4a3c;
+    --color-auriga-cream: #f5f0e8;
+    --color-auriga-ink: #1a1a1a;
+    --color-auriga-muted: #7a6e60;
+    --color-auriga-line: #e2d8cc;
+
+    --font-display: 'Poppins', system-ui, sans-serif;
+    --font-mono-ui: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+    --radius-card: 2px;
 }
+
+/* Cahaya radial halus di hero arsip Deforestory. */
+.hero-glow {
+    background:
+        radial-gradient(circle at 20% 0%, rgba(220, 38, 38, .06), transparent 40%),
+        radial-gradient(circle at 80% 100%, rgba(43, 83, 67, .08), transparent 45%);
+}
+
+/* Sembunyikan elemen Alpine sebelum inisialisasi (mencegah kedip
+   pada bagian yang default-nya terlipat, mis. rel vote komentar). */
+[x-cloak] { display: none !important; }
 
 .poppins-thin {
     font-family: "Poppins", sans-serif;
@@ -104,7 +148,7 @@
 }
 
 figure.media-caption {
-    margin: 0 0 16px 0 !important;
+    margin-bottom: 16px !important;
 }
 
 figure.media-caption video,
@@ -174,3 +218,116 @@ figure.media-caption figcaption {
 .prose p {
     line-height: 1.6;
 }
+
+/* ============================================================
+   Kolom komentar — benang balasan (gaya editorial thread)
+   Garis penanda vertikal pada blok balasan + kait melengkung
+   pada setiap item balasan, supaya thread terbaca tanpa border
+   kotak yang berisik.
+   ============================================================ */
+.comment-item {
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #E5E7EB;
+}
+
+.comment-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.replies {
+    position: relative;
+    margin-top: 1rem;
+    margin-left: 0.5rem;
+    padding-left: 1.25rem;
+}
+
+.replies::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.5rem;
+    bottom: 0;
+    width: 2px;
+    background-color: #E5E7EB;
+    border-radius: 1px;
+}
+
+.reply-item {
+    position: relative;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+}
+
+.reply-item:first-child {
+    padding-top: 0;
+}
+
+.reply-item::before {
+    content: '';
+    position: absolute;
+    left: -1.25rem;
+    top: 1.25rem;
+    width: 0.875rem;
+    height: 0.75rem;
+    border-left: 2px solid #E5E7EB;
+    border-bottom: 2px solid #E5E7EB;
+    border-bottom-left-radius: 8px;
+}
+
+/* Putih penutup supaya garis benang berhenti rapi di balasan terakhir. */
+.reply-item:last-child::after {
+    content: '';
+    position: absolute;
+    left: -1.25rem;
+    top: calc(1.25rem + 0.75rem);
+    width: 2px;
+    bottom: -0.5rem;
+    background-color: #FFFFFF;
+    z-index: 1;
+}
+
+@media (min-width: 640px) {
+    .replies {
+        margin-left: 0.75rem;
+        padding-left: 1.5rem;
+    }
+
+    .reply-item::before {
+        left: -1.5rem;
+        width: 1rem;
+    }
+
+    .reply-item:last-child::after {
+        left: -1.5rem;
+    }
+}
+
+.comment-reply {
+      position: relative;
+      margin-left: 1.25rem;
+      padding-left: 1.25rem;
+    }
+
+    .comment-reply::before {
+      position: absolute;
+      top: -2rem;
+      left: 0;
+      width: 1.25rem;
+      height: 3.25rem;
+      border-left: 1px solid #e5e7eb;
+      border-bottom: 1px solid #e5e7eb;
+      border-bottom-left-radius: 1rem;
+      content: '';
+      pointer-events: none;
+    }
+
+    @media (min-width: 640px) {
+      .comment-reply {
+        padding-left: 2rem;
+      }
+
+      .comment-reply::before {
+        width: 2rem;
+      }
+    }
