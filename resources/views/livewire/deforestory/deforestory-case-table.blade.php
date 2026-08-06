@@ -21,6 +21,10 @@
             <div class="mb-4 p-3 bg-green-50 border border-green-200 text-green-800 rounded">{{ session('success') }}</div>
         @endif
 
+        @if (session('error'))
+            <div class="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 rounded">{{ session('error') }}</div>
+        @endif
+
         <div class="flex flex-wrap items-center justify-between mb-4 gap-3">
             <input type="text" wire:model.live.debounce.150ms="search" placeholder="Cari judul / slug kartu..." class="border p-2 rounded">
             <span class="text-xs text-gray-400">Sumber: API ({{ config('services.deforestory_api.url') }})</span>
@@ -77,6 +81,11 @@
                                 <a href="{{ $laporanUrl }}">
                                     <button class="bg-blue-600 px-3 py-1 rounded text-white text-xs">Kelola laporan</button>
                                 </a>
+                                <button wire:click="deleteCard('{{ $row['slug'] }}')"
+                                    wire:confirm="{{ $row['laporan_total'] > 0
+                                        ? 'Kartu ini punya ' . $row['laporan_total'] . ' laporan. Hapus kartu beserta semua konten detailnya?'
+                                        : 'Hapus kartu ini?' }}"
+                                    class="bg-red-600 px-3 py-1 rounded text-white text-xs">Hapus</button>
                             </td>
                         </tr>
                     @empty

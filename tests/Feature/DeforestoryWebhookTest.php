@@ -197,6 +197,35 @@ class DeforestoryWebhookTest extends TestCase
         Queue::assertPushed(DeforestoryWebhookJob::class);
     }
 
+    public function test_publishing_via_form_without_slug_derives_from_title(): void
+    {
+        config(['services.deforestory_api.webhook_url' => self::TARGET]);
+
+        $case = DeforestoryCase::create([
+            'slug' => 'mayawana', 'status' => 'active', 'sort' => 1,
+        ]);
+        DeforestoryCaseTranslation::create([
+            'case_id' => $case->id, 'locale' => 'id', 'title' => 'Mayawana',
+        ]);
+
+        Queue::fake();
+
+        $component = Livewire::test(DeforestoryLaporanForm::class, ['caseSlug' => 'mayawana'])
+            ->set('title_id', 'Laporan Baru Tanpa Slug')
+            ->set('title_en', 'New report')
+            ->set('status', 'active')
+            ->set('sort', 1)
+            ->call('save');
+
+        // Validasi lolos walau slug tidak diisi (diturunkan dari judul ID).
+        $this->assertTrue($component->errors()->isEmpty(), 'Save should pass validation without slug');
+
+        $saved = DeforestoryLaporan::where('slug', 'laporan-baru-tanpa-slug')->first();
+        $this->assertNotNull($saved, 'Slug harus diturunkan otomatis dari judul ID');
+
+        Queue::assertPushed(DeforestoryNotificationJob::class);
+    }
+
     public function test_editing_active_laporan_does_not_dispatch_jobs(): void
     {
         config(['services.deforestory_api.webhook_url' => self::TARGET]);

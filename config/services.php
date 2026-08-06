@@ -54,6 +54,13 @@ return [
         'webhook_url' => env('DEFORESTORY_WEBHOOK_URL'),
         'webhook_secret' => env('DEFORESTORY_WEBHOOK_SECRET'),
         'webhook_timeout' => env('DEFORESTORY_WEBHOOK_TIMEOUT', 10),
+
+        // Sync keluar ke simontini: saat laporan di-publish/unpublish, CMS POST
+        // payload laporan ke endpoint simontini (deforestory/sync). Beda dari
+        // webhook di atas — simontini pakai Bearer token (bukan HMAC) + shape
+        // body sendiri (lihat DeforestorySyncJob). Gak dikonfigurasi → skip.
+        'sync_url' => env('DEFORESTORY_SYNC_URL'),
+        'sync_token' => env('DEFORESTORY_SYNC_TOKEN'),
     ],
 
 ];

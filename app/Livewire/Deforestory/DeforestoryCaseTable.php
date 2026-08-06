@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Deforestory;
 
+use App\Models\DeforestoryCard;
 use App\Models\DeforestoryCase;
 use App\Services\DeforestoryApiService;
 use Livewire\Component;
@@ -48,7 +49,7 @@ class DeforestoryCaseTable extends Component
         $cmsMap = DeforestoryCase::whereIn('slug', $slugs)
             ->withCount(['laporans as laporan_count' => function ($q) {
                 $q->where('status', 'active');
-            }])
+            }, 'laporans as laporan_total'])
             ->get()
             ->keyBy('slug');
 
@@ -67,6 +68,7 @@ class DeforestoryCaseTable extends Component
                 'detail_status' => $cms?->status,
                 'case_id' => $cms?->id,
                 'laporan_count' => $cms?->laporan_count ?? 0,
+                'laporan_total' => $cms?->laporan_total ?? 0,
             ];
         }, array_values($apiCases));
 
@@ -89,14 +91,31 @@ class DeforestoryCaseTable extends Component
     }
 
     /**
-     * Hapus konten detail CMS untuk sebuah slug (bukan kartu API-nya).
+     * Hapus kartu deforestory beserta konten detail CMS-nya.
+     *
+     * Menghapus card di `deforestory_cards` (identitas dari web lain) DAN
+     * `DeforestoryCase` (konten detail + cascade semua laporannya). Konfirmasi
+     * di view lewat `wire:confirm` — pesan berbeda bila kasus masih punya
+     * laporan. Card yang dihapus bisa muncul lagi bila web lain push ulang
+     * via inbound webhook (POST /api/deforestory/cards).
      */
-    public function deleteDetail($slug)
+    public function deleteCard($slug)
     {
+        $card = DeforestoryCard::where('slug', $slug)->first();
         $case = DeforestoryCase::where('slug', $slug)->first();
+
+        if (! $card && ! $case) {
+            session()->flash('error', 'Kartu "' . $slug . '" tidak ditemukan.');
+            return;
+        }
+
+        if ($card) {
+            $card->delete();
+        }
         if ($case) {
             $case->delete();
-            session()->flash('success', 'Konten detail untuk "' . $slug . '" dihapus. Kartu tetap ada di API.');
         }
+
+        session()->flash('success', 'Kartu "' . $slug . '" beserta konten detailnya dihapus.');
     }
 }

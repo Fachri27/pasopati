@@ -6,6 +6,7 @@ use App\Models\DeforestoryCase;
 use App\Models\DeforestoryLaporan;
 use App\Models\DeforestoryLaporanTranslation;
 use App\Jobs\DeforestoryNotificationJob;
+use App\Jobs\DeforestorySyncJob;
 use App\Jobs\DeforestoryWebhookJob;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -132,10 +133,16 @@ class DeforestoryLaporanForm extends Component
             'laporan_content_en' => 'nullable|string',
         ];
 
+        // Slug diturunkan dari judul ID bila kosong. Input readonly diisi Alpine
+        // JS yang kadang gagal sync balik ke Livewire → server yang hitung, bukan
+        // mengandalkan nilai dari browser.
+        if (! $this->slug) {
+            $this->slug = \Illuminate\Support\Str::slug($this->title_id);
+        }
+
         $this->validate($rules);
 
-        // Slug diturunkan dari judul ID bila kosong.
-        $slug = $this->slug ?: \Illuminate\Support\Str::slug($this->title_id);
+        $slug = $this->slug;
 
         // Upload gambar laporan per-locale (id + en). Image legacy (laporan.image)
         // gak lagi ditulis form; cuma dipakai sebagai fallback baca data lama.
@@ -169,18 +176,32 @@ class DeforestoryLaporanForm extends Component
             );
         }
 
-        // Antrekan notifikasi email HANYA saat publish — yaitu laporan menjadi
-        // aktif untuk pertama kali (dibuat aktif, atau diubah dari draft/inactive
-        // ke active). Edit laporan yang sudah aktif TIDAK memicu notifikasi.
+        // Antrekan job keluar HANYA saat transisi status active↔non-active:
+        // - publish (draft/inactive → active): notifikasi email, webhook ke web
+        //   lain, dan sync keluar ke simontini (status 'on').
+        // - unpublish (active → draft/inactive): sync keluar ke simontini (status
+        //   'off') supaya update turun dari sisi sana.
+        // Edit laporan yang sudah aktif TIDAK memicu job apa pun.
         $justPublished = $this->status === 'active' && ! $wasActive;
-        if ($justPublished) {
+        $justUnpublished = $wasActive && $this->status !== 'active';
+
+        if ($justPublished || $justUnpublished) {
             $case = DeforestoryCase::find($this->caseId);
-            if ($case && $case->status === 'active') {
+
+            if ($justPublished && $case && $case->status === 'active') {
                 // 1) Notifikasi email ke subscriber CMS ini.
                 DeforestoryNotificationJob::dispatch($case, 'created');
 
                 // 2) Webhook keluar ke web lain supaya langsung update tanpa polling.
                 DeforestoryWebhookJob::dispatch($case, $laporan, 'created');
+
+                // 3) Sync keluar ke simontini: laporan jadi aktif di sisi sana.
+                DeforestorySyncJob::dispatch($case, $laporan, 'on');
+            }
+
+            if ($justUnpublished && $case) {
+                // Sync keluar ke simontini: laporan turun dari aktif.
+                DeforestorySyncJob::dispatch($case, $laporan, 'off');
             }
         }
 

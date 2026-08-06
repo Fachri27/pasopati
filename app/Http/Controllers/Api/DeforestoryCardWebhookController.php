@@ -120,8 +120,15 @@ class DeforestoryCardWebhookController extends Controller
 
                 $model = DeforestoryCard::updateOrCreate($key, $attributes);
 
+                // Hanya card BARU yang PUBLISH yang memicu email — card draft
+                // (di-push tersembunyi) gak boleberitau subscriber sebelum tampil.
+                // refresh() supaya baca status persisten (default 'publish' dari DB
+                // kalau caller gak kirim status — in-memory model belum tau itu).
                 if ($model->wasRecentlyCreated) {
-                    $newCards[] = $model;
+                    $model->refresh();
+                    if ($model->status === 'publish') {
+                        $newCards[] = $model;
+                    }
                 }
 
                 // Echo balik slug + uuid tiap card tersimpan (uuid null bila

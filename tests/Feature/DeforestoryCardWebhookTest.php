@@ -394,6 +394,49 @@ class DeforestoryCardWebhookTest extends TestCase
         Queue::assertPushed(DeforestoryCardNotificationJob::class, 2);
     }
 
+    public function test_draft_card_does_not_dispatch_notification_job(): void
+    {
+        Queue::fake();
+
+        // Card draft gak boleh kirim email — belum tampil di publik.
+        $payload = ['cards' => [[
+            'uuid' => self::UUID_MAYAWANA,
+            'slug' => 'mayawana-draft',
+            'title_id' => 'Mayawana draft',
+            'status' => 'draft',
+            'sort' => 1,
+        ]]];
+        $this->postCards($payload, Str::uuid()->toString())
+            ->assertStatus(200)
+            ->assertJson(['stored' => 1, 'notified' => 0]);
+
+        Queue::assertNotPushed(DeforestoryCardNotificationJob::class);
+    }
+
+    public function test_job_skips_card_set_to_draft_after_dispatch(): void
+    {
+        Mail::fake();
+
+        DeforestorySubscriber::create(['email' => 'all@x.com', 'type' => 'all', 'locale' => 'id', 'active' => true]);
+
+        // Card publish baru → job di-dispatch.
+        $card = DeforestoryCard::create([
+            'slug' => 'mayawana', 'title_id' => 'Mayawana', 'status' => 'publish', 'sort' => 1,
+        ]);
+
+        // Simulasi: SETELAH dispatch tapi sebelum worker benar-benar jalan, card
+        // di-set draft (mis. admin unpublish). Job me-resolve ulang by id lewat
+        // SerializesModels, jadi lihat status terbaru dari DB.
+        $card->status = 'draft';
+        $card->save();
+
+        DeforestoryCardNotificationJob::dispatchSync($card);
+
+        // Worker skip card draft → gak ada email.
+        Mail::assertNothingQueued();
+        Mail::assertNotSent(\App\Mail\DeforestoryCardMail::class);
+    }
+
     public function test_existing_card_update_does_not_dispatch_job(): void
     {
         Queue::fake();

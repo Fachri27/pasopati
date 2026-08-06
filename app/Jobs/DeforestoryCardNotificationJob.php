@@ -36,6 +36,13 @@ class DeforestoryCardNotificationJob implements ShouldQueue
             return;
         }
 
+        // Hanya card publish yang diberitau. Bisa jadi card di-set draft
+        // SETELAH dispatch tapi sebelum worker jalan — skip biar gak email
+        // card yang sudah disembunyiin.
+        if ($this->card->status !== 'publish') {
+            return;
+        }
+
         $subscribers = DeforestorySubscriber::query()
             ->where('active', true)
             ->where('type', 'all')
