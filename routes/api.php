@@ -27,15 +27,16 @@ use Illuminate\Support\Facades\Route;
 |
 | Semua endpoint terima ?locale=id|en (default id).
 |
-| Inbound webhook (autentikasi Bearer token = DEFORESTORY_API_KEY):
+| Inbound webhook (auth sementara DIMATIKAN — publik untuk testing):
 |   POST /api/deforestory/cards                              push daftar kartu kasus dari web lain
 |
 */
 
-// Inbound: web lain POST daftar card ke CMS. Autentikasi = Bearer token
-// (middleware `deforestory.api`, sama dengan endpoint GET sindikasi). Tanpa CSRF.
-Route::post('/deforestory/cards', [DeforestoryCardWebhookController::class, 'handle'])
-    ->middleware('deforestory.api');
+// Inbound: web lain POST daftar card ke CMS.
+// NOTE: auth sementara DIMATIKAN (testing) — endpoint jadi publik. Nyalakan
+// lagi `->middleware('deforestory.api')` (Bearer token = DEFORESTORY_API_KEY)
+// sebelum dipakai beneran di produksi.
+Route::post('/deforestory/cards', [DeforestoryCardWebhookController::class, 'handle']);
 
 Route::prefix('deforestory')
     ->controller(DeforestoryApiController::class)

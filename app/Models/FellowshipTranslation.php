@@ -20,4 +20,14 @@ class FellowshipTranslation extends Model
     {
         return $this->belongsTo(Fellowship::class);
     }
+
+    /**
+     * Teks polos untuk SEO / meta description (dipakai HasSeoMeta::getSeoData).
+     * Fellowship tidak punya kolom body, jadi gabungkan judul, sub-judul, dan
+     * excerpt sebagai sumber deskripsi, lalu bersihkan tag HTML-nya.
+     */
+    public function plainText(): string
+    {
+        return strip_tags(trim(($this->title ?? '') . ' ' . ($this->sub_judul ?? '') . ' ' . ($this->excerpt ?? '')));
+    }
 }

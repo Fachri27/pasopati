@@ -20,7 +20,7 @@
 <header class="relative bg-paper text-ink overflow-hidden border-b border-line hero-glow">
     <div class="relative max-w-[1200px] mx-auto px-5 text-center pt-[calc(64px+4rem)] pb-[4.5rem]">
         <h1 class="font-display font-bold text-[clamp(2.6rem,8vw,5rem)] leading-[1.05] tracking-[-.025em] max-w-[16ch] mx-auto mb-5 text-pasopati">
-            Deforest<span class="text-forest not-italic">ory</span>
+            Defore<span class="text-forest not-italic">story</span>
         </h1>
         <p class="text-[clamp(1.05rem,2vw,1.25rem)] leading-relaxed text-ink-2 max-w-[62ch] mx-auto mb-8">
             Kisah deforestasi, konflik lahan, dan kerusakan ekosistem Indonesia disusun dari citra satelit dan catatan lapangan menjadi arsip yang dapat dibandingkan, ditelusuri, dan diingat kembali.

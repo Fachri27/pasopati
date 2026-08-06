@@ -527,8 +527,8 @@ pakai layanan request-bin publik untuk data produksi.
 |---|---|
 | `app/Jobs/DeforestoryWebhookJob.php` | Job kirim webhook keluar (POST + HMAC signature + translations id/en) |
 | `app/Livewire/Deforestory/DeforestoryLaporanForm.php` | Dispatch job saat `$justPublished` |
-| `config/services.php` (`deforestory_api`) | Konfigurasi secret webhook keluar & masuk + API key |
-| `.env` | `DEFORESTORY_WEBHOOK_URL`, `DEFORESTORY_WEBHOOK_SECRET`, `DEFORESTORY_WEBHOOK_TIMEOUT`, `DEFORESTORY_CARD_WEBHOOK_SECRET`, `DEFORESTORY_API_KEY` |
+| `config/services.php` (`deforestory_api`) | Konfigurasi secret webhook keluar + API key (auth inbound sementara dimatikan) |
+| `.env` | `DEFORESTORY_WEBHOOK_URL`, `DEFORESTORY_WEBHOOK_SECRET`, `DEFORESTORY_WEBHOOK_TIMEOUT`, `DEFORESTORY_API_KEY` |
 
 ---
 
@@ -548,21 +548,27 @@ tanpa CMS nge-GET ke web lain. Sebelumnya CMS nge-GET card dari web lain (mock
 | URL | `https://pasopati.id/api/deforestory/cards` |
 | Content-Type | `application/json` |
 | Body | JSON (UTF-8) — lihat §8c |
-| Autentikasi | **Bearer token** `DEFORESTORY_API_KEY` (sama dengan endpoint GET sindikasi) — lihat §8b |
+| Autentikasi | **Sementara DIMATIKAN** untuk testing — endpoint publik (tanpa token).
+  Sebelum dipakai beneran di produksi, nyalakan lagi middleware `deforestory.api`
+  (Bearer token `DEFORESTORY_API_KEY`) — lihat §8b.
 
 ### 8b. Headers
 
 | Header | Isi | Wajib? |
 |---|---|---|
-| `Authorization` | `Bearer <DEFORESTORY_API_KEY>` | **wajib** (token bisa juga via `?token=`) |
+| `Authorization` | `Bearer <DEFORESTORY_API_KEY>` | **saat ini tidak wajib** (auth dimatikan). Normalnya wajib (token bisa juga via `?token=`) |
 | `X-Deforestory-Delivery` | UUID pengiriman — **pakai untuk idempotensi** | opsional (tanpa ini, dedup dimatikan) |
 | `Content-Type` | `application/json` | selalu |
 
-### 8c. Body (JSON) — full-list sync
+### 8c. Body (JSON) — tambah / update (upsert)
 
-Web lain POST **seluruh daftar card** sekaligus. CMS lalu **replace** tabel lokal:
-card yang tidak ada di payload dihapus, sisanya upsert by slug. Kedua locale
-(`id` + `en`) dikirim sekaligus.
+Web lain POST **card yang baru/berubah**. CMS **menambah** card by slug kalau slug
+baru, atau **memperbarui** kalau slug sudah ada. Card lain yang sudah tersimpan
+**tetap utuh** — endpoint ini gak menghapus card yang tidak ada di payload. Kedua
+locale (`id` + `en`) dikirim sekaligus dalam satu card.
+
+Jadi web lain cukup POST satu card tiap kali ada card baru/diubah; tidak perlu
+mengirim seluruh daftar setiap kali.
 
 ```json
 {
@@ -601,11 +607,14 @@ Catatan:
 
 ### 8d. Ekspektasi balasan dari CMS
 
-- Sukses → `200 {"received": true, "stored": <N>}`.
-- Token salah / hilang → `401 {"message":"Unauthorized"}`.
+- Sukses → `200 {"received": true, "stored": <N>}` (N = jumlah card yang ditambah/diubah).
+- Token salah / hilang → saat ini **tidak error** (auth dimatikan). Normalnya `401 {"message":"Unauthorized"}`.
 - Payload tidak valid (tidak ada `cards` / tidak ada slug) → `422`.
 - Kirim ulang dengan `X-Deforestory-Delivery` sama → `200 {"received": true, "dedup": true}`
   (tidak diproses ulang). Gunakan UUID berbeda tiap pengiriman baru.
+
+Catatan: **penghapusan card tidak ditangani** endpoint ini. Kalau perlu hapus card
+dari CMS, tambahkan field `event=deleted` per card (atau endpoint DELETE terpisah).
 
 ### 8e. Contoh kirim dari web lain
 
@@ -633,19 +642,20 @@ await fetch('https://pasopati.id/api/deforestory/cards', {
 
 ### 8f. Setup di sisi CMS
 
-Tidak perlu konfigurasi tambahan — endpoint pakai `DEFORESTORY_API_KEY` yang sudah
-ada (sama dengan endpoint GET sindikasi). Jadi cukup pastikan `DEFORESTORY_API_KEY`
+Tidak perlu konfigurasi tambahan untuk testing — **auth sementara dimatikan**, jadi
+endpoint terima POST tanpa token. Sebelum dipakai beneran di produksi, nyalakan lagi
+`->middleware('deforestory.api')` di `routes/api.php`, pastikan `DEFORESTORY_API_KEY`
 di `.env` CMS terisi, dan kasih nilai itu ke web lain.
 
-Tidak perlu CSRF exception — endpoint ada di `routes/api.php` (middleware `api` +
-`deforestory.api`, tanpa CSRF).
+Tidak perlu CSRF exception — endpoint ada di `routes/api.php` (middleware `api`,
+tanpa CSRF).
 
 ### 8g. Referensi file inbound di CMS
 
 | File | Peran |
 |---|---|
-| `app/Http/Controllers/Api/DeforestoryCardWebhookController.php` | Idempotensi + full-list replace (auth via middleware `deforestory.api`) |
+| `app/Http/Controllers/Api/DeforestoryCardWebhookController.php` | Idempotensi + upsert (tambah/update, gak hapus) card by slug |
 | `app/Models/DeforestoryCard.php` | Model card lokal + `toCardArray($locale)` |
 | `app/Services/DeforestoryApiService.php` | Baca card dari tabel lokal (getCases / cardBySlug) |
 | `database/migrations/2026_08_06_000001_create_deforestory_cards_table.php` | Tabel `deforestory_cards` |
-| `routes/api.php` | `POST /api/deforestory/cards` (middleware `deforestory.api`) |
+| `routes/api.php` | `POST /api/deforestory/cards` (middleware `api`; `deforestory.api` sementara dimatikan) |

@@ -11,15 +11,17 @@ use Illuminate\Support\Facades\DB;
 /**
  * Terima push daftar kartu kasus Deforestory dari web lain (inbound webhook).
  *
- * Sebaliknya dulu CMS nge-GET card dari web lain (mock /api/deforestory-cases);
- * sekarang web lain yang POST seluruh daftar card ke CMS. Autentikasi lewat
- * API key (middleware `deforestory.api` → Bearer token = DEFORESTORY_API_KEY),
- * sama dengan endpoint GET sindikasi. Lalu replace tabel deforestory_cards
- * (full-list sync): card yang tidak ada di payload dihapus, sisanya upsert
- * by slug. Idempotensi lewat X-Deforestory-Delivery supaya kirim ulang aman.
+ * Web lain POST card ke CMS. Tiap POST **menambah / memperbarui** card by slug
+ * (upsert) — gak menghapus card lain yang sudah ada. Jadi web lain tinggal
+ * kirim card baru/berubah; card yang sudah tersimpan tetap utuh. Idempotensi
+ * lewat X-Deforestory-Delivery supaya kirim ulang aman.
+ *
+ * Catatan: penghapusan card TIDAK ditangani endpoint ini. Kalau nanti perlu
+ * hapus, tambahkan field event=deleted per card (atau endpoint DELETE terpisah).
  *
  * Endpoint: POST /api/deforestory/cards (route di routes/api.php, middleware
- * `deforestory.api` — Bearer token; tanpa CSRF).
+ * `api` saja). NOTE: auth sementara DIMATIKAN untuk testing — endpoint publik.
+ * Nyalakan `deforestory.api` (Bearer = DEFORESTORY_API_KEY) sebelum produksi.
  */
 class DeforestoryCardWebhookController extends Controller
 {
@@ -43,30 +45,17 @@ class DeforestoryCardWebhookController extends Controller
             return response()->json(['message' => 'Invalid payload: cards required'], 422);
         }
 
-        // 3) Full-list replace dalam transaksi: hapus card yang tidak ada di
-        //    payload, upsert sisanya by slug.
-        $slugs = [];
-        foreach ($cards as $card) {
-            $slug = $card['slug'] ?? null;
-            if (is_string($slug) && $slug !== '') {
-                $slugs[] = $slug;
-            }
-        }
-
-        if (empty($slugs)) {
-            return response()->json(['message' => 'Invalid payload: no card slugs'], 422);
-        }
-
+        // Upsert by slug: tambah kalau slug baru, update kalau sudah ada.
+        // Gak hapus card lain (mode tambah/update, bukan full-list replace).
         $stored = 0;
-        DB::transaction(function () use ($cards, $slugs, &$stored) {
-            // Hapus card lama yang tidak ada di payload ini (full-list sync).
-            DeforestoryCard::whereNotIn('slug', $slugs)->delete();
-
+        $seen = [];
+        DB::transaction(function () use ($cards, &$stored, &$seen) {
             foreach ($cards as $card) {
                 $slug = $card['slug'] ?? null;
-                if (! is_string($slug) || $slug === '') {
+                if (! is_string($slug) || $slug === '' || isset($seen[$slug])) {
                     continue;
                 }
+                $seen[$slug] = true;
 
                 DeforestoryCard::updateOrCreate(
                     ['slug' => $slug],
@@ -85,6 +74,10 @@ class DeforestoryCardWebhookController extends Controller
                 $stored++;
             }
         });
+
+        if ($stored === 0) {
+            return response()->json(['message' => 'Invalid payload: no card slugs'], 422);
+        }
 
         return response()->json(['received' => true, 'stored' => $stored], 200);
     }

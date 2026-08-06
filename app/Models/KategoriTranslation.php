@@ -17,4 +17,12 @@ class KategoriTranslation extends Model
     {
         return $this->belongsTo(Kategori::class);
     }
+
+    /**
+     * Teks polos untuk SEO / meta description (dipakai HasSeoMeta::getSeoData).
+     */
+    public function plainText(): string
+    {
+        return strip_tags(trim(($this->kategori_name ?? '') . ' ' . ($this->content ?? '')));
+    }
 }

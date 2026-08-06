@@ -63,19 +63,20 @@ class DeforestoryCardWebhookTest extends TestCase
         );
     }
 
-    public function test_valid_api_key_stores_cards_full_list_replace(): void
+    public function test_valid_api_key_upserts_cards_without_deleting_others(): void
     {
         config(['services.deforestory_api.key' => self::KEY]);
 
-        // Seed card lama yang TIDAK ada di payload → harus terhapus (full-list replace).
-        DeforestoryCard::create(['slug' => 'lama-dihapus', 'sort' => 0]);
+        // Seed card lama yang TIDAK ada di payload → harus TETAP ADA (mode tambah/update, bukan replace).
+        DeforestoryCard::create(['slug' => 'lama-tetap', 'sort' => 0]);
 
         $response = $this->postCards($this->cardsPayload(), Str::uuid()->toString());
 
         $response->assertStatus(200)->assertJson(['received' => true, 'stored' => 2]);
 
-        $this->assertDatabaseMissing('deforestory_cards', ['slug' => 'lama-dihapus']);
-        $this->assertSame(2, DeforestoryCard::count());
+        // Card lama tetap utuh; 2 card baru ditambahkan → total 3.
+        $this->assertDatabaseHas('deforestory_cards', ['slug' => 'lama-tetap']);
+        $this->assertSame(3, DeforestoryCard::count());
 
         $m = DeforestoryCard::where('slug', 'mayawana')->first();
         $this->assertSame('pulp', $m->category);
@@ -89,7 +90,7 @@ class DeforestoryCardWebhookTest extends TestCase
 
         $this->postCards($this->cardsPayload(), Str::uuid()->toString());
 
-        // Push kedua: ubah category mayawana, hapus pulau-laut dari payload.
+        // Push kedua: ubah mayawana, TANPA kirim pulau-laut.
         $updated = [
             'cards' => [
                 [
@@ -109,31 +110,20 @@ class DeforestoryCardWebhookTest extends TestCase
         $response = $this->postCards($updated, Str::uuid()->toString());
 
         $response->assertStatus(200)->assertJson(['stored' => 1]);
-        $this->assertSame(1, DeforestoryCard::count());
+
+        // mayawana di-update; pulau-laut TETAP ADA (gak ikut dihapus).
+        $this->assertSame(2, DeforestoryCard::count());
         $this->assertSame('mining', DeforestoryCard::where('slug', 'mayawana')->value('category'));
         $this->assertSame('Mayawana (baru)', DeforestoryCard::where('slug', 'mayawana')->value('title_id'));
-        $this->assertDatabaseMissing('deforestory_cards', ['slug' => 'pulau-laut']);
+        $this->assertDatabaseHas('deforestory_cards', ['slug' => 'pulau-laut']);
     }
 
-    public function test_missing_api_key_returns_401(): void
+    public function test_works_without_auth(): void
     {
-        config(['services.deforestory_api.key' => self::KEY]);
-
-        // Kirim tanpa Bearer token.
+        // Auth sementara dimatikan — POST tanpa token pun harus sukses.
         $response = $this->postCards($this->cardsPayload(), Str::uuid()->toString(), key: null);
 
-        $response->assertStatus(401);
-        $this->assertSame(0, DeforestoryCard::count());
-    }
-
-    public function test_invalid_api_key_returns_401(): void
-    {
-        config(['services.deforestory_api.key' => self::KEY]);
-
-        $response = $this->postCards($this->cardsPayload(), Str::uuid()->toString(), key: 'salah');
-
-        $response->assertStatus(401);
-        $this->assertSame(0, DeforestoryCard::count());
+        $response->assertStatus(200)->assertJson(['received' => true, 'stored' => 2]);
     }
 
     public function test_idempotency_same_delivery_dedup(): void
