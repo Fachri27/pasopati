@@ -17,17 +17,40 @@ use Illuminate\Support\Facades\Queue;
 use Livewire\Livewire;
 use Tests\TestCase;
 
+/**
+ * Sync keluar laporan Deforestory ke endpoint simontini (deforestory/sync).
+ * Publish-only — dipicu form saat laporan jadi active. Unpublish/edit gak di-sync.
+ *
+ * Endpoint = POST {sync_url}/{uuid} — uuid card simontini di URL path. Body 7
+ * field: title_id/en, description_id/en, target_url_id/en, published_at.
+ * Job skip diam-diam kalau case gak punya card / card gak punya uuid, atau
+ * simontini belum dikonfigurasi.
+ */
 class DeforestorySyncTest extends TestCase
 {
     use RefreshDatabase;
 
     private const URL = 'https://simontini.example/api/deforestory/sync';
     private const TOKEN = 'sync-token';
+    private const UUID = '26cd5ee6-b0dc-4a06-b9c7-82dbf6a99c10';
+
+    private function syncEndpoint(): string
+    {
+        return self::URL . '/' . self::UUID;
+    }
+
+    private function configSync(): void
+    {
+        config([
+            'services.deforestory_api.sync_url' => self::URL,
+            'services.deforestory_api.sync_token' => self::TOKEN,
+        ]);
+    }
 
     private function makeCard(): DeforestoryCard
     {
         return DeforestoryCard::create([
-            'uuid' => '26cd5ee6-b0dc-4a06-b9c7-82dbf6a99c10',
+            'uuid' => self::UUID,
             'slug' => 'mayawana',
             'status' => 'publish',
             'category' => 'pulp',
@@ -72,60 +95,42 @@ class DeforestorySyncTest extends TestCase
         return [$case->fresh(), $laporan->fresh(['translations'])];
     }
 
-    public function test_sync_posts_payload_with_bearer_token_when_configured(): void
+    public function test_sync_posts_seven_field_payload_with_bearer_token(): void
     {
-        config([
-            'services.deforestory_api.sync_url' => self::URL,
-            'services.deforestory_api.sync_token' => self::TOKEN,
-        ]);
-
+        $this->configSync();
         $this->makeCard();
         [$case, $laporan] = $this->makeLaporan();
 
-        Http::fake([
-            self::URL => Http::response(['ok' => true], 200),
-        ]);
+        Http::fake([$this->syncEndpoint() => Http::response(['ok' => true], 200)]);
 
-        DeforestorySyncJob::dispatchSync($case, $laporan, 'on');
+        DeforestorySyncJob::dispatchSync($case, $laporan);
 
-        Http::assertSent(function ($request) use ($laporan) {
-            if ($request->url() !== self::URL || $request->method() !== 'POST') {
+        Http::assertSent(function ($request) {
+            if ($request->url() !== $this->syncEndpoint() || $request->method() !== 'POST') {
                 return false;
             }
-            if ($request->header('Authorization')[0] !== 'Bearer '.self::TOKEN) {
+            if ($request->header('Authorization')[0] !== 'Bearer ' . self::TOKEN) {
                 return false;
             }
 
             $data = $request->data();
-            return $data['external_id'] === 'pasopati-update-'.$laporan->id
-                && $data['deforestory_id'] === '26cd5ee6-b0dc-4a06-b9c7-82dbf6a99c10'
-                && $data['title_id'] === 'Dampak di luar peta'
+
+            // 7 field, persis kontrak simontini (urutan alphabetical setelah sort).
+            $keys = array_keys($data);
+            sort($keys);
+            $expected = ['description_en', 'description_id', 'published_at', 'target_url_en', 'target_url_id', 'title_en', 'title_id'];
+            if ($keys !== $expected) {
+                return false;
+            }
+
+            return $data['title_id'] === 'Dampak di luar peta'
                 && $data['title_en'] === 'Impact beyond the map'
                 && $data['description_id'] === 'Desc dampak'
                 && $data['description_en'] === 'Desc impact'
                 && $data['published_at'] === '2025-06-03'
-                && $data['status'] === 'on'
-                && str_starts_with($data['image_url'], 'http')
-                && str_contains($data['image_url'], 'storage/deforestory/laporans/dampak.jpg')
-                && str_contains($data['target_url'], '/id/deforestory/mayawana/dampak-di-luar-peta');
+                && str_contains($data['target_url_id'], '/id/deforestory/mayawana/dampak-di-luar-peta')
+                && str_contains($data['target_url_en'], '/en/deforestory/mayawana/dampak-di-luar-peta');
         });
-    }
-
-    public function test_sync_off_payload_when_unpublishing(): void
-    {
-        config([
-            'services.deforestory_api.sync_url' => self::URL,
-            'services.deforestory_api.sync_token' => self::TOKEN,
-        ]);
-
-        $this->makeCard();
-        [$case, $laporan] = $this->makeLaporan();
-
-        Http::fake([self::URL => Http::response([], 200)]);
-
-        DeforestorySyncJob::dispatchSync($case, $laporan, 'off');
-
-        Http::assertSent(fn ($r) => $r->url() === self::URL && $r->data()['status'] === 'off');
     }
 
     public function test_sync_noop_when_url_not_configured(): void
@@ -140,33 +145,27 @@ class DeforestorySyncTest extends TestCase
 
         Http::fake();
 
-        DeforestorySyncJob::dispatchSync($case, $laporan, 'on');
+        DeforestorySyncJob::dispatchSync($case, $laporan);
 
         Http::assertNothingSent();
     }
 
     public function test_sync_skips_when_case_has_no_matching_card(): void
     {
-        config([
-            'services.deforestory_api.sync_url' => self::URL,
-            'services.deforestory_api.sync_token' => self::TOKEN,
-        ]);
+        $this->configSync();
 
         [$case, $laporan] = $this->makeLaporan();
 
         Http::fake();
 
-        DeforestorySyncJob::dispatchSync($case, $laporan, 'on');
+        DeforestorySyncJob::dispatchSync($case, $laporan);
 
         Http::assertNothingSent();
     }
 
     public function test_sync_skips_when_card_has_no_uuid(): void
     {
-        config([
-            'services.deforestory_api.sync_url' => self::URL,
-            'services.deforestory_api.sync_token' => self::TOKEN,
-        ]);
+        $this->configSync();
 
         DeforestoryCard::create([
             'slug' => 'mayawana',
@@ -177,33 +176,27 @@ class DeforestorySyncTest extends TestCase
 
         Http::fake();
 
-        DeforestorySyncJob::dispatchSync($case, $laporan, 'on');
+        DeforestorySyncJob::dispatchSync($case, $laporan);
 
         Http::assertNothingSent();
     }
 
     public function test_sync_fails_job_when_target_returns_non_2xx(): void
     {
-        config([
-            'services.deforestory_api.sync_url' => self::URL,
-            'services.deforestory_api.sync_token' => self::TOKEN,
-        ]);
-
+        $this->configSync();
         $this->makeCard();
         [$case, $laporan] = $this->makeLaporan();
 
-        Http::fake([self::URL => Http::response(['err' => 'nope'], 500)]);
+        Http::fake([$this->syncEndpoint() => Http::response(['err' => 'nope'], 500)]);
 
         $this->expectException(\RuntimeException::class);
-        (new DeforestorySyncJob($case, $laporan, 'on'))->handle();
+        (new DeforestorySyncJob($case, $laporan))->handle();
     }
 
-    public function test_publishing_via_form_dispatches_sync_job_on(): void
+    public function test_publishing_via_form_dispatches_sync_job(): void
     {
-        config([
-            'services.deforestory_api.sync_url' => self::URL,
-            'services.deforestory_api.webhook_url' => self::URL,
-        ]);
+        $this->configSync();
+        config(['services.deforestory_api.webhook_url' => self::URL]);
 
         $this->makeCard();
         $case = DeforestoryCase::create([
@@ -223,15 +216,15 @@ class DeforestorySyncTest extends TestCase
             ->set('sort', 1)
             ->call('save');
 
-        // Publish (status active dari baru) → sync 'on' ikut ke-antrian.
-        Queue::assertPushed(DeforestorySyncJob::class, fn ($job) => $job->status === 'on');
+        // Publish (status active dari baru) → sync ikut ke-antrian.
+        Queue::assertPushed(DeforestorySyncJob::class);
         Queue::assertPushed(DeforestoryNotificationJob::class);
         Queue::assertPushed(DeforestoryWebhookJob::class);
     }
 
-    public function test_unpublishing_via_form_dispatches_sync_job_off(): void
+    public function test_unpublishing_via_form_does_not_dispatch_sync(): void
     {
-        config(['services.deforestory_api.sync_url' => self::URL]);
+        $this->configSync();
 
         $case = DeforestoryCase::create([
             'slug' => 'mayawana', 'status' => 'active', 'sort' => 1,
@@ -255,6 +248,7 @@ class DeforestorySyncTest extends TestCase
 
         Queue::fake();
 
+        // Laporan aktif → edit ke inactive = unpublish.
         Livewire::test(DeforestoryLaporanForm::class, ['laporanId' => $laporan->id])
             ->set('title_id', 'Laporan aktif')
             ->set('title_en', 'Active report')
@@ -262,13 +256,13 @@ class DeforestorySyncTest extends TestCase
             ->set('sort', 1)
             ->call('save');
 
-        // Unpublish (active → inactive) → sync 'off' ke-antrian.
-        Queue::assertPushed(DeforestorySyncJob::class, fn ($job) => $job->status === 'off');
+        // Publish-only → unpublish gak memicu sync.
+        Queue::assertNotPushed(DeforestorySyncJob::class);
     }
 
     public function test_editing_active_laporan_does_not_dispatch_sync(): void
     {
-        config(['services.deforestory_api.sync_url' => self::URL]);
+        $this->configSync();
 
         $case = DeforestoryCase::create([
             'slug' => 'mayawana', 'status' => 'active', 'sort' => 1,

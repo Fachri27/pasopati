@@ -176,32 +176,27 @@ class DeforestoryLaporanForm extends Component
             );
         }
 
-        // Antrekan job keluar HANYA saat transisi status active↔non-active:
-        // - publish (draft/inactive → active): notifikasi email, webhook ke web
-        //   lain, dan sync keluar ke simontini (status 'on').
-        // - unpublish (active → draft/inactive): sync keluar ke simontini (status
-        //   'off') supaya update turun dari sisi sana.
-        // Edit laporan yang sudah aktif TIDAK memicu job apa pun.
+        // Antrekan job keluar HANYA saat publish (draft/inactive → active):
+        // - notifikasi email ke subscriber CMS ini,
+        // - webhook keluar ke web lain (sindikasi lama),
+        // - sync keluar ke simontini (publish-only, body 7-field).
+        // Unpublish (active → draft/inactive) gak di-sync ke simontini —
+        // simontini cuma perlu tau laporan baru naik. Edit laporan aktif
+        // TIDAK memicu job apa pun.
         $justPublished = $this->status === 'active' && ! $wasActive;
-        $justUnpublished = $wasActive && $this->status !== 'active';
 
-        if ($justPublished || $justUnpublished) {
+        if ($justPublished) {
             $case = DeforestoryCase::find($this->caseId);
 
-            if ($justPublished && $case && $case->status === 'active') {
+            if ($case && $case->status === 'active') {
                 // 1) Notifikasi email ke subscriber CMS ini.
                 DeforestoryNotificationJob::dispatch($case, 'created');
 
                 // 2) Webhook keluar ke web lain supaya langsung update tanpa polling.
                 DeforestoryWebhookJob::dispatch($case, $laporan, 'created');
 
-                // 3) Sync keluar ke simontini: laporan jadi aktif di sisi sana.
-                DeforestorySyncJob::dispatch($case, $laporan, 'on');
-            }
-
-            if ($justUnpublished && $case) {
-                // Sync keluar ke simontini: laporan turun dari aktif.
-                DeforestorySyncJob::dispatch($case, $laporan, 'off');
+                // 3) Sync keluar ke simontini (publish-only).
+                DeforestorySyncJob::dispatch($case, $laporan);
             }
         }
 

@@ -11,28 +11,26 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Str;
 
 /**
  * Kirim laporan Deforestory ke endpoint simontini (sync keluar) saat laporan
- * di-publish atau di-unpublish.
+ * di-publish (jadi active). Publish-only — unpublish/edit gak di-sync
+ * (simontini cuma perlu tau laporan baru naik, bukan laporan turun).
  *
  * Beda dari DeforestoryWebhookJob (webhook keluar generik, HMAC + shape sindikasi
- * lama): simontini pakai Bearer token (bukan HMAC) + shape body sendiri
- * (external_id, deforestory_id, title_id/en, description_id/en, image_url,
- * target_url, published_at, status).
+ * lama): simontini pakai Bearer token (bukan HMAC) + shape body sendiri.
  *
- * `deforestory_id` = UUID card simontini. Case pasopati di-match ke card
- * simontini via slug (case.slug == card.slug). Kalau case gak punya card
- * simontini (atau card gak punya uuid) → skip diam-diam: laporan ini bukan
- * bagian deforestory simontini, jadi gak ada yang dituju.
+ * Endpoint = POST {sync_url}/{uuid} — uuid card simontini ada di URL path
+ * (identifier kasus di sisi simontini). Body (7 field):
+ *   title_id, title_en, description_id, description_en,
+ *   target_url_id, target_url_en, published_at
+ * `description_*` = excerpt laporan. `target_url_*` = URL publik laporan per
+ * locale di pasopati. Gak ada external_id/deforestory_id di body (uuid sudah di
+ * path), gak ada image_url, gak ada status.
  *
- * `external_id` = "pasopati-update-{laporan.id}" — id unik laporan versi
- * pasopati, dipakai simontini untuk dedup/upsert update.
- *
- * `status` = 'on' (publish — laporan jadi active) atau 'off' (unpublish —
- * turun dari active). Edit biasa laporan aktif gak memicu job ini (cuma
- * transisi active↔non-active, lihat DeforestoryLaporanForm::save).
+ * `deforestory_id` (uuid card) dicari lewat case.slug == card.slug. Kalau case
+ * gak punya card simontini / card gak punya uuid → skip diam-diam: laporan ini
+ * bukan bagian deforestory simontini.
  *
  * Dijalankan via queue (async) supaya simpan admin gak nunggu HTTP keluar.
  * tries=3 + backoff 10s biar retry kalau simontini sempat gagal merespons 2xx.
@@ -46,8 +44,7 @@ class DeforestorySyncJob implements ShouldQueue
 
     public function __construct(
         public DeforestoryCase $case,
-        public DeforestoryLaporan $laporan,
-        public string $status = 'on' // 'on' | 'off'
+        public DeforestoryLaporan $laporan
     ) {}
 
     public function handle(): void
@@ -61,76 +58,59 @@ class DeforestorySyncJob implements ShouldQueue
             return;
         }
 
-        // deforestory_id = uuid card simontini (case di-match via slug). Kalau
-        // case gak punya card / card gak punya uuid → bukan case simontini, skip.
+        // uuid card simontini (case di-match via slug) → identifier kasus di
+        // simontini, ditaruh di URL path. Kalau case gak punya card / card gak
+        // punya uuid → bukan case simontini, skip.
         $card = DeforestoryCard::where('slug', $this->case->slug)->first();
         if (! $card || ! $card->uuid) {
             return;
         }
 
-        $payload = $this->payload($card);
+        $payload = $this->payload();
+
+        // Endpoint simontini: POST /api/deforestory/sync/{uuid}.
+        $endpoint = rtrim($url, '/') . '/' . rawurlencode($card->uuid);
 
         $response = Http::timeout($timeout)
             ->withToken($token)
-            ->post($url, $payload);
+            ->post($endpoint, $payload);
 
         // Lempar supaya Laravel retry (tries=3) kalau simontini gagal 2xx.
         if (! $response->successful()) {
             throw new \RuntimeException(
-                "Sync laporan ke simontini ({$url}) gagal: HTTP {$response->status()}"
+                "Sync laporan ke simontini ({$endpoint}) gagal: HTTP {$response->status()}"
             );
         }
     }
 
     /**
-     * Shape body simontini (deforestory/sync). Field per-locale (id + en) diisi
-     * dari DeforestoryLaporanTranslation. image_url & target_url tunggal — pakai
-     * locale default 'id' (dengan fallback). description_* = excerpt laporan.
+     * Body simontini (7 field). title/description per-locale dari
+     * DeforestoryLaporanTranslation (description = excerpt). target_url per
+     * locale = URL publik laporan di pasopati.
      */
-    protected function payload(DeforestoryCard $card): array
+    protected function payload(): array
     {
         $idTrans = $this->laporan->translation('id');
         $enTrans = $this->laporan->translation('en');
 
-        // image_url tunggal: prioritas image locale id → image laporan lama →
-        // cover case. Ubah path storage jadi URL absolut.
-        $imagePath = $idTrans?->image ?: $this->laporan->image ?: $this->case->featured_image;
-
-        // target_url: URL publik laporan di pasopati (locale id).
-        $targetUrl = route('deforestory.case.laporan', [
-            'locale' => 'id',
-            'slug' => $this->case->slug,
-            'laporanSlug' => $this->laporan->slug,
-        ]);
-
         $publishedAt = ($this->laporan->published_at ?? $this->laporan->created_at)?->toDateString();
 
         return [
-            'external_id' => 'pasopati-update-' . $this->laporan->id,
-            'deforestory_id' => $card->uuid,
             'title_id' => $idTrans?->title,
             'title_en' => $enTrans?->title,
             'description_id' => $idTrans?->excerpt,
             'description_en' => $enTrans?->excerpt,
-            'image_url' => $this->imageUrl($imagePath),
-            'target_url' => $targetUrl,
+            'target_url_id' => route('deforestory.case.laporan', [
+                'locale' => 'id',
+                'slug' => $this->case->slug,
+                'laporanSlug' => $this->laporan->slug,
+            ]),
+            'target_url_en' => route('deforestory.case.laporan', [
+                'locale' => 'en',
+                'slug' => $this->case->slug,
+                'laporanSlug' => $this->laporan->slug,
+            ]),
             'published_at' => $publishedAt,
-            'status' => $this->status,
         ];
-    }
-
-    /**
-     * Path storage (relatif) → URL absolut. URL absolut (http/https) dilewat
-     * apa adanya (mis. gambar yang sudah URL penuh).
-     */
-    protected function imageUrl(?string $path): ?string
-    {
-        if (! $path) {
-            return null;
-        }
-
-        return Str::startsWith($path, ['http://', 'https://'])
-            ? $path
-            : asset('storage/' . $path);
     }
 }
