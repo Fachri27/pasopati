@@ -14,6 +14,9 @@ use Tests\TestCase;
  * Test endpoint GET by-uuid: web lain (simontini) mengenal kasus via uuid card,
  * bukan slug. uuid → card → case (slug match) → laporan.
  *
+ * Endpoint PUBLIK (tanpa token) — data laporan yang sudah publish, aman
+ * di-consume siapa pun.
+ *
  * Response = JSON array berisi tiap laporan dalam shape SAMA dengan payload
  * sync (DeforestorySyncJob::payload): {title_id, title_en, description_id,
  * description_en, target_url_id, target_url_en, published_at}. Laporan kasus
@@ -26,16 +29,9 @@ class DeforestoryApiByUuidTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const TOKEN = 'test-secret-token';
     private const UUID = '6518428c-62fc-4788-97cc-f6bac6385615';
     private const CASE_SLUG = 'mayawana';
     private const LAPORAN_SLUG = 'jejak-deforestasi-mayawana';
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-        config(['services.deforestory_api.key' => self::TOKEN]);
-    }
 
     /** Case aktif + card (slug match) + laporan aktif dgn translations id/en. */
     private function makeCaseWithCardAndLaporan(int $laporanCount = 1): array
@@ -97,7 +93,7 @@ class DeforestoryApiByUuidTest extends TestCase
 
     private function listUrl(string $uuid = self::UUID): string
     {
-        return "/api/deforestory/by-uuid/laporan/{$uuid}?token=" . self::TOKEN;
+        return "/api/deforestory/by-uuid/laporan/{$uuid}";
     }
 
     /** Assert sebuah object punya 7 field sync-payload persis. */
@@ -199,20 +195,13 @@ class DeforestoryApiByUuidTest extends TestCase
         $this->assertSame($laporans[0]->created_at->toDateString(), $res->json('0.published_at'));
     }
 
-    // ---- auth -------------------------------------------------------------
+    // ---- publik (tanpa token) ---------------------------------------------
 
-    public function test_by_uuid_endpoint_requires_token(): void
+    public function test_by_uuid_endpoint_is_public_without_token(): void
     {
+        // Endpoint sindikasi publik — gak butuh Bearer token.
         $this->makeCaseWithCardAndLaporan();
 
-        $this->get('/api/deforestory/by-uuid/laporan/'.self::UUID)->assertStatus(401);
-    }
-
-    public function test_by_uuid_wrong_token_rejected(): void
-    {
-        $this->makeCaseWithCardAndLaporan();
-
-        $this->get('/api/deforestory/by-uuid/laporan/'.self::UUID.'?token=salah')
-            ->assertStatus(401);
+        $this->get('/api/deforestory/by-uuid/laporan/'.self::UUID)->assertStatus(200);
     }
 }
