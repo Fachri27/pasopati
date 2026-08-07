@@ -26,8 +26,16 @@
                 <div class="flex items-right space-x-1 text-sm">
                     @php
                     $currentLocale = app()->getLocale();
-                    $currentPath = str_replace('/' . $currentLocale, '', request()->getPathInfo());
                     $otherLocale = $currentLocale === 'en' ? 'id' : 'en';
+                    // Hapus HANYA segmen locale di depan path, bukan semua
+                    // kemunculan "/{locale}". str_replace('/en', ...) sebelumnya
+                    // juga memotong slug yang berawalan "en" (mis. "enabling-...")
+                    // karena batas "/fellowship/en" ikut terganti -> "/fellowshipabling".
+                    $segments = explode('/', trim(request()->getPathInfo(), '/'));
+                    if (($segments[0] ?? null) === $currentLocale) {
+                        array_shift($segments);
+                    }
+                    $currentPath = '/' . implode('/', $segments);
                     $switchUrl = '/' . $otherLocale . $currentPath;
                     @endphp
                     <a href="{{ $switchUrl }}"
