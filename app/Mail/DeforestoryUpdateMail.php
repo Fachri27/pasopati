@@ -56,7 +56,7 @@ class DeforestoryUpdateMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            markdown: 'emails.deforestory-update',
+            view: 'emails.deforestory-update',
             with: [
                 'case' => $this->case,
                 'subscriber' => $this->subscriber,

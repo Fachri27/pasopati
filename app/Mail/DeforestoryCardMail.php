@@ -47,7 +47,7 @@ class DeforestoryCardMail extends Mailable
         $isId = $this->subscriberLocale === 'id';
 
         return new Content(
-            markdown: 'emails.deforestory-card',
+            view: 'emails.deforestory-card',
             with: [
                 'card' => $this->card,
                 'subscriber' => $this->subscriber,

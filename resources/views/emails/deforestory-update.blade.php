@@ -1,46 +1,51 @@
 @php
+    // Notifikasi email saat kasus/laporan Deforestory di-publish (DeforestoryUpdateMail).
+    // Single-locale per subscriber. Tampilan = layout "Deforestory Dispatch" yang
+    // dipakai bareng sama email deforestory-card lewat partial — biar gak bisa drift.
     $isId = $locale === 'id';
     $title = $case->translation($locale)?->title ?? $case->translation('id')?->title ?? $case->slug;
     $excerpt = $case->translation($locale)?->excerpt ?? $case->translation('id')?->excerpt ?? '';
     $caseUrl = route('deforestory.case', ['locale' => $locale, 'slug' => $case->slug]);
     $unsubscribeUrl = route('deforestory.unsubscribe', ['locale' => $locale, 'token' => $subscriber->unsubscribe_token]);
+
+    $imagePath = $case->featured_image ?: null;
+    $imageUrl = $imagePath
+        ? (\Illuminate\Support\Str::startsWith($imagePath, ['http://', 'https://']) ? $imagePath : asset('storage/' . $imagePath))
+        : null;
+
+    $dateText = ($case->created_at ? \Carbon\Carbon::parse($case->created_at)->locale($locale)->translatedFormat('d F Y') : '');
+
+    if ($event === 'created') {
+        $tag = $isId ? 'Baru' : 'New';
+        if ($isCaseSpecific) {
+            $label = $isId ? 'Kasus Baru · Yang Anda Ikuti' : 'New Case · You Follow';
+        } else {
+            $label = $isId ? 'Kasus Baru' : 'New Case';
+        }
+    } else {
+        $tag = $isId ? 'Pembaruan' : 'Update';
+        $label = $isCaseSpecific
+            ? ($isId ? 'Pembaruan · Yang Anda Ikuti' : 'Update · You Follow')
+            : ($isId ? 'Pembaruan Kasus' : 'Case Update');
+    }
 @endphp
-
-<x-mail::message>
-@if ($event === 'created')
-    @if ($isCaseSpecific)
-# {{ $isId ? 'Kasus yang Anda Ikuti Telah Diterbitkan' : 'A Case You Follow Has Been Published' }}
-    @else
-# {{ $isId ? 'Kasus Deforestory Baru' : 'New Deforestory Case' }}
-    @endif
-@else
-    @if ($isCaseSpecific)
-# {{ $isId ? 'Update untuk Kasus yang Anda Ikuti' : 'Update for a Case You Follow' }}
-    @else
-# {{ $isId ? 'Update Kasus Deforestory' : 'Deforestory Case Updated' }}
-    @endif
-@endif
-
-{{ $isCaseSpecific
-    ? ($isId ? 'Kasus yang Anda ikuti memiliki pembaruan:' : 'A case you follow has an update:')
-    : ($isId ? 'Kami menerbitkan arsip baru di Deforestory:' : 'We published a new archive on Deforestory:') }}
-
-**{{ $title }}**
-
-@if ($excerpt)
-{{ strip_tags($excerpt) }}
-@endif
-
-<x-mail::button :url="$caseUrl" color="success">
-{{ $isId ? 'Baca Arsip' : 'Read Archive' }}
-</x-mail::button>
-
----
-
-{{ $isId ? 'Anda menerima email ini karena berlangganan Deforestory.' : 'You are receiving this because you subscribed to Deforestory.' }}
-
-{{ $isId ? 'Berhenti berlangganan:' : 'Unsubscribe:' }} [{{ $unsubscribeUrl }}]({{ $unsubscribeUrl }})
-
-Thanks,<br>
-{{ config('app.name') }}
-</x-mail::message>
+@include('emails.partials.deforestory-dispatch', [
+    'brand' => 'PASOPATI',
+    'subline' => 'Deforestory',
+    'tag' => $tag,
+    'label' => $label,
+    'title' => $title,
+    'description' => $excerpt,
+    'imageUrl' => $imageUrl,
+    'dateLabel' => $isId ? 'DITERBITKAN' : 'PUBLISHED',
+    'dateText' => $dateText,
+    'buttonLabel' => $isId ? 'Baca Arsip' : 'Read Archive',
+    'buttonUrl' => $caseUrl,
+    'reason' => $isId
+        ? 'Anda menerima email ini karena berlangganan pembaruan Deforestory di Pasopati.'
+        : 'You receive this email because you subscribed to Deforestory updates on Pasopati.',
+    'unsubscribeLabel' => $isId ? 'Berhenti berlangganan / Unsubscribe' : 'Unsubscribe',
+    'unsubscribeUrl' => $unsubscribeUrl,
+    'footWordmark' => 'PASOPATI · Deforestory',
+    'lang' => $locale,
+])
