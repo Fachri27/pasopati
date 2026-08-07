@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\DeforestoryCard;
 use App\Models\DeforestoryCase;
 use App\Models\DeforestoryLaporan;
 use Illuminate\Http\Request;
@@ -203,6 +204,42 @@ class DeforestoryApiController extends Controller
         ]);
     }
 
+    /**
+     * Daftar laporan sebuah kasus, diidentifikasi via UUID kartu simontini.
+     * GET /api/deforestory/by-uuid/laporan/{uuid}
+     *
+     * Web lain (simontini) mengenal kasus via uuid card, bukan slug. Endpoint
+     * ini jembatan: uuid → card → case (slug match) → daftar laporan aktif.
+     *
+     * Response = JSON array berisi tiap laporan dalam shape yang SAMA dengan
+     * payload sync (DeforestorySyncJob::payload): {title_id, title_en,
+     * description_id, description_en, target_url_id, target_url_en,
+     * published_at}. Jadi consumer simontini pakai satu shape untuk push & pull.
+     */
+    public function laporanByUuid(Request $request, string $uuid)
+    {
+        $card = DeforestoryCard::where('uuid', $uuid)->first();
+        if (! $card) {
+            return response()->json(['message' => 'Card not found for uuid'], 404);
+        }
+
+        $case = DeforestoryCase::where('slug', $card->slug)
+            ->where('status', 'active')
+            ->first();
+
+        $laporans = $case
+            ? $case->laporans()
+                ->where('status', 'active')
+                ->with('translations')
+                ->orderBy('sort')
+                ->get()
+            : collect();
+
+        return response()->json(
+            $laporans->map(fn ($l) => $this->laporanSyncShape($l, $case))->values()
+        );
+    }
+
     // ---- Shaping helpers -------------------------------------------------
 
     protected function locale(Request $request): string
@@ -283,5 +320,38 @@ class DeforestoryApiController extends Controller
             'queue' => config('queue.default'),
             'length' => $length,
         ]);
+    }
+
+    /**
+     * Shape payload sync simontini (DeforestorySyncJob::payload) — 7 field,
+     * description = excerpt laporan, target_url = URL publik laporan per locale.
+     * Dipakai endpoint by-uuid GET supaya response identik dengan payload yang
+     * simontini terima via push (sync), jadi consumer gak perlu kode terpisah.
+     *
+     * Catatan: translation('id'/'en') di model fallback ke translation pertama
+     * kalau locale itu gak ada — sama persis dengan behavior sync job.
+     */
+    protected function laporanSyncShape(DeforestoryLaporan $laporan, DeforestoryCase $case): array
+    {
+        $idTrans = $laporan->translation('id');
+        $enTrans = $laporan->translation('en');
+
+        return [
+            'title_id' => $idTrans?->title,
+            'title_en' => $enTrans?->title,
+            'description_id' => $idTrans?->excerpt,
+            'description_en' => $enTrans?->excerpt,
+            'target_url_id' => route('deforestory.case.laporan', [
+                'locale' => 'id',
+                'slug' => $case->slug,
+                'laporanSlug' => $laporan->slug,
+            ]),
+            'target_url_en' => route('deforestory.case.laporan', [
+                'locale' => 'en',
+                'slug' => $case->slug,
+                'laporanSlug' => $laporan->slug,
+            ]),
+            'published_at' => ($laporan->published_at ?? $laporan->created_at)?->toDateString(),
+        ];
     }
 }

@@ -251,7 +251,7 @@ class DeforestoryCardWebhookTest extends TestCase
         $this->assertSame('Spatial analysis of Mayawana.', $enCases[0]['excerpt']);
 
         $this->assertSame(
-            ['slug', 'category', 'year', 'image', 'title', 'excerpt'],
+            ['slug', 'uuid', 'category', 'year', 'image', 'title', 'excerpt'],
             array_keys($idCases[0])
         );
     }

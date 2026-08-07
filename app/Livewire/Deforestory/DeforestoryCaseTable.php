@@ -61,6 +61,7 @@ class DeforestoryCaseTable extends Component
             return [
                 'slug' => $slug,
                 'title' => $card['title'] ?? '',
+                'uuid' => $card['uuid'] ?? null,
                 'image' => $card['image'] ?? null,
                 'category' => $card['category'] ?? '',
                 'year' => $card['year'] ?? '',

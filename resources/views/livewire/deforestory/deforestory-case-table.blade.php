@@ -36,6 +36,7 @@
                     <tr class="bg-gray-100 text-left text-sm font-medium text-gray-600">
                         <th class="p-3 w-24">Gambar</th>
                         <th class="p-3">Kartu (API)</th>
+                        <th class="p-3 w-44">UUID Simontini</th>
                         <th class="p-3 w-28">Kategori</th>
                         <th class="p-3 w-24">Tahun</th>
                         <th class="p-3 w-32">Jumlah laporan</th>
@@ -65,6 +66,16 @@
                                 <span class="text-sm font-medium text-gray-800 block">{{ $row['title'] }}</span>
                                 <span class="text-xs text-gray-400">/{{ $row['slug'] }}</span>
                             </td>
+                            <td class="p-3">
+                                @if (! empty($row['uuid']))
+                                    <div x-data="{ copied:false, copy(){ navigator.clipboard?.writeText('{{ e($row['uuid']) }}'); this.copied=true; setTimeout(()=>this.copied=false,1200) } }">
+                                        <code class="block text-[10px] font-mono text-gray-600 break-all leading-tight">{{ $row['uuid'] }}</code>
+                                        <button type="button" @click="copy" class="mt-1 text-[11px] text-blue-600 hover:underline whitespace-nowrap" x-text="copied ? 'Tersalin ✓' : 'Salin'">Salin</button>
+                                    </div>
+                                @else
+                                    <span class="text-xs text-gray-400">—</span>
+                                @endif
+                            </td>
                             <td class="p-3 text-xs">{{ $row['category'] ?: '-' }}</td>
                             <td class="p-3 text-xs">{{ $row['year'] ?: '-' }}</td>
                             <td class="p-3">
@@ -90,7 +101,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td class="p-3 text-center text-gray-400" colspan="6">
+                            <td class="p-3 text-center text-gray-400" colspan="7">
                                 Tidak ada kartu dari API. Periksa konfigurasi <code>DEFORESTORY_API_URL</code>.
                             </td>
                         </tr>

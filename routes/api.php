@@ -23,6 +23,13 @@ use Illuminate\Support\Facades\Route;
 |   GET  /api/deforestory/cases/{slug}/laporan/{laporan}   satu laporan (metadata)
 |   GET  /api/deforestory/cases/{slug}/laporan/{laporan}/translations  satu laporan + translations id & en
 |
+| Sindikasi by card uuid (simontini mengenal kasus via uuid, bukan slug).
+| Response = JSON array berisi tiap laporan dalam shape sync-payload
+| (sama dengan DeforestorySyncJob::payload): {title_id, title_en,
+|  description_id, description_en, target_url_id, target_url_en, published_at}.
+| Laporan kasus terus bertambah → array ikut membesar:
+|   GET  /api/deforestory/by-uuid/laporan/{uuid}             daftar laporan (array of sync-payload objects)
+|
 | Integrasi internal:
 |   GET  /api/deforestory/queue-length                      jumlah job pending
 |
@@ -56,6 +63,12 @@ Route::prefix('deforestory')
         Route::get('/cases/{slug}/laporan/latest', 'laporanLatest');
         Route::get('/cases/{slug}/laporan/{laporanSlug}', 'laporanShow');
         Route::get('/cases/{slug}/laporan/{laporanSlug}/translations', 'laporanTranslations');
+
+        // Sindikasi by card uuid — web lain (simontini) mengenal kasus via uuid.
+        // Response = array berisi tiap laporan dalam shape sync-payload (7 field),
+        // sama dengan payload push sync, jadi consumer pakai satu shape. Laporan
+        // kasus akan terus bertambah → array ikut membesar.
+        Route::get('/by-uuid/laporan/{uuid}', 'laporanByUuid');
 
         // Monitoring (perlu Bearer token).
         Route::get('/queue-length', 'queueLength');

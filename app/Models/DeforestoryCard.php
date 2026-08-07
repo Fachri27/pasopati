@@ -59,6 +59,7 @@ class DeforestoryCard extends Model
 
         return [
             'slug' => $this->slug,
+            'uuid' => $this->uuid,
             'category' => $this->category,
             'year' => $this->year,
             'image' => $image,
