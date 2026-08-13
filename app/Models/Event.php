@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\EventOrientation;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class Event extends Model
 {
@@ -13,6 +14,7 @@ class Event extends Model
         'image_en',
         'video',
         'title_id',
+        'slug',
         'title_en',
         'event_date',
         'location',
@@ -31,6 +33,31 @@ class Event extends Model
             'location_geojson' => 'array',
             'orientation' => EventOrientation::class,
         ];
+    }
+
+    /*
+     * Slug dari `title_id` diisi otomatis saat event baru disimpan dan
+     * dibiarkan apa adanya saat judul diubah — agar tautan share yang sudah
+     * tersebar tetap mengarah ke event yang sama. Hanya diisi kalau kosong,
+     * jadi editor boleh menetapkan slug sendiri kalau perlu. Dijaga unik
+     * dengan menambah akhiran -2, -3, dst. bila bentuk dasarnya dipakai
+     * event lain.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (Event $event) {
+            if (! empty($event->slug)) {
+                return;
+            }
+
+            $dasar = Str::slug($event->title_id) ?: ('event-' . ($event->id ?? 'baru'));
+            $slug = $dasar;
+            $i = 1;
+            while (Event::where('slug', $slug)->where('id', '!=', $event->id ?? 0)->exists()) {
+                $slug = $dasar . '-' . ++$i;
+            }
+            $event->slug = $slug;
+        });
     }
 
     public function getImageIdUrlAttribute(): ?string

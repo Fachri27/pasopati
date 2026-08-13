@@ -86,4 +86,37 @@ class GoogleCommentLoginRedirectTest extends TestCase
 
         $this->assertGuest();
     }
+
+    /**
+     * Callback yang dimuat dua kali sudah mengonsumsi `url.intended` pada
+     * pemrosesan pertama, jadi callback kedua tidak menemukannya lagi di sesi.
+     * Nilai yang sama ikut disimpan sebagai cookie saat tombol login ditekan —
+     * callback kedua harus balik ke halaman itu, bukan terlempar ke beranda.
+     */
+    public function test_mismatched_state_uses_cookie_when_session_intended_is_consumed(): void
+    {
+        $this->withCookie('komentar_kembali', '/id/fire?laporan=12')
+            ->get('/comment/login/google/callback?code=palsu&state=tidak-cocok')
+            ->assertRedirect('/id/fire?laporan=12');
+
+        $this->assertGuest();
+    }
+
+    /** Cookie yang menunjuk ke luar ditolak, seperti intended yang lain. */
+    public function test_mismatched_state_rejects_external_cookie(): void
+    {
+        $this->withCookie('komentar_kembali', 'https://situs-lain.example/curi')
+            ->get('/comment/login/google/callback?code=palsu&state=tidak-cocok')
+            ->assertRedirect('/');
+    }
+
+    /**
+     * Tombol login di /fire menyerahkan ?intended= yang berisi URL halaman
+     * asalnya; URL itu harus ikut tersimpan sebagai cookie cadangan.
+     */
+    public function test_redirect_route_queues_return_cookie(): void
+    {
+        $this->get('/comment/login/google?intended='.urlencode('/id/fire?laporan=12'))
+            ->assertCookie('komentar_kembali', '/id/fire?laporan=12');
+    }
 }

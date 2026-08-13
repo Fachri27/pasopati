@@ -501,6 +501,57 @@
   height: auto;
 }
 
+/* --- Tombol bagikan -------------------------------------------------------
+   Sejajar dengan tombol tutup, diletakkan tepat di kirinya. */
+.rincian__bagikan {
+  position: absolute;
+  top: 12px;
+  right: 50px;
+  z-index: 2;
+  display: grid;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  place-items: center;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--r-teks);
+  transition: background-color 0.2s ease;
+}
+
+.rincian__bagikan:hover {
+  background: var(--r-sorot);
+}
+
+.rincian__bagikan svg {
+  width: 15px;
+  height: auto;
+}
+
+.rincian__bagikan:focus-visible {
+  outline: 2px solid var(--r-tautan);
+  outline-offset: 2px;
+}
+
+/* --- Toast "Link tersalin" ------------------------------------------------
+   Muncul sebentar di puncak panel setelah link disalin ke clipboard. */
+.rincian__toast {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  z-index: 3;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: var(--r-teks);
+  color: #fff;
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.25);
+  pointer-events: none;
+}
+
 /* --- Layar sempit: panel ditumpuk ---------------------------------------- */
 @media (max-width: 860px) {
   .rincian {

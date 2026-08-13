@@ -72,6 +72,14 @@ class FirePageTest extends TestCase
         $response->assertDontSee('class="pantauan-kosong"', false);
         $response->assertSee('aria-roledescription="korsel"', false);
         $response->assertSee('Karhutla Sukabumi Meluas');
+        // Tombol bagikan + toast tersaji di markup pop-up rincian.
+        $response->assertSee('rincian__bagikan', false);
+        $response->assertSee('rincian__toast', false);
+
+        // Slug dibangun otomatis dari judul dan ikut dalam payload berita
+        // supaya tautan share memakai ?event=<slug>, bukan id numerik.
+        $berita = $response->viewData('berita');
+        $this->assertSame('karhutla-sukabumi-meluas', $berita[0]['slug']);
     }
 
     /**
@@ -144,6 +152,67 @@ class FirePageTest extends TestCase
         $this->assertCount(10, $berita);
         $this->assertSame('Kejadian 12', $berita[0]['judul']);
         $this->assertSame('Kejadian 3', $berita[9]['judul']);
+    }
+
+    /**
+     * Tautan share pop-up rincian memakai ?event=<slug>. Kalau event itu lebih
+     * lama dari 10 berita terbaru, ia tidak terambil secara normal →
+     * bukaRincianSlug(slug) di klien tidak menemukannya. FireController harus
+     * tetap menyertakannya (di-prepend) supaya deep-link share selalu bisa
+     * membuka rincian event yang dimaksud.
+     */
+    public function test_event_query_param_includes_old_event_not_in_latest_ten(): void
+    {
+        foreach (range(1, 12) as $n) {
+            $this->buatEvent("Kejadian {$n}", 'Sukabumi, Jawa Barat', '2026-08-'.str_pad((string) $n, 2, '0', STR_PAD_LEFT));
+        }
+
+        $lama = Event::where('title_id', 'Kejadian 1')->first();
+
+        // Tanpa param: 10 terbaru, Kejadian 1 (paling lama) tidak termuat.
+        $berita = $this->get(route('fire', ['locale' => 'id']))->assertOk()->viewData('berita');
+        $this->assertCount(10, $berita);
+        $this->assertNotContains('Kejadian 1', array_column($berita, 'judul'));
+
+        // Dengan ?event=<slug lama>: Kejadian 1 di-prepend, total jadi 11.
+        $berita = $this->get(route('fire', ['locale' => 'id', 'event' => $lama->slug]))
+            ->assertOk()
+            ->viewData('berita');
+
+        $this->assertCount(11, $berita);
+        $this->assertSame('Kejadian 1', $berita[0]['judul']);
+        $this->assertSame($lama->slug, $berita[0]['slug']);
+    }
+
+    /** ?event= untuk event yang sudah termuat di 10 terbaru tidak menduplikasi. */
+    public function test_event_query_param_for_already_included_event_does_not_duplicate(): void
+    {
+        foreach (range(1, 12) as $n) {
+            $this->buatEvent("Kejadian {$n}", 'Sukabumi, Jawa Barat', '2026-08-'.str_pad((string) $n, 2, '0', STR_PAD_LEFT));
+        }
+
+        $terbaru = Event::where('title_id', 'Kejadian 12')->first();
+
+        $berita = $this->get(route('fire', ['locale' => 'id', 'event' => $terbaru->slug]))
+            ->assertOk()
+            ->viewData('berita');
+
+        $this->assertCount(10, $berita);
+        $this->assertSame('Kejadian 12', $berita[0]['judul']);
+    }
+
+    /** ?event= dengan slug yang tidak ada tidak mengubah daftar berita. */
+    public function test_event_query_param_with_unknown_slug_leaves_list_unchanged(): void
+    {
+        foreach (range(1, 12) as $n) {
+            $this->buatEvent("Kejadian {$n}", 'Sukabumi, Jawa Barat', '2026-08-'.str_pad((string) $n, 2, '0', STR_PAD_LEFT));
+        }
+
+        $berita = $this->get(route('fire', ['locale' => 'id', 'event' => 'event-tidak-ada']))
+            ->assertOk()
+            ->viewData('berita');
+
+        $this->assertCount(10, $berita);
     }
 
     /**

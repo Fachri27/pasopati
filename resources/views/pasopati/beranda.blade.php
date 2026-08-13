@@ -7,7 +7,7 @@
     <section
       id="beranda"
       aria-label="Beranda"
-      x-data="korsel(@js($berita ?? []))"
+      x-data="korsel(@js($berita ?? []), @js(url()->current()))"
       x-on:mouseenter="hentikanOtomatis()"
       x-on:mouseleave="mulaiOtomatis()"
       x-on:focusin="hentikanOtomatis()"
@@ -631,6 +631,25 @@
                     </a>
                   </div>
                 @endauth
+              </div>
+
+              <button
+                type="button"
+                aria-label="Bagikan rincian"
+                x-on:click="bagikan()"
+                class="rincian__bagikan"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="18" cy="5" r="3" />
+                  <circle cx="6" cy="12" r="3" />
+                  <circle cx="18" cy="19" r="3" />
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                  <line x1="15.42" y1="6.51" x2="8.59" y2="10.49" />
+                </svg>
+              </button>
+
+              <div class="rincian__toast" x-cloak x-show="tersalin" x-transition role="status">
+                Link tersalin
               </div>
 
               <button

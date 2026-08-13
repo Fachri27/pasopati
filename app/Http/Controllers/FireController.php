@@ -67,9 +67,26 @@ class FireController extends Controller
             ->take(10)
             ->get();
 
+        // Tautan share pop-up rincian memakai ?event=<slug>. Kalau event itu
+        // lebih lama dari 10 berita terbaru, ia tidak terambil di atas →
+        // bukaRincianSlug(slug) di sisi klien tidak menemukannya dan pop-up
+        // tidak terbuka. Pastikan event yang diminta ikut dimuat (di-prepend)
+        // supaya deep-link share selalu bisa membuka rincian event yang
+        // dimaksud.
+        $eventDiminta = request()->query('event');
+        if ($eventDiminta && ! $events->firstWhere('slug', $eventDiminta)) {
+            $diminta = Event::where('slug', $eventDiminta)->first();
+            if ($diminta) {
+                $events->prepend($diminta);
+            }
+        }
+
         $berita = $events->map(fn (Event $event) => [
             // Dipakai untuk menautkan kartu peta ke pop-up rincian yang sama.
             'id' => $event->id,
+            // Dipakai tautan share pop-up rincian (?event=<slug>), lebih terbaca
+            // daripada id numerik dan stabil saat judul event diubah.
+            'slug' => $event->slug,
             'pulau' => $this->inferPulau($event->location),
             'tanggal' => $event->event_date?->locale('id')->translatedFormat('j F Y') ?? '',
             'judul' => $event->title_id,

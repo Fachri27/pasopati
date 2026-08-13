@@ -12,10 +12,13 @@
  * Di Laravel: `berita` bisa datang dari Blade — x-data="korsel(@js($berita))".
  */
 document.addEventListener("alpine:init", function () {
-  Alpine.data("korsel", function (beritaAwal) {
+  Alpine.data("korsel", function (beritaAwal, urlDasar) {
     return {
       /* --- keadaan --- */
       berita: beritaAwal || window.BERITA || [],
+      /* URL dasar halaman fire (sudah memuat locale + host, tanpa query) —
+         dipakai urlBagikan() menyusun tautan share ?event=<id>. */
+      urlDasar: urlDasar || window.location.origin + window.location.pathname,
       SALINAN: 3,
       JEDA_OTOMATIS: 6000, /* ms; 0 untuk mematikan putar otomatis */
       DURASI: 550, /* selaras dengan durasi transisi pada jalur */
@@ -205,14 +208,18 @@ document.addEventListener("alpine:init", function () {
         return rute + "?intended=" + encodeURIComponent(kembali);
       },
 
-      /* Dipanggil sekali saat halaman dimuat: kalau URL-nya membawa ?laporan=,
-         berarti pengguna baru kembali dari login. Penanda itu langsung dihapus
-         dari URL supaya menyegarkan halaman tidak membuka pop-up lagi. */
+      /* Dipanggil sekali saat halaman dimuat: kalau URL-nya membawa ?laporan=
+         (pengguna baru kembali dari login — memakai id) atau ?event=
+         (pendatang dari tautan share — memakai slug), berarti pop-up rincian
+         event itu harus terbuka. Penanda itu langsung dihapus dari URL supaya
+         menyegarkan halaman tidak membuka pop-up lagi. */
       pulihkanDariMasuk: function () {
         var params = new URLSearchParams(window.location.search);
+        var slug = params.get("event");
         var id = params.get("laporan");
-        if (!id) return;
+        if (!slug && !id) return;
 
+        params.delete("event");
         params.delete("laporan");
         var sisa = params.toString();
         window.history.replaceState(
@@ -223,9 +230,20 @@ document.addEventListener("alpine:init", function () {
 
         this.$nextTick(
           function () {
-            this.bukaRincianId(id);
+            if (slug) this.bukaRincianSlug(slug);
+            else this.bukaRincianId(id);
           }.bind(this)
         );
+      },
+
+      bukaRincianSlug: function (slug) {
+        for (var i = 0; i < this.berita.length; i++) {
+          if (String(this.berita[i].slug || "") === String(slug)) {
+            this.bukaRincian(i);
+
+            return;
+          }
+        }
       },
 
       bukaRincianId: function (id) {
@@ -236,6 +254,69 @@ document.addEventListener("alpine:init", function () {
             return;
           }
         }
+      },
+
+      /* --- bagikan rincian yang terbuka ---
+         Tautan share = halaman fire + ?event=<slug berita yang sedang dibuka>.
+         Slug terbaca sebagai judul kejadian, alih-alih id numerik. Dibuka oleh
+         pendatang, pop-up rincian event itu muncul otomatis (lihat
+         pulihkanDariMasuk di atas). Memakai Web Share API bila tersedia
+         (mobile → share sheet OS); kalau tidak, salin ke clipboard + toast. */
+      tersalin: false,
+      _jedaTersalin: null,
+
+      urlBagikan: function () {
+        if (this.sorot === null) return "";
+        var b = this.berita[this.sorot];
+        if (!b) return "";
+        return this.urlDasar + "?event=" + encodeURIComponent(b.slug);
+      },
+
+      bagikan: function () {
+        if (this.sorot === null) return;
+        var url = this.urlBagikan();
+        if (!url) return;
+        var judul = (this.berita[this.sorot] && this.berita[this.sorot].judul) || "Berita karhutla — Pasopati";
+        var self = this;
+
+        if (navigator.share) {
+          navigator.share({ title: judul, url: url }).catch(function () {});
+          return;
+        }
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard
+            .writeText(url)
+            .then(function () {
+              self.tampilkanTersalin();
+            })
+            .catch(function () {});
+          return;
+        }
+
+        /* Fallback terakhir (browser tanpa Clipboard API): input sementara +
+           execCommand. */
+        var input = document.createElement("input");
+        input.value = url;
+        input.setAttribute("readonly", "");
+        input.style.position = "absolute";
+        input.style.left = "-9999px";
+        document.body.appendChild(input);
+        input.select();
+        try {
+          document.execCommand("copy");
+          self.tampilkanTersalin();
+        } catch (e) {}
+        document.body.removeChild(input);
+      },
+
+      tampilkanTersalin: function () {
+        var self = this;
+        this.tersalin = true;
+        if (this._jedaTersalin) window.clearTimeout(this._jedaTersalin);
+        this._jedaTersalin = window.setTimeout(function () {
+          self.tersalin = false;
+        }, 2200);
       },
 
       /* Halaman di belakang pop-up tidak ikut tergulir — sama caranya dengan
