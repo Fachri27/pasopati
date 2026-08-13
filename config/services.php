@@ -38,6 +38,16 @@ return [
     'turnstile' => [
         'site_key' => env('TURNSTILE_SITE_KEY'),
         'secret_key' => env('TURNSTILE_SECRET_KEY'),
+
+        // Pakai "test key" Cloudflare yang selalu lolos di hostname mana pun,
+        // menggantikan key di atas. Hanya untuk pengembangan: widget-nya
+        // memasang spanduk "Hanya untuk pengujian", dan verifikasinya tidak
+        // menyaring bot sama sekali.
+        //
+        // Harus dinyalakan sengaja lewat TURNSTILE_TEST_KEYS=true. Dulu ini
+        // ikut APP_ENV=local, jadi server yang APP_ENV-nya salah setel diam-diam
+        // memakai captcha yang selalu lolos.
+        'test_keys' => env('TURNSTILE_TEST_KEYS', false),
     ],
 
     // Integrasi GeoServer untuk pencarian lokasi pada CRUD Event/Kejadian.

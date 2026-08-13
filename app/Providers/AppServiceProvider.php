@@ -28,14 +28,17 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Cloudflare Turnstile: key real (0x...) hanya mau render di hostname
-        // yang di-whitelist di dashboard Cloudflare — library.test/localhost
-        // gak terima, jadi widget error 110200/400 di dev. Cloudflare menyediakan
-        // "test key" yang selalu lolos di domain manapun (termasuk localhost &
-        // IP) persis untuk dev lokal. Override dilakukan di sini (bukan di
-        // config/services.php) karena env binding baru tersedia setelah
-        // bootstrap. Key real di .env tetap dipakai di production.
-        if ($this->app->environment('local')) {
+        // Cloudflare Turnstile: key asli (0x...) hanya mau render di hostname
+        // yang di-whitelist di dashboard Cloudflare, jadi di mesin pengembangan
+        // widget-nya bisa error 110200/400. Cloudflare menyediakan "test key"
+        // yang selalu lolos di hostname mana pun untuk keperluan itu.
+        //
+        // Penggantinya kini harus diminta sengaja (TURNSTILE_TEST_KEYS=true),
+        // bukan mengikuti APP_ENV: dengan aturan lama, server yang APP_ENV-nya
+        // tertinggal di `local` diam-diam memakai captcha yang selalu lolos —
+        // spanduk "Hanya untuk pengujian" muncul di situs hidup dan
+        // perlindungan botnya sebenarnya mati. Bawaannya sekarang key asli.
+        if (config('services.turnstile.test_keys')) {
             config([
                 'services.turnstile.site_key' => '1x00000000000000000000AA',
                 'services.turnstile.secret_key' => '1x0000000000000000000000000000000AA',
