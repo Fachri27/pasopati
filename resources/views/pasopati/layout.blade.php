@@ -5,11 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     {{-- Dipakai kolom komentar pop-up rincian saat mengirim lewat fetch. --}}
     <meta name="csrf-token" content="{{ csrf_token() }}" />
-    <title>Fire Pasopati — Pantauan Karhutla Indonesia</title>
+    <title>@yield('title', 'Fire Pasopati — Pantauan Karhutla Indonesia')</title>
     <meta
       name="description"
-      content="Pantauan kebakaran hutan dan lahan di Indonesia — berita terkini, statistik harian, dan peta sebaran wilayah rawan."
+      content="@yield('description', 'Pantauan kebakaran hutan dan lahan di Indonesia — berita terkini, statistik harian, dan peta sebaran wilayah rawan.')"
     />
+    @stack('meta')
     <link rel="stylesheet" href="{{ asset('assets/vendor/leaflet/leaflet.css') }}" />
     {{-- Pemilih rentang tanggal pada dialog peta. Di-vendor ke public/ seperti
          leaflet dan alpine, bukan lewat bundel Vite: resources/js/app.js juga

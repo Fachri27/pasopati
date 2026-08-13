@@ -7,7 +7,7 @@
     <section
       id="beranda"
       aria-label="Beranda"
-      x-data="korsel(@js($berita ?? []), @js(url()->current()))"
+      x-data="korsel(@js($berita ?? []), @js($urlDasar ?? url()->current()), @js($eventSlugDiminta ?? null))"
       x-on:mouseenter="hentikanOtomatis()"
       x-on:mouseleave="mulaiOtomatis()"
       x-on:focusin="hentikanOtomatis()"
@@ -181,14 +181,14 @@
                         <video
                           x-on:click.stop="bukaRincian(k.asli)"
                           :src="k.isi.video"
-                          :poster="k.isi.gambar"
+                          :poster="k.isi.poster"
                           :aria-label="k.isi.alt || ''"
                           :controls="kurangiGerak"
                           x-effect="setelVideo($el, i)"
                           muted
                           loop
                           playsinline
-                          preload="none"
+                          :preload="k.isi.poster ? 'none' : 'metadata'"
                           :class="i === aktif ? 'grayscale-0' : 'grayscale-[0.65]'"
                           class="{{ $mediaVertikal }}"
                         ></video>
@@ -238,14 +238,14 @@
                         <video
                           x-on:click.stop="bukaRincian(k.asli)"
                           :src="k.isi.video"
-                          :poster="k.isi.gambar"
+                          :poster="k.isi.poster"
                           :aria-label="k.isi.alt || ''"
                           :controls="kurangiGerak"
                           x-effect="setelVideo($el, i)"
                           muted
                           loop
                           playsinline
-                          preload="none"
+                          :preload="k.isi.poster ? 'none' : 'metadata'"
                           width="462"
                           height="308"
                           :class="i === aktif ? 'grayscale-0' : 'grayscale-[0.65]'"
@@ -411,7 +411,7 @@
                 <template x-if="berita[sorot].video">
                   <video
                     :src="berita[sorot].video"
-                    :poster="berita[sorot].gambar"
+                    :poster="berita[sorot].poster"
                     :aria-label="berita[sorot].alt || ''"
                     :autoplay="!kurangiGerak"
                     controls
@@ -433,7 +433,19 @@
                 <!-- Kepala: keping bundar + nama pulau + tanggal, sejajar
                      dengan baris profil pada rujukan. -->
                 <div class="rincian__kepala">
-                  <img class="rincian__keping" :src="berita[sorot].gambar" alt="" aria-hidden="true" />
+                  {{-- Hanya thumbnail asli event ini. `gambar` punya cadangan satu
+                       foto bawaan yang sama untuk semua event tanpa thumbnail,
+                       jadi memakainya di sini membuat keping ini menampilkan
+                       gambar yang sama sekali tidak ada hubungannya dengan
+                       video/foto yang sedang dibuka. Tanpa thumbnail, huruf
+                       depan nama pulau saja — sama seperti keping komentar. --}}
+                  <template x-if="berita[sorot].poster">
+                    <img class="rincian__keping" :src="berita[sorot].poster" alt="" aria-hidden="true" />
+                  </template>
+                  <template x-if="!berita[sorot].poster">
+                    <span class="rincian__inisial" aria-hidden="true"
+                          x-text="(berita[sorot].pulau || 'I').charAt(0)"></span>
+                  </template>
                   <div class="rincian__kapsi-isi">
                     <p class="rincian__pulau" x-text="berita[sorot].pulau || 'Indonesia'"></p>
                     <p class="rincian__tanggal" x-text="berita[sorot].tanggal"></p>
@@ -447,7 +459,19 @@
                   <!-- Kapsi: keping + nama pulau tebal disambung judul, sama
                        seperti baris keterangan pada rujukan. -->
                   <div class="rincian__kapsi">
-                    <img class="rincian__keping" :src="berita[sorot].gambar" alt="" aria-hidden="true" />
+                    {{-- Hanya thumbnail asli event ini. `gambar` punya cadangan satu
+                       foto bawaan yang sama untuk semua event tanpa thumbnail,
+                       jadi memakainya di sini membuat keping ini menampilkan
+                       gambar yang sama sekali tidak ada hubungannya dengan
+                       video/foto yang sedang dibuka. Tanpa thumbnail, huruf
+                       depan nama pulau saja — sama seperti keping komentar. --}}
+                  <template x-if="berita[sorot].poster">
+                    <img class="rincian__keping" :src="berita[sorot].poster" alt="" aria-hidden="true" />
+                  </template>
+                  <template x-if="!berita[sorot].poster">
+                    <span class="rincian__inisial" aria-hidden="true"
+                          x-text="(berita[sorot].pulau || 'I').charAt(0)"></span>
+                  </template>
                     <div class="rincian__kapsi-isi">
                       <p class="rincian__judul">
                         <strong x-text="berita[sorot].pulau || 'Indonesia'"></strong>
@@ -619,7 +643,7 @@
 
                     <a
                       class="rincian__masuk-tombol"
-                      :href="tautanMasuk(@js(route('comment.google.login')), @js(request()->getRequestUri()))"
+                      :href="tautanMasuk(@js(route('comment.google.login')))"
                     >
                       <svg viewBox="0 0 24 24" aria-hidden="true">
                         <path fill="#4285F4" d="M21.6 12.2c0-.7-.1-1.5-.2-2.2H12v4.3h5.4a4.6 4.6 0 0 1-2 3v2.8h3.5c2-1.9 3.2-4.6 3.2-7.9z" />

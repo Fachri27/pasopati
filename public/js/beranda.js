@@ -12,13 +12,18 @@
  * Di Laravel: `berita` bisa datang dari Blade — x-data="korsel(@js($berita))".
  */
 document.addEventListener("alpine:init", function () {
-  Alpine.data("korsel", function (beritaAwal, urlDasar) {
+  Alpine.data("korsel", function (beritaAwal, urlDasar, slugDiminta) {
     return {
       /* --- keadaan --- */
       berita: beritaAwal || window.BERITA || [],
-      /* URL dasar halaman fire (sudah memuat locale + host, tanpa query) —
-         dipakai urlBagikan() menyusun tautan share ?event=<id>. */
+      /* URL dasar halaman fire (/{locale}/fire, sudah memuat host, tanpa slug
+         maupun query) — dipakai urlBagikan() menyusun permalink dan
+         perbaruiUrlRincian() pushState. */
       urlDasar: urlDasar || window.location.origin + window.location.pathname,
+      /* Slug event yang diminta server lewat permalink path /{locale}/fire/<slug>
+         (route fire.event). Dipakai pulihkanDariMasuk membuka pop-up event itu
+         saat halaman dimuat. */
+      slugDiminta: slugDiminta || null,
       SALINAN: 3,
       JEDA_OTOMATIS: 6000, /* ms; 0 untuk mematikan putar otomatis */
       DURASI: 550, /* selaras dengan durasi transisi pada jalur */
@@ -60,6 +65,10 @@ document.addEventListener("alpine:init", function () {
             this.pulihkanDariMasuk();
           }.bind(this)
         );
+
+        /* Tombol back/forward browser: sinkronkan pop-up ke URL — permalink
+           path membuka rincian event itu, base /fire menutupnya. */
+        window.addEventListener("popstate", this.saatPopState.bind(this));
 
         /* Ukur ulang saat ukuran (atau mode) berubah — lebar kartu berbeda per
            mode. setTimeout, bukan rAF: ini bukan pekerjaan animasi, dan rAF
@@ -170,7 +179,11 @@ document.addEventListener("alpine:init", function () {
          nilai. */
       sorot: null,
 
-      bukaRincian: function (indeks) {
+      /* `tenang` = true menyingkirkan pushState: dipakai saat membuka pop-up
+         sebagai reaksi terhadap URL yang sudah benar (permalink saat halaman
+         dimuat, atau popstate dari tombol back/forward) — supaya tidak menambah
+         entri riwayat dan memicu loop. */
+      bukaRincian: function (indeks, tenang) {
         var jumlah = this.berita.length;
         if (!jumlah) return;
 
@@ -179,77 +192,121 @@ document.addEventListener("alpine:init", function () {
         this.sorot = ((indeks % jumlah) + jumlah) % jumlah;
         this.hentikanOtomatis();
         this.kunciGulir(true);
+        if (!tenang) this.perbaruiUrlRincian();
       },
 
-      tutupRincian: function () {
+      tutupRincian: function (tenang) {
         if (this.sorot === null) return;
         this.sorot = null;
         this.kunciGulir(false);
         if (this.terlihat) this.mulaiOtomatis();
+        if (!tenang) this.perbaruiUrlRincian();
       },
 
       pindahRincian: function (arah) {
         if (this.sorot === null) return;
         var jumlah = this.berita.length;
         this.sorot = ((this.sorot + arah) % jumlah + jumlah) % jumlah;
+        this.perbaruiUrlRincian();
       },
 
-      /* Dipanggil dari kartu berita di dalam dialog peta, yang punya komponen
-         Alpine sendiri: ia hanya menyiarkan id laporannya lewat window event,
-         dan pencocokan ke indeks dikerjakan di sini. */
+      /* PUSHSTATE: alamat bar mengikuti pop-up yang terbuka — pola Instagram.
+         Sorot null → base /{locale}/fire; sorot terisi → permalink /fire/<slug>. */
+      perbaruiUrlRincian: function () {
+        var url;
+        if (this.sorot === null) {
+          url = this.urlDasar;
+        } else {
+          var b = this.berita[this.sorot];
+          if (!b || !b.slug) return;
+          url = this.urlDasar + "/" + b.slug;
+        }
+        window.history.pushState({}, "", url);
+      },
+
+      /* POPSTATE: reaksi terhadap back/forward — cocokkan URL ke pop-up tanpa
+         pushState ulang (pergerakan tombol itu sendiri yang mengubah URL). */
+      saatPopState: function () {
+        var bagian = window.location.pathname.split("/");
+        var slug = bagian[bagian.length - 1] || "";
+        for (var i = 0; i < this.berita.length; i++) {
+          if (slug && String(this.berita[i].slug || "") === String(slug)) {
+            this.bukaRincian(i, true);
+
+            return;
+          }
+        }
+        this.tutupRincian(true);
+      },
+
       /* Tautan "Masuk dengan Google" untuk laporan yang sedang dibuka.
-         Tujuan kembalinya membawa ?laporan=<id> supaya sepulang dari Google
-         pop-up ini terbuka lagi di laporan yang sama — bukan sekadar mendarat
-         di halamannya dan kehilangan tempat baca. */
-      tautanMasuk: function (rute, jalur) {
-        var laporan = this.berita[this.sorot];
-        var kembali = jalur.split("?")[0] + "?laporan=" + (laporan ? laporan.id : "");
+         Tujuan kembali = permalink event yang sedang dibuka (atau base /fire
+         bila tidak ada) — sepulang login, mendarat di permalink itu → show()
+         merender dan pop-up terbuka lagi di event yang sama. */
+      tautanMasuk: function (rute) {
+        var kembali = this.sorot !== null ? this.urlBagikan() : this.urlDasar;
 
         return rute + "?intended=" + encodeURIComponent(kembali);
       },
 
-      /* Dipanggil sekali saat halaman dimuat: kalau URL-nya membawa ?laporan=
-         (pengguna baru kembali dari login — memakai id) atau ?event=
-         (pendatang dari tautan share — memakai slug), berarti pop-up rincian
-         event itu harus terbuka. Penanda itu langsung dihapus dari URL supaya
-         menyegarkan halaman tidak membuka pop-up lagi. */
+      /* Dipanggil sekali saat halaman dimuat. Tiga sumber pop-up awal:
+         (1) permalink path /{locale}/fire/<slug> → slugDiminta dari server;
+         (2) link share lama ?event=<slug> → di-upgrade ke permalink path;
+         (3) login lama ?laporan=<id> → penanda dihapus. Semua dibuka tenang
+         (URL sudah benar / sedang diperbaiki) supaya tidak menambah riwayat. */
       pulihkanDariMasuk: function () {
         var params = new URLSearchParams(window.location.search);
         var slug = params.get("event");
         var id = params.get("laporan");
-        if (!slug && !id) return;
 
-        params.delete("event");
-        params.delete("laporan");
-        var sisa = params.toString();
-        window.history.replaceState(
-          {},
-          "",
-          window.location.pathname + (sisa ? "?" + sisa : "") + window.location.hash
-        );
+        if (slug) {
+          /* Upgrade link share lama ?event=<slug> → permalink path /fire/<slug>
+             supaya address bar mencerminkan URL baru dan reload mendarat di
+             show() alih-alih index(). */
+          params.delete("event");
+          var sisa = params.toString();
+          window.history.replaceState(
+            {},
+            "",
+            this.urlDasar + "/" + slug + (sisa ? "?" + sisa : "") + window.location.hash
+          );
+        } else if (id) {
+          params.delete("laporan");
+          var sisa2 = params.toString();
+          window.history.replaceState(
+            {},
+            "",
+            window.location.pathname + (sisa2 ? "?" + sisa2 : "") + window.location.hash
+          );
+        }
+
+        /* Prioritas: query lama lebih dulu (baru saja di-upgrade/dihapus di
+           atas), baru slugDiminta dari permalink path. */
+        var slugBuka = slug || (this.slugDiminta || null);
+        if (!slugBuka && !id) return;
 
         this.$nextTick(
           function () {
-            if (slug) this.bukaRincianSlug(slug);
-            else this.bukaRincianId(id);
+            if (slugBuka) this.bukaRincianSlug(slugBuka, true);
+            else this.bukaRincianId(id, true);
           }.bind(this)
         );
       },
 
-      bukaRincianSlug: function (slug) {
+      bukaRincianSlug: function (slug, tenang) {
         for (var i = 0; i < this.berita.length; i++) {
           if (String(this.berita[i].slug || "") === String(slug)) {
-            this.bukaRincian(i);
+            this.bukaRincian(i, tenang);
 
             return;
           }
         }
       },
 
-      bukaRincianId: function (id) {
+      bukaRincianId: function (id, tenang) {
         for (var i = 0; i < this.berita.length; i++) {
           if (String(this.berita[i].id) === String(id)) {
-            this.bukaRincian(i);
+            this.bukaRincian(i, tenang);
 
             return;
           }
@@ -257,19 +314,20 @@ document.addEventListener("alpine:init", function () {
       },
 
       /* --- bagikan rincian yang terbuka ---
-         Tautan share = halaman fire + ?event=<slug berita yang sedang dibuka>.
+         Tautan share = permalink event yang sedang dibuka: /{locale}/fire/<slug>.
          Slug terbaca sebagai judul kejadian, alih-alih id numerik. Dibuka oleh
-         pendatang, pop-up rincian event itu muncul otomatis (lihat
-         pulihkanDariMasuk di atas). Memakai Web Share API bila tersedia
-         (mobile → share sheet OS); kalau tidak, salin ke clipboard + toast. */
+         pendatang, route show() merender halaman dengan pop-up event itu
+         terbuka otomatis (lihat slugDiminta & pulihkanDariMasuk di atas).
+         Memakai Web Share API bila tersedia (mobile → share sheet OS); kalau
+         tidak, salin ke clipboard + toast. */
       tersalin: false,
       _jedaTersalin: null,
 
       urlBagikan: function () {
         if (this.sorot === null) return "";
         var b = this.berita[this.sorot];
-        if (!b) return "";
-        return this.urlDasar + "?event=" + encodeURIComponent(b.slug);
+        if (!b || !b.slug) return "";
+        return this.urlDasar + "/" + encodeURIComponent(b.slug);
       },
 
       bagikan: function () {

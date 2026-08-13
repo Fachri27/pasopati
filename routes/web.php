@@ -37,6 +37,13 @@ Route::middleware(['setlocale'])->prefix('{locale}')->where(['locale' => 'id|en'
     // Fire Pasopati — pantauan karhutla (berita dari CMS Event/Kejadian)
     Route::get('/fire', [FireController::class, 'index'])->name('fire');
 
+    // Permalink satu event (pola Instagram): /{locale}/fire/<slug>. Pop-up
+    // rincian event ini terbuka otomatis, dan OG meta memuat judul+gambar
+    // event itu. Slug dibatasi kebab supaya tak menabrak segmen route lain.
+    Route::get('/fire/{slug}', [FireController::class, 'show'])
+        ->name('fire.event')
+        ->where('slug', '[a-z0-9\-]+');
+
     // load more articles (infinite scroll)
     Route::get('/load-more-articles', [PageController::class, 'loadMoreArticles'])->name('articles.load-more');
 

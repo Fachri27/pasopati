@@ -75,6 +75,9 @@ class FirePageTest extends TestCase
         // Tombol bagikan + toast tersaji di markup pop-up rincian.
         $response->assertSee('rincian__bagikan', false);
         $response->assertSee('rincian__toast', false);
+        // Halaman base /fire tetap memakai judul default — meta per-event
+        // hanya untuk permalink (lihat test_fire_event_permalink_*).
+        $response->assertSee('<title>Fire Pasopati — Pantauan Karhutla Indonesia</title>', false);
 
         // Slug dibangun otomatis dari judul dan ikut dalam payload berita
         // supaya tautan share memakai ?event=<slug>, bukan id numerik.
@@ -137,6 +140,30 @@ class FirePageTest extends TestCase
         // Tanpa video, kartu tetap memakai <img> — kuncinya harus null, bukan
         // string kosong, karena Blade memilih varian lewat `!k.isi.video`.
         $this->assertNull($berita[1]['video']);
+    }
+
+    /**
+     * Poster video tidak boleh jatuh ke foto cadangan bersama.
+     *
+     * `gambar` sengaja punya cadangan supaya kartu tanpa foto tidak kosong,
+     * tetapi cadangan itu satu berkas yang sama untuk semua event. Dipakai
+     * sebagai poster, setiap event yang thumbnail-nya gagal dibuat (ffmpeg
+     * tidak terpasang di server) tampil dengan foto identik dan terlihat
+     * seperti kartu yang tertukar. `poster` karena itu null apa adanya.
+     */
+    public function test_video_without_a_thumbnail_sends_no_poster(): void
+    {
+        $this->buatEvent('Rekaman tanpa thumbnail', 'Bengkalis, Riau', '2026-08-11', 'landscape', 'events/videos/uji.mp4');
+
+        $berita = $this->get(route('fire', ['locale' => 'id']))
+            ->assertOk()
+            ->viewData('berita');
+
+        $this->assertNull($berita[0]['poster']);
+
+        // `gambar` tetap terisi: dipakai <img> kartu non-video dan keping
+        // bundar di pop-up, yang memang tidak boleh kosong.
+        $this->assertNotEmpty($berita[0]['gambar']);
     }
 
     public function test_fire_page_takes_ten_most_recent_events(): void
@@ -213,6 +240,75 @@ class FirePageTest extends TestCase
             ->viewData('berita');
 
         $this->assertCount(10, $berita);
+    }
+
+    /**
+     * Permalink path /{locale}/fire/<slug> (pola Instagram). Controller show()
+     * memuat event itu, menyiapkan slug untuk korsel (pop-up terbuka otomatis),
+     * dan tetap menyajikan 10 berita terbaru di korsel.
+     */
+    public function test_fire_event_permalink_loads_event_and_passes_slug(): void
+    {
+        $this->buatEvent('Kejadian Lama', 'Sukabumi, Jawa Barat', '2026-08-01');
+        $baru = $this->buatEvent('Kejadian Baru', 'Bengkalis, Riau', '2026-08-12');
+
+        $response = $this->get(route('fire.event', ['locale' => 'id', 'slug' => $baru->slug]))
+            ->assertOk();
+
+        $this->assertSame($baru->slug, $response->viewData('eventSlugDiminta'));
+        // urlDasar selalu base /{locale}/fire (tanpa slug) — dipakai korsel
+        // menyusun permalink tiap event.
+        $this->assertStringEndsWith('/id/fire', $response->viewData('urlDasar'));
+        $berita = $response->viewData('berita');
+        $this->assertContains($baru->title_id, array_column($berita, 'judul'));
+    }
+
+    /** Permalink event yang lebih lama dari 10 terbaru: di-prepend supaya
+     *  pop-up-nya bisa dibuka, sama seperti deep-link ?event= lama. */
+    public function test_fire_event_permalink_includes_old_event_not_in_latest_ten(): void
+    {
+        foreach (range(1, 12) as $n) {
+            $this->buatEvent("Kejadian {$n}", 'Sukabumi, Jawa Barat', '2026-08-'.str_pad((string) $n, 2, '0', STR_PAD_LEFT));
+        }
+
+        $lama = Event::where('title_id', 'Kejadian 1')->first();
+
+        $berita = $this->get(route('fire.event', ['locale' => 'id', 'slug' => $lama->slug]))
+            ->assertOk()
+            ->viewData('berita');
+
+        $this->assertCount(11, $berita);
+        $this->assertSame('Kejadian 1', $berita[0]['judul']);
+        $this->assertSame($lama->slug, $berita[0]['slug']);
+    }
+
+    /** Slug tak dikenal di permalink → 404, sama seperti post Instagram yang tak ada. */
+    public function test_unknown_event_slug_returns_404(): void
+    {
+        $this->buatEvent('Satu Event', 'Sukabumi, Jawa Barat', '2026-08-11');
+
+        $this->get(route('fire.event', ['locale' => 'id', 'slug' => 'event-tidak-ada']))
+            ->assertNotFound();
+    }
+
+    /**
+     * Permalink memuat OG/Twitter meta + <title> dari event itu, supaya preview
+     * link di WhatsApp/Twitter menampilkan judul+gambar event — bagian inti dari
+     * pengalaman "kaya Instagram". Halaman base /fire tidak memuat meta ini
+     * (diverifikasi di test_fire_page_renders_events_from_cms).
+     */
+    public function test_fire_event_permalink_has_event_og_meta(): void
+    {
+        $e = $this->buatEvent('Karhutla Sukabumi Meluas', 'Sukabumi, Jawa Barat', '2026-08-11');
+
+        $response = $this->get(route('fire.event', ['locale' => 'id', 'slug' => $e->slug]))->assertOk();
+
+        $response->assertSee('<title>Karhutla Sukabumi Meluas</title>', false);
+        $response->assertSee('<meta property="og:title" content="Karhutla Sukabumi Meluas"', false);
+        $response->assertSee('<meta property="og:image" content="', false);
+        // image_id kosong di buatEvent → jatuh ke cadangan berita-jawa.jpg.
+        $response->assertSee('assets/img/berita-jawa.jpg', false);
+        $response->assertSee('<meta name="twitter:card" content="summary_large_image"', false);
     }
 
     /**

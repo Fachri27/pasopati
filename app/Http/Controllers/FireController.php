@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\EventOrientation;
 use App\Models\Event;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 class FireController extends Controller
@@ -67,12 +68,12 @@ class FireController extends Controller
             ->take(10)
             ->get();
 
-        // Tautan share pop-up rincian memakai ?event=<slug>. Kalau event itu
-        // lebih lama dari 10 berita terbaru, ia tidak terambil di atas →
-        // bukaRincianSlug(slug) di sisi klien tidak menemukannya dan pop-up
-        // tidak terbuka. Pastikan event yang diminta ikut dimuat (di-prepend)
-        // supaya deep-link share selalu bisa membuka rincian event yang
-        // dimaksud.
+        // Kompatibilitas link share lama ?event=<slug>: kalau event itu lebih
+        // lama dari 10 berita terbaru, ia tidak terambil di atas →
+        // bukaRincianSlug(slug) di sisi klien tidak menemukannya. Pastikan
+        // event yang diminta ikut dimuat (di-prepend) supaya deep-link share
+        // lama tetap membuka rincian event yang dimaksud. Link share baru
+        // memakai permalink path /{locale}/fire/<slug> (lihat show()).
         $eventDiminta = request()->query('event');
         if ($eventDiminta && ! $events->firstWhere('slug', $eventDiminta)) {
             $diminta = Event::where('slug', $eventDiminta)->first();
@@ -81,31 +82,43 @@ class FireController extends Controller
             }
         }
 
-        $berita = $events->map(fn (Event $event) => [
-            // Dipakai untuk menautkan kartu peta ke pop-up rincian yang sama.
-            'id' => $event->id,
-            // Dipakai tautan share pop-up rincian (?event=<slug>), lebih terbaca
-            // daripada id numerik dan stabil saat judul event diubah.
-            'slug' => $event->slug,
-            'pulau' => $this->inferPulau($event->location),
-            'tanggal' => $event->event_date?->locale('id')->translatedFormat('j F Y') ?? '',
-            'judul' => $event->title_id,
-            'gambar' => $event->image_id_url ?? asset('assets/img/berita-jawa.jpg'),
-            'alt' => $event->title_id,
-            // Bila event menyertakan video, kartu memutarnya alih-alih
-            // menampilkan foto diam — `gambar` tetap dikirim dan dipakai
-            // sebagai poster. Untuk event bervideo, EventController mengisi
-            // image_id dengan thumbnail hasil ffmpeg, jadi posternya adalah
-            // frame dari video itu sendiri.
-            'video' => $event->video_url,
-            // Dipakai pop-up rincian saat judul/gambar kartu diklik.
-            'lokasi' => $this->rapikanLokasi($event->location),
-            // Orientasi di CMS memilih varian kartu di beranda.blade.php:
-            // "horizontal" → foto memenuhi bingkai kartu, judul & tanggal
-            // menumpang putih di atasnya (varian `vertikal`); "landscape" →
-            // kartu kaca putih, teks gelap di atas, foto 3:2 di bawah.
-            'vertikal' => $event->orientation === EventOrientation::Horizontal,
-        ])->all();
+        return $this->renderFire($events, null, null, app()->getLocale());
+    }
+
+    /**
+     * Permalink satu event (pola Instagram): /{locale}/fire/<slug>. Memuat
+     * halaman /fire yang sama, tetapi event yang diminta di-prepend bila tidak
+     * termuat di 10 terbaru, slug-nya diteruskan ke korsel supaya pop-up
+     * rincian event itu terbuka otomatis, dan OG meta diisi judul+gambar event
+     * itu agar preview link (WhatsApp/Twitter) menampilkan kartu event — bukan
+     * meta generik halaman /fire. Slug tak dikenal → 404, sama seperti
+     * permalink post Instagram yang tak ada.
+     */
+    public function show(string $locale, string $slug): View
+    {
+        $event = Event::where('slug', $slug)->firstOrFail();
+
+        $events = Event::query()
+            ->orderByDesc('event_date')
+            ->take(10)
+            ->get();
+
+        if (! $events->firstWhere('id', $event->id)) {
+            $events->prepend($event);
+        }
+
+        return $this->renderFire($events, $event->slug, $event, $locale);
+    }
+
+    /**
+     * Titik render bersama untuk index() dan show(): bangun payload berita,
+     * variabel umum (cap tanggal, hak tambah kejadian, URL dasar /fire), dan
+     * — bila diberi event — set SEO per-event. $eventSlugDiminta diteruskan ke
+     * korsel agar pop-up event itu terbuka saat halaman dimuat.
+     */
+    protected function renderFire(Collection $events, ?string $eventSlugDiminta = null, ?Event $eventUntukSeo = null, string $locale = 'id'): View
+    {
+        $berita = $this->bangunBerita($events);
 
         // Dipakai keadaan "belum ada laporan" di section 1: cap tanggal pada
         // rak kosong, dan tautan ke CMS yang hanya muncul bagi peran yang
@@ -119,7 +132,72 @@ class FireController extends Controller
         $bisaTambahKejadian = auth()->check()
             && in_array(auth()->user()->role, ['admin', 'editor'], true);
 
-        return view('pasopati.index', compact('berita', 'tanggalPantauan', 'bisaTambahKejadian'));
+        // URL dasar /{locale}/fire (tanpa slug) — dipakai korsel menyusun
+        // permalink tiap event dan tombol bagikan.
+        $urlDasar = route('fire', ['locale' => $locale]);
+
+        // Meta OG/Twitter untuk permalink event (dipakai pasopati.layout lewat
+        // @yield/@stack). Halaman base /fire tidak mengisi $metaEvent, jadi
+        // judul/deskripsi defaultnya tetap.
+        $metaEvent = null;
+        if ($eventUntukSeo) {
+            $tanggalId = $eventUntukSeo->event_date?->locale('id')->translatedFormat('j F Y') ?? '';
+            $tanggalEn = $eventUntukSeo->event_date?->locale('en')->translatedFormat('j F Y') ?? '';
+            $lokasi = $this->rapikanLokasi($eventUntukSeo->location) ?? '';
+            $judul = $locale === 'en' ? ($eventUntukSeo->title_en ?: $eventUntukSeo->title_id) : $eventUntukSeo->title_id;
+            $tanggal = $locale === 'en' ? $tanggalEn : $tanggalId;
+            $ringkas = trim($lokasi.', '.$tanggal, ', ');
+
+            $metaEvent = [
+                'title' => $judul,
+                'description' => $ringkas !== '' ? $ringkas : 'Pantauan karhutla — Pasopati',
+                'image' => $eventUntukSeo->image_id_url ?? asset('assets/img/berita-jawa.jpg'),
+                'url' => route('fire.event', ['locale' => $locale, 'slug' => $eventUntukSeo->slug]),
+            ];
+        }
+
+        return view('pasopati.index', compact('berita', 'tanggalPantauan', 'bisaTambahKejadian', 'urlDasar', 'eventSlugDiminta', 'metaEvent'));
+    }
+
+    /**
+     * Susun payload berita dari koleksi Event — dipakai korsel dan popup peta.
+     */
+    protected function bangunBerita(Collection $events): array
+    {
+        return $events->map(fn (Event $event) => [
+            // Dipakai untuk menautkan kartu peta ke pop-up rincian yang sama.
+            'id' => $event->id,
+            // Dipakai permalink pop-up rincian (/{locale}/fire/<slug>), lebih
+            // terbaca daripada id numerik dan stabil saat judul diubah.
+            'slug' => $event->slug,
+            'pulau' => $this->inferPulau($event->location),
+            'tanggal' => $event->event_date?->locale('id')->translatedFormat('j F Y') ?? '',
+            'judul' => $event->title_id,
+            'gambar' => $event->image_id_url ?? asset('assets/img/berita-jawa.jpg'),
+            'alt' => $event->title_id,
+            // Bila event menyertakan video, kartu memutarnya alih-alih
+            // menampilkan foto diam — `gambar` tetap dikirim dan dipakai
+            // sebagai poster. Untuk event bervideo, EventController mengisi
+            // image_id dengan thumbnail hasil ffmpeg, jadi posternya adalah
+            // frame dari video itu sendiri.
+            'video' => $event->video_url,
+            // Poster video: HANYA thumbnail asli event ini, tanpa cadangan.
+            // `gambar` di atas jatuh ke satu foto bawaan yang sama untuk semua
+            // event tanpa thumbnail — kalau itu dipakai sebagai poster, setiap
+            // event bervideo yang thumbnail-nya gagal dibuat (mis. ffmpeg tidak
+            // terpasang di server) tampil dengan foto yang sama persis dan
+            // terlihat seolah kartunya tertukar. Dibiarkan null supaya peramban
+            // memakai frame pertama video itu sendiri — selalu milik event yang
+            // bersangkutan.
+            'poster' => $event->image_id_url,
+            // Dipakai pop-up rincian saat judul/gambar kartu diklik.
+            'lokasi' => $this->rapikanLokasi($event->location),
+            // Orientasi di CMS memilih varian kartu di beranda.blade.php:
+            // "horizontal" → foto memenuhi bingkai kartu, judul & tanggal
+            // menumpang putih di atasnya (varian `vertikal`); "landscape" →
+            // kartu kaca putih, teks gelap di atas, foto 3:2 di bawah.
+            'vertikal' => $event->orientation === EventOrientation::Horizontal,
+        ])->all();
     }
 
     /**
