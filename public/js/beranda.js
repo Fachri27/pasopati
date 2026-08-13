@@ -242,9 +242,16 @@ document.addEventListener("alpine:init", function () {
       /* Tautan "Masuk dengan Google" untuk laporan yang sedang dibuka.
          Tujuan kembali = permalink event yang sedang dibuka (atau base /fire
          bila tidak ada) — sepulang login, mendarat di permalink itu → show()
-         merender dan pop-up terbuka lagi di event yang sama. */
+         merender dan pop-up terbuka lagi di event yang sama.
+
+         Intended dipakai sebagai PATH RELATIF (mis. /id/fire/<slug>), bukan URL
+         absolut, supaya selalu dianggap tujuan internal oleh intendedAman() di
+         controller dan tidak bergantung pada skema/host produksi. */
       tautanMasuk: function (rute) {
-        var kembali = this.sorot !== null ? this.urlBagikan() : this.urlDasar;
+        var dasar = this.urlDasar;
+        var m = /^https?:\/\/[^\/]+(\/.*)$/.exec(dasar);
+        var path = m ? m[1] : dasar;
+        var kembali = this.sorot !== null ? path + "/" + this.berita[this.sorot].slug : path;
 
         return rute + "?intended=" + encodeURIComponent(kembali);
       },
