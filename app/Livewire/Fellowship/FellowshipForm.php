@@ -2,10 +2,13 @@
 
 namespace App\Livewire\Fellowship;
 
+use App\Models\Fellowship;
+use App\Models\FellowshipTranslation;
+use App\Models\Kategori;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use App\Models\{Fellowship, FellowshipTranslation, Kategori};
-use Livewire\{Component, WithFileUploads};
+use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class FellowshipForm extends Component
 {
@@ -16,32 +19,49 @@ class FellowshipForm extends Component
     ====================================================== */
 
     public $fellowship;
+
     public $fellowshipId;
 
     public $categoriesData = [];
+
     public $selectedCategories = [];
+
     public $selectedKategori = [];
 
-    public $title_id, $title_en;
-    public $sub_judul_id, $sub_judul_en;
-    public $excerpt_id, $excerpt_en;
+    public $title_id;
+
+    public $title_en;
+
+    public $sub_judul_id;
+
+    public $sub_judul_en;
+
+    public $excerpt_id;
+
+    public $excerpt_en;
 
     public $start_date;
+
     public $end_date;
+
     public $status;
 
     /* ================= IMAGES PER LOCALE ================= */
 
     public $image_id;
+
     public $image_en;
 
     public $image_cover_id;
+
     public $image_cover_en;
 
     public $old_image_id;
+
     public $old_image_en;
 
     public $old_image_cover_id;
+
     public $old_image_cover_en;
 
     protected $listeners = ['updateCategoryContent' => 'updateCategoryContent'];
@@ -81,7 +101,9 @@ class FellowshipForm extends Component
                 ];
             })->toArray();
 
-        if (! $fellowshipId) return;
+        if (! $fellowshipId) {
+            return;
+        }
 
         $this->fellowship = Fellowship::with('translations', 'kategoris')
             ->findOrFail($fellowshipId);
@@ -130,13 +152,15 @@ class FellowshipForm extends Component
 
     private function uploadImage($file, $oldPath, $title, $suffix)
     {
-        if (! $file) return $oldPath;
+        if (! $file) {
+            return $oldPath;
+        }
 
         if ($oldPath && Storage::disk('public')->exists($oldPath)) {
             Storage::disk('public')->delete($oldPath);
         }
 
-        $filename = Str::slug($title) . '-' . $suffix . '-' . time() . '.' . $file->getClientOriginalExtension();
+        $filename = Str::slug($title).'-'.$suffix.'-'.time().'.'.$file->getClientOriginalExtension();
 
         return $file->storeAs('fellowship', $filename, 'public');
     }
@@ -185,16 +209,16 @@ class FellowshipForm extends Component
         foreach (['id', 'en'] as $locale) {
 
             $image = $this->uploadImage(
-                $this->{'image_' . $locale},
-                $this->{'old_image_' . $locale},
-                $this->{'title_' . $locale},
+                $this->{'image_'.$locale},
+                $this->{'old_image_'.$locale},
+                $this->{'title_'.$locale},
                 'image'
             );
 
             $cover = $this->uploadImage(
-                $this->{'image_cover_' . $locale},
-                $this->{'old_image_cover_' . $locale},
-                $this->{'title_' . $locale},
+                $this->{'image_cover_'.$locale},
+                $this->{'old_image_cover_'.$locale},
+                $this->{'title_'.$locale},
                 'cover'
             );
 
@@ -204,15 +228,14 @@ class FellowshipForm extends Component
                     'locale' => $locale,
                 ],
                 [
-                    'title' => $this->{'title_' . $locale},
-                    'sub_judul' => $this->{'sub_judul_' . $locale},
-                    'excerpt' => $this->{'excerpt_' . $locale},
+                    'title' => $this->{'title_'.$locale},
+                    'sub_judul' => $this->{'sub_judul_'.$locale},
+                    'excerpt' => $this->{'excerpt_'.$locale},
                     'image' => $image,
                     'image_cover' => $cover,
                 ]
             );
 
-            
         }
 
         /* ========= SAVE CATEGORIES ========= */

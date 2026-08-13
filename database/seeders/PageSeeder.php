@@ -2,10 +2,9 @@
 
 namespace Database\Seeders;
 
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
-use Carbon\Carbon;
 
 class PageSeeder extends Seeder
 {
@@ -18,7 +17,7 @@ class PageSeeder extends Seeder
 
             // Insert ke tabel pages
             $pageId = DB::table('pages')->insertGetId([
-                'slug' => 'artikel-' . $i,
+                'slug' => 'artikel-'.$i,
                 'type' => 'default',
                 'page_type' => 'expose',
                 'featured_image' => null,
@@ -35,9 +34,9 @@ class PageSeeder extends Seeder
             DB::table('page_translations')->insert([
                 'page_id' => $pageId,
                 'locale' => 'id',
-                'title' => 'Judul Artikel ' . $i,
-                'excerpt' => 'Ini adalah ringkasan artikel ke-' . $i,
-                'content' => '<p>Konten lengkap artikel ke-' . $i . ' dalam Bahasa Indonesia.</p>',
+                'title' => 'Judul Artikel '.$i,
+                'excerpt' => 'Ini adalah ringkasan artikel ke-'.$i,
+                'content' => '<p>Konten lengkap artikel ke-'.$i.' dalam Bahasa Indonesia.</p>',
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -46,9 +45,9 @@ class PageSeeder extends Seeder
             DB::table('page_translations')->insert([
                 'page_id' => $pageId,
                 'locale' => 'en',
-                'title' => 'Article Title ' . $i,
-                'excerpt' => 'This is the excerpt for article number ' . $i,
-                'content' => '<p>Full content of article number ' . $i . ' in English.</p>',
+                'title' => 'Article Title '.$i,
+                'excerpt' => 'This is the excerpt for article number '.$i,
+                'content' => '<p>Full content of article number '.$i.' in English.</p>',
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);

@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Models\DeforestoryCase;
 use App\Models\DeforestoryLaporan;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Str;
 
 /**
  * Isi laporan dummy untuk kasus yang belum punya laporan (default:

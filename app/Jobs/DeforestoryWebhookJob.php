@@ -28,6 +28,7 @@ class DeforestoryWebhookJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
+
     public int $backoff = 10;
 
     public function __construct(
@@ -144,6 +145,6 @@ class DeforestoryWebhookJob implements ShouldQueue
 
         return Str::startsWith($path, ['http://', 'https://'])
             ? $path
-            : asset('storage/' . $path);
+            : asset('storage/'.$path);
     }
 }

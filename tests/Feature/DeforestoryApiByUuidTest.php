@@ -19,7 +19,8 @@ use Tests\TestCase;
  *
  * Response = JSON array berisi tiap laporan dalam shape SAMA dengan payload
  * sync (DeforestorySyncJob::payload): {title_id, title_en, description_id,
- * description_en, target_url_id, target_url_en, published_at}. Laporan kasus
+ * description_en, image_id, image_en, target_url_id, target_url_en,
+ * published_at}. Laporan kasus
  * terus bertambah → array ikut membesar. Consumer pakai satu shape untuk
  * push (sync) & pull (GET).
  *
@@ -30,7 +31,9 @@ class DeforestoryApiByUuidTest extends TestCase
     use RefreshDatabase;
 
     private const UUID = '6518428c-62fc-4788-97cc-f6bac6385615';
+
     private const CASE_SLUG = 'mayawana';
+
     private const LAPORAN_SLUG = 'jejak-deforestasi-mayawana';
 
     /** Case aktif + card (slug match) + laporan aktif dgn translations id/en. */
@@ -96,22 +99,25 @@ class DeforestoryApiByUuidTest extends TestCase
         return "/api/deforestory/by-uuid/laporan/{$uuid}";
     }
 
-    /** Assert sebuah object punya 7 field sync-payload persis. */
+    /** Assert sebuah object punya 9 field sync-payload persis. */
     private function assertSyncShape(array $row, string $laporanSlug = self::LAPORAN_SLUG): void
     {
         $this->assertSame(
-            ['title_id', 'title_en', 'description_id', 'description_en', 'target_url_id', 'target_url_en', 'published_at'],
+            ['title_id', 'title_en', 'description_id', 'description_en', 'image_id', 'image_en', 'target_url_id', 'target_url_en', 'published_at'],
             array_keys($row),
-            'shape harus 7 field sync-payload, gak ada field lain'
+            'shape harus 9 field sync-payload, gak ada field lain'
         );
 
         $this->assertSame('Jejak Deforestasi', $row['title_id']);
         $this->assertSame('Deforestation Trail', $row['title_en']);
         $this->assertSame('Deskripsi laporan', $row['description_id']);
         $this->assertSame('Report desc', $row['description_en']);
+        // image per-locale dari translation (di makeCase... image = https://cdn.test/cover-{locale}.jpg).
+        $this->assertSame('https://cdn.test/cover-id.jpg', $row['image_id']);
+        $this->assertSame('https://cdn.test/cover-en.jpg', $row['image_en']);
         $this->assertSame('2024-11-12', $row['published_at']);
-        $this->assertStringContainsString("/id/deforestory/".self::CASE_SLUG."/{$laporanSlug}", $row['target_url_id']);
-        $this->assertStringContainsString("/en/deforestory/".self::CASE_SLUG."/{$laporanSlug}", $row['target_url_en']);
+        $this->assertStringContainsString('/id/deforestory/'.self::CASE_SLUG."/{$laporanSlug}", $row['target_url_id']);
+        $this->assertStringContainsString('/en/deforestory/'.self::CASE_SLUG."/{$laporanSlug}", $row['target_url_en']);
     }
 
     public function test_list_returns_array_of_sync_shape_objects(): void

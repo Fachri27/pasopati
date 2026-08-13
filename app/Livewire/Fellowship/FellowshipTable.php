@@ -9,26 +9,30 @@ use Livewire\Component;
 class FellowshipTable extends Component
 {
     public $search = '';
+
     public $status;
+
     public $author;
+
     public $dataRange;
 
     protected $updatesQueryString = ['search', 'status', 'author', 'dataRange'];
+
     public function render()
     {
         $fellowship = Fellowship::with('translations')
-        ->whereHas('translations', function($query){
-            $query->where('title','like', '%'. $this->search .'%');
+            ->whereHas('translations', function ($query) {
+                $query->where('title', 'like', '%'.$this->search.'%');
 
-            if( $this->status && $this->status !== 'all'){
-                $query->where('status', $this->status);
-            }
+                if ($this->status && $this->status !== 'all') {
+                    $query->where('status', $this->status);
+                }
 
-            if ($this->author === 'me') {
-                $query->where('user_id', auth()->id());
-            }
+                if ($this->author === 'me') {
+                    $query->where('user_id', auth()->id());
+                }
 
-            if ($this->dataRange) {
+                if ($this->dataRange) {
                     $dates = array_map('trim', explode('to', $this->dataRange));
 
                     if (count($dates) === 2) {
@@ -50,14 +54,15 @@ class FellowshipTable extends Component
                         }
                     }
                 }
-        })->paginate(5);
+            })->paginate(5);
 
         return view('livewire.fellowship.fellowship-table', compact('fellowship'))
-        ->layout('layouts.admin');
+            ->layout('layouts.admin');
     }
 
-    public function delete(Fellowship $fellapp) {
+    public function delete(Fellowship $fellapp)
+    {
         $fellapp->delete();
-        session()->flash('success','Data Fellowship Berhasil di Hapus');
+        session()->flash('success', 'Data Fellowship Berhasil di Hapus');
     }
 }

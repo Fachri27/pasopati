@@ -102,6 +102,7 @@ class Komentar extends Component
             $this->replyingTo = null;
             $this->replyingToName = null;
             $this->resetValidation();
+
             return;
         }
 

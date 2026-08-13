@@ -37,6 +37,7 @@
                         <a href="{{ route('deforestory.index') }}" class="px-3 py-2 rounded hover:bg-gray-800">Deforestory</a>
                         <a href="{{ route('deforestory.subscribers') }}" class="px-3 py-2 rounded hover:bg-gray-800">Subscriber</a>
                         <a href="{{ route('petition.admin.index') }}" class="px-3 py-2 rounded hover:bg-gray-800">Petisi</a>
+                        <a href="{{ route('events.index') }}" class="px-3 py-2 rounded hover:bg-gray-800">Kejadian</a>
                         <a href="{{ route('kategori.index') }}" class="px-3 py-2 rounded hover:bg-gray-800">Kategori</a>
                         @if ($user === 'admin')
                         <a href="{{ route('user.index') }}" class="px-3 py-2 rounded hover:bg-gray-800">Users</a>
@@ -89,6 +90,7 @@
                     <a href="{{ route('deforestory.index') }}" class="block px-3 py-2 rounded hover:bg-gray-700">Deforestory</a>
                     <a href="{{ route('deforestory.subscribers') }}" class="block px-3 py-2 rounded hover:bg-gray-700">Subscriber</a>
                     <a href="{{ route('petition.admin.index') }}" class="block px-3 py-2 rounded hover:bg-gray-700">Petisi</a>
+                    <a href="{{ route('events.index') }}" class="block px-3 py-2 rounded hover:bg-gray-700">Kejadian</a>
                     <a href="{{ route('kategori.index') }}" class="block px-3 py-2 rounded hover:bg-gray-700">Kategori</a>
                     @if ($user === 'admin')
                     <a href="{{ route('user.index') }}" class="block px-3 py-2 rounded hover:bg-gray-700">Users</a>

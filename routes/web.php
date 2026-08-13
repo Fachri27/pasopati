@@ -1,20 +1,41 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\{DeforestoryController, EditorController, FellowshipController, PageController, PetitionController, SearchController};
-use App\Http\Controllers\Admin\PetitionExportController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\PetitionExportController;
+use App\Http\Controllers\Auth\GoogleCommentLoginController;
+use App\Http\Controllers\Fire\LaporanKomentarController;
+use App\Http\Controllers\DeforestoryController;
+use App\Http\Controllers\EditorController;
+use App\Http\Controllers\EventController;
+use App\Http\Controllers\FellowshipController;
+use App\Http\Controllers\FireController;
+use App\Http\Controllers\PageController;
+use App\Http\Controllers\PetitionController;
+use App\Http\Controllers\SearchController;
 use App\Livewire\Auth\LoginForm;
-use App\Livewire\Fellowship\{FellowshipForm, FellowshipTable};
-use App\Livewire\Deforestory\{DeforestoryCaseTable, DeforestoryLaporanForm, DeforestoryLaporanTable, DeforestorySubscriberTable};
-use App\Livewire\{KategoriForm, KategoriTable};
-use App\Livewire\Pages\{PageForm, PageTable};
-use App\Livewire\Petition\{PetitionForm, PetitionTable, PetitionSignatureList};
-use App\Livewire\Users\{UserForm, UserTable};
+use App\Livewire\Deforestory\DeforestoryCaseTable;
+use App\Livewire\Deforestory\DeforestoryLaporanForm;
+use App\Livewire\Deforestory\DeforestoryLaporanTable;
+use App\Livewire\Deforestory\DeforestorySubscriberTable;
+use App\Livewire\Fellowship\FellowshipForm;
+use App\Livewire\Fellowship\FellowshipTable;
+use App\Livewire\KategoriForm;
+use App\Livewire\KategoriTable;
+use App\Livewire\Pages\PageForm;
+use App\Livewire\Pages\PageTable;
+use App\Livewire\Petition\PetitionForm;
+use App\Livewire\Petition\PetitionSignatureList;
+use App\Livewire\Petition\PetitionTable;
+use App\Livewire\Users\UserForm;
+use App\Livewire\Users\UserTable;
+use Illuminate\Support\Facades\Route;
 
 Route::middleware(['setlocale'])->prefix('{locale}')->where(['locale' => 'id|en'])->group(function () {
     // home (no locale in URL)
     Route::get('/', [PageController::class, 'indexUser'])->name('home');
+
+    // Fire Pasopati — pantauan karhutla (berita dari CMS Event/Kejadian)
+    Route::get('/fire', [FireController::class, 'index'])->name('fire');
 
     // load more articles (infinite scroll)
     Route::get('/load-more-articles', [PageController::class, 'loadMoreArticles'])->name('articles.load-more');
@@ -31,8 +52,6 @@ Route::middleware(['setlocale'])->prefix('{locale}')->where(['locale' => 'id|en'
     Route::get('/artikel-landing', function () {
         return view('front.page-expose');
     })->name('artikel-landing');
-
-    
 
     Route::get('/ngopini/{slug}', [PageController::class, 'showNgopini'])->name('ngopini-show');
 
@@ -65,6 +84,16 @@ Route::middleware(['setlocale'])->prefix('{locale}')->where(['locale' => 'id|en'
     // public catch-all page preview (at end)
     Route::get('/{page_type}/{slug}', [PageController::class, 'preview'])->name('show-page');
 });
+
+// Kolom komentar pada pop-up rincian laporan di /{locale}/fire. Di luar grup
+// {locale} karena dipanggil lewat fetch dari Alpine, bukan dinavigasi — jadi
+// URL-nya tetap sama untuk kedua bahasa. Kirim dibatasi supaya satu IP tidak
+// bisa membanjiri komentar.
+Route::get('/fire/laporan/{event}/komentar', [LaporanKomentarController::class, 'index'])
+    ->name('fire.komentar.index');
+Route::post('/fire/laporan/{event}/komentar', [LaporanKomentarController::class, 'store'])
+    ->middleware('throttle:10,1')
+    ->name('fire.komentar.store');
 
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware('auth')->name('dashboard');
 
@@ -101,6 +130,21 @@ Route::middleware(['auth', 'role:admin,editor'])->group(function () {
     Route::get('/admin/petisi/{petitionId}/edit', PetitionForm::class)->name('petition.admin.edit');
     Route::get('/admin/petisi/{petitionId}/signatures', PetitionSignatureList::class)->name('petition.admin.signatures');
     Route::get('/admin/petisi/{petitionId}/export-pdf', [PetitionExportController::class, 'exportPdf'])->name('petition.admin.export-pdf');
+
+    // Event / Kejadian (CRUD + pencarian lokasi via GeoServer/PostGIS).
+    Route::get('/admin/events', [EventController::class, 'index'])->name('events.index');
+    Route::get('/admin/events/create', [EventController::class, 'create'])->name('events.create');
+    Route::post('/admin/events', [EventController::class, 'store'])->name('events.store');
+    Route::get('/admin/events/{event}', [EventController::class, 'show'])->name('events.show');
+    Route::get('/admin/events/{event}/edit', [EventController::class, 'edit'])->name('events.edit');
+    Route::put('/admin/events/{event}', [EventController::class, 'update'])->name('events.update');
+    Route::delete('/admin/events/{event}', [EventController::class, 'destroy'])->name('events.destroy');
+
+    // Proxy internal untuk autocomplete lokasi. Sama-origin (web, pakai
+    // session + middleware auth) jadi kredensial GeoServer/PostGIS tidak
+    // pernah ter-expose ke frontend.
+    Route::get('/api/locations/search', [EventController::class, 'searchLocations'])->name('api.locations.search');
+    Route::get('/api/locations/{id}', [EventController::class, 'locationDetail'])->name('api.locations.detail');
 });
 
 Route::middleware(['auth', 'role:admin'])->group(function () {
@@ -117,6 +161,16 @@ Route::post('/logout', function () {
 
     return redirect('/login');
 })->name('logout');
+
+// Login Google untuk kolom komentar (Laravel Socialite). PUBLIK — commenter
+// bukan admin, role 'commenter' tidak lolos middleware role:admin,editor.
+// Intended URL (halaman asal) dilewat via ?intended= supaya balik ke artikel.
+Route::get('/comment/login/google', [GoogleCommentLoginController::class, 'redirectToGoogle'])
+    ->name('comment.google.login');
+Route::get('/comment/login/google/callback', [GoogleCommentLoginController::class, 'handleCallback'])
+    ->name('comment.google.callback');
+Route::get('/comment/logout', [GoogleCommentLoginController::class, 'logout'])
+    ->name('comment.logout');
 
 Route::group(['prefix' => 'laravel-filemanager', 'middleware' => ['web', 'auth']], function () {
     \UniSharp\LaravelFilemanager\Lfm::routes();

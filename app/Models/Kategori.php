@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Kategori extends Model
 {
     use HasSeoMeta;
+
     protected $fillable = [];
 
     public function translations()
@@ -18,7 +19,7 @@ class Kategori extends Model
     public function fellowships()
     {
         return $this->belongsToMany(Fellowship::class, 'kategori_fellowships')
-        ->withPivot('status', 'content_id', 'content_en')
-        ->withTimestamps();
+            ->withPivot('status', 'content_id', 'content_en')
+            ->withTimestamps();
     }
 }

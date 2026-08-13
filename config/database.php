@@ -98,6 +98,23 @@ return [
             'sslmode' => 'prefer',
         ],
 
+        // Koneksi kedua: database PostGIS di belakang GeoServer. Dipakai
+        // GeoServerService untuk pencarian lokasi (sumber data layer WFS).
+        // Diatur via variabel DB_*_GEO di .env.
+        'geo' => [
+            'driver' => env('DB_CONNECTION_GEO', 'pgsql'),
+            'host' => env('DB_HOST_GEO', '127.0.0.1'),
+            'port' => env('DB_PORT_GEO', '5432'),
+            'database' => env('DB_DATABASE_GEO', 'simontini'),
+            'username' => env('DB_USERNAME_GEO'),
+            'password' => env('DB_PASSWORD_GEO'),
+            'charset' => env('DB_CHARSET_GEO', 'utf8'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => env('DB_SEARCH_PATH_GEO', 'public'),
+            'sslmode' => env('DB_SSLMODE_GEO', 'prefer'),
+        ],
+
         'sqlsrv' => [
             'driver' => 'sqlsrv',
             'url' => env('DB_URL'),

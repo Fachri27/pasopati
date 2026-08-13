@@ -8,8 +8,11 @@ use Livewire\Component;
 class LoginForm extends Component
 {
     public $email = '';
+
     public $password = '';
+
     public $remember = false;
+
     public $load = false;
 
     protected $rules = [
@@ -27,15 +30,17 @@ class LoginForm extends Component
         $this->validate();
         $this->load = true;
 
-        if(Auth::attempt(['email' => $this->email,'password'=> $this->password], $this->remember)) {
+        if (Auth::attempt(['email' => $this->email, 'password' => $this->password], $this->remember)) {
             session()->regenerate();
+
             return redirect()->intended('dashboard')
-                             ->with('success', 'Login berhasil!');
+                ->with('success', 'Login berhasil!');
         }
 
         $this->loading = false;
         $this->addError('email', 'Email atau password salah.');
     }
+
     public function render()
     {
         return view('livewire.auth.login-form')->layout('layouts.auth');

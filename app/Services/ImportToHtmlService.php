@@ -25,7 +25,7 @@ class ImportToHtmlService
 
     public function parseToHtml(string $path): string
     {
-        if (!file_exists($path)) {
+        if (! file_exists($path)) {
             throw new \Exception("File tidak ditemukan: {$path}");
         }
 
@@ -43,7 +43,7 @@ class ImportToHtmlService
         $soffice = $this->sofficePath();
         $outDir = sys_get_temp_dir();
 
-        $outputPath = $outDir . '/' . pathinfo($path, PATHINFO_FILENAME) . '.html';
+        $outputPath = $outDir.'/'.pathinfo($path, PATHINFO_FILENAME).'.html';
 
         $cmd = sprintf(
             '%s --headless --convert-to html:"HTML" --outdir %s %s 2>&1',
@@ -54,7 +54,7 @@ class ImportToHtmlService
 
         exec($cmd, $output, $exitCode);
 
-        if ($exitCode !== 0 || !file_exists($outputPath)) {
+        if ($exitCode !== 0 || ! file_exists($outputPath)) {
             return $this->parseWordToHtmlFallback($path);
         }
 
@@ -84,6 +84,7 @@ class ImportToHtmlService
 
         $html = trim($html);
         unlink($tempFile);
+
         return $html;
     }
 
@@ -92,7 +93,7 @@ class ImportToHtmlService
         $soffice = $this->sofficePath();
 
         $outDir = sys_get_temp_dir();
-        $outputPath = $outDir . '/' . pathinfo($path, PATHINFO_FILENAME) . '.html';
+        $outputPath = $outDir.'/'.pathinfo($path, PATHINFO_FILENAME).'.html';
 
         $cmd = sprintf(
             '%s --headless --convert-to html:"HTML" --outdir %s %s 2>&1',
@@ -109,6 +110,7 @@ class ImportToHtmlService
             if (preg_match('/<body[^>]*>(.*?)<\/body>/is', $html, $matches)) {
                 return trim($matches[1]);
             }
+
             return trim($html);
         }
 
@@ -126,7 +128,7 @@ class ImportToHtmlService
         foreach ($paragraphs as $para) {
             $para = trim($para);
             if ($para !== '') {
-                $html .= '<p>' . e($para) . '</p>';
+                $html .= '<p>'.e($para).'</p>';
             }
         }
 

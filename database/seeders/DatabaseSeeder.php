@@ -30,6 +30,7 @@ class DatabaseSeeder extends Seeder
             PageSeeder::class,
             ContentBlocksDummySeeder::class,
             ExposeEudrDummySeeder::class,
+            EventSeeder::class,
         ]);
     }
 }

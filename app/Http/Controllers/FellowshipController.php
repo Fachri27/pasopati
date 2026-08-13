@@ -7,9 +7,10 @@ use Illuminate\Http\Request;
 
 class FellowshipController extends Controller
 {
-    public function Preview($locale = null, $slug = null) {
+    public function Preview($locale = null, $slug = null)
+    {
         // Fallback jika $locale null (misal akses dari admin preview lama)
-        if (!$locale || !in_array($locale, ['id','en'])) {
+        if (! $locale || ! in_array($locale, ['id', 'en'])) {
             $locale = app()->getLocale() ?? config('app.locale') ?? 'id';
         }
         // Set locale agar konsisten di view dan query
@@ -36,7 +37,7 @@ class FellowshipController extends Controller
         seo()->setLocale($locale)
             ->set('title', ['id' => $meta['title'], 'en' => $meta['title']])
             ->set('description', ['id' => $meta['description'], 'en' => $meta['description']])
-            ->set('image', ['id'=> $meta['image'], 'en'=> $meta['image']])
+            ->set('image', ['id' => $meta['image'], 'en' => $meta['image']])
             ->set('type', $meta['type']);
 
         return view('front.page-fellowship', compact('fellowship', 'categories', 'locale'));
@@ -49,26 +50,26 @@ class FellowshipController extends Controller
         $fellowships = Fellowship::with(['translations' => function ($q) use ($locale) {
             $q->where('locale', $locale);
         }])
-            ->when($search, function($query, $search) use ($locale) {
-                $query->whereHas('translations', function($q) use ($locale, $search) {
+            ->when($search, function ($query, $search) use ($locale) {
+                $query->whereHas('translations', function ($q) use ($locale, $search) {
                     $q->where('locale', $locale)
-                        ->where(function($q2) use ($search) {
-                            $q2->where('title','like','%'.$search.'%');
-                            $q2->orWhere('description','like','%'.$search.'%');
+                        ->where(function ($q2) use ($search) {
+                            $q2->where('title', 'like', '%'.$search.'%');
+                            $q2->orWhere('description', 'like', '%'.$search.'%');
                         });
                 });
-                
+
             })
             ->where('status', 'active')
             ->orderBy('start_date', 'desc')
             ->get();
-        
+
         $meta = [
             'title' => __('Pasopati Fellowship'),
             'description' => __('pasopati.id: Pasopati Project dirancang sebagai sebuah situs yang menampilkan informasi, data, dan analisis isu-isu kehutanan, persawitan, dan pertambangan. Situs ini fokus menyampaikan suara kritis pada tema-tema tersebut di atas, termasuk mengenai pelakunya dan kebijakan-kebijakan terkait.
             Pasopati Project didedikasikan untuk mencapai salah satu tujuan Auriga, yakni mengeliminir aksi-aksi destruktif terhadap sumberdaya alam. Situs ini dikelola oleh Auriga. Namun demikian ekspose-ekspose tertentu dalam situs ini dilakukan bersama jejaring.'),
             'image' => asset('images/image.png'),
-            'type' => 'article',    
+            'type' => 'article',
         ];
 
         seo()->setLocale($locale)

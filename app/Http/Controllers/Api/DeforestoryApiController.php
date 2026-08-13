@@ -213,8 +213,9 @@ class DeforestoryApiController extends Controller
      *
      * Response = JSON array berisi tiap laporan dalam shape yang SAMA dengan
      * payload sync (DeforestorySyncJob::payload): {title_id, title_en,
-     * description_id, description_en, target_url_id, target_url_en,
-     * published_at}. Jadi consumer simontini pakai satu shape untuk push & pull.
+     * description_id, description_en, image_id, image_en, target_url_id,
+     * target_url_en, published_at}. Jadi consumer simontini pakai satu shape
+     * untuk push & pull.
      */
     public function laporanByUuid(Request $request, string $uuid)
     {
@@ -257,7 +258,7 @@ class DeforestoryApiController extends Controller
 
         return Str::startsWith($path, ['http://', 'https://'])
             ? $path
-            : asset('storage/' . $path);
+            : asset('storage/'.$path);
     }
 
     protected function caseSummary(DeforestoryCase $case, string $locale): array
@@ -323,10 +324,13 @@ class DeforestoryApiController extends Controller
     }
 
     /**
-     * Shape payload sync simontini (DeforestorySyncJob::payload) — 7 field,
-     * description = excerpt laporan, target_url = URL publik laporan per locale.
-     * Dipakai endpoint by-uuid GET supaya response identik dengan payload yang
-     * simontini terima via push (sync), jadi consumer gak perlu kode terpisah.
+     * Shape payload sync simontini (DeforestorySyncJob::payload) — 9 field:
+     * title_*, description_* (= excerpt), image_* (gambar laporan per-locale,
+     * fallback translation->image → laporan->image legacy → case->featured_image,
+     * diresolve ke URL absolut), target_url_* (URL publik laporan per locale),
+     * published_at. Dipakai endpoint by-uuid GET supaya response identik dengan
+     * payload yang simontini terima via push (sync), jadi consumer gak perlu
+     * kode terpisah.
      *
      * Catatan: translation('id'/'en') di model fallback ke translation pertama
      * kalau locale itu gak ada — sama persis dengan behavior sync job.
@@ -341,6 +345,8 @@ class DeforestoryApiController extends Controller
             'title_en' => $enTrans?->title,
             'description_id' => $idTrans?->excerpt,
             'description_en' => $enTrans?->excerpt,
+            'image_id' => $this->laporanImage($laporan, $case, 'id'),
+            'image_en' => $this->laporanImage($laporan, $case, 'en'),
             'target_url_id' => route('deforestory.case.laporan', [
                 'locale' => 'id',
                 'slug' => $case->slug,

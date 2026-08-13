@@ -14,7 +14,7 @@ class RedirectOldPublicUrls
     public function handle(Request $request, Closure $next): Response
     {
         $path = $request->getPathInfo();
-        
+
         // Skip if already new-style (has /en/ or /id/ right after domain)
         if (preg_match('#^/(en|id)(/|$)#', $path)) {
             return $next($request);
@@ -33,7 +33,7 @@ class RedirectOldPublicUrls
         // List of old public route patterns that need redirect
         $publicRoutes = [
             'expose', 'ngopini', 'artikel', 'fellowship', 'cbi',
-            'artikel-fellowship', 'artikel-landing', 'ngopini-artikel'
+            'artikel-fellowship', 'artikel-landing', 'ngopini-artikel',
         ];
 
         $pathSegments = array_filter(explode('/', $path));
@@ -42,13 +42,13 @@ class RedirectOldPublicUrls
         // Only redirect if the first path segment matches a public route
         if ($firstSegment && in_array($firstSegment, $publicRoutes)) {
             // Use Indonesian as default locale for old URLs
-            $newPath = '/id' . $path;
-            
+            $newPath = '/id'.$path;
+
             // Preserve query string
             if ($request->getQueryString()) {
-                $newPath .= '?' . $request->getQueryString();
+                $newPath .= '?'.$request->getQueryString();
             }
-            
+
             // Return 301 permanent redirect for SEO
             return redirect($newPath, 301);
         }

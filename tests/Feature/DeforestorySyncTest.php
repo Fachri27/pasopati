@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Jobs\DeforestorySyncJob;
 use App\Jobs\DeforestoryNotificationJob;
+use App\Jobs\DeforestorySyncJob;
 use App\Jobs\DeforestoryWebhookJob;
 use App\Livewire\Deforestory\DeforestoryLaporanForm;
 use App\Models\DeforestoryCard;
@@ -21,8 +21,9 @@ use Tests\TestCase;
  * Sync keluar laporan Deforestory ke endpoint simontini (deforestory/sync).
  * Publish-only — dipicu form saat laporan jadi active. Unpublish/edit gak di-sync.
  *
- * Endpoint = POST {sync_url}/{uuid} — uuid card simontini di URL path. Body 7
- * field: title_id/en, description_id/en, target_url_id/en, published_at.
+ * Endpoint = POST {sync_url}/{uuid} — uuid card simontini di URL path. Body 9
+ * field: title_id/en, description_id/en, image_id/en, target_url_id/en,
+ * published_at.
  * Job skip diam-diam kalau case gak punya card / card gak punya uuid, atau
  * simontini belum dikonfigurasi.
  */
@@ -31,12 +32,14 @@ class DeforestorySyncTest extends TestCase
     use RefreshDatabase;
 
     private const URL = 'https://simontini.example/api/deforestory/sync';
+
     private const TOKEN = 'sync-token';
+
     private const UUID = '26cd5ee6-b0dc-4a06-b9c7-82dbf6a99c10';
 
     private function syncEndpoint(): string
     {
-        return self::URL . '/' . self::UUID;
+        return self::URL.'/'.self::UUID;
     }
 
     private function configSync(): void
@@ -95,7 +98,7 @@ class DeforestorySyncTest extends TestCase
         return [$case->fresh(), $laporan->fresh(['translations'])];
     }
 
-    public function test_sync_posts_seven_field_payload_with_bearer_token(): void
+    public function test_sync_posts_nine_field_payload_with_bearer_token(): void
     {
         $this->configSync();
         $this->makeCard();
@@ -109,24 +112,28 @@ class DeforestorySyncTest extends TestCase
             if ($request->url() !== $this->syncEndpoint() || $request->method() !== 'POST') {
                 return false;
             }
-            if ($request->header('Authorization')[0] !== 'Bearer ' . self::TOKEN) {
+            if ($request->header('Authorization')[0] !== 'Bearer '.self::TOKEN) {
                 return false;
             }
 
             $data = $request->data();
 
-            // 7 field, persis kontrak simontini (urutan alphabetical setelah sort).
+            // 9 field, persis kontrak simontini (urutan alphabetical setelah sort).
             $keys = array_keys($data);
             sort($keys);
-            $expected = ['description_en', 'description_id', 'published_at', 'target_url_en', 'target_url_id', 'title_en', 'title_id'];
+            $expected = ['description_en', 'description_id', 'image_en', 'image_id', 'published_at', 'target_url_en', 'target_url_id', 'title_en', 'title_id'];
             if ($keys !== $expected) {
                 return false;
             }
 
+            // image_id/image_en: di makeLaporan translation gak punya image sendiri
+            // → fallback ke laporan->image legacy ('deforestory/laporans/dampak.jpg').
             return $data['title_id'] === 'Dampak di luar peta'
                 && $data['title_en'] === 'Impact beyond the map'
                 && $data['description_id'] === 'Desc dampak'
                 && $data['description_en'] === 'Desc impact'
+                && str_contains($data['image_id'], '/storage/deforestory/laporans/dampak.jpg')
+                && str_contains($data['image_en'], '/storage/deforestory/laporans/dampak.jpg')
                 && $data['published_at'] === '2025-06-03'
                 && str_contains($data['target_url_id'], '/id/deforestory/mayawana/dampak-di-luar-peta')
                 && str_contains($data['target_url_en'], '/en/deforestory/mayawana/dampak-di-luar-peta');

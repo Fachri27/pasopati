@@ -90,23 +90,23 @@ class DeforestoryCardWebhookController extends Controller
                 // Upsert by uuid: pastikan slug gak dipakai card lain (uuid beda /
                 // null) → hindari pelanggaran unique slug. Skip bila bentrok.
                 if ($hasUuid && DeforestoryCard::where('slug', $slug)
-                        ->where(fn ($q) => $q->where('uuid', '!=', $uuid)->orWhereNull('uuid'))
-                        ->exists()) {
+                    ->where(fn ($q) => $q->where('uuid', '!=', $uuid)->orWhereNull('uuid'))
+                    ->exists()) {
                     continue;
                 }
 
                 $key = $hasUuid ? ['uuid' => $uuid] : ['slug' => $slug];
                 $attributes = [
-                    'slug'       => $slug,
-                    'category'   => $card['category']   ?? null,
-                    'year'       => $card['year']       ?? null,
-                    'image_id'   => $card['image_id']   ?? null,
-                    'image_en'   => $card['image_en']   ?? null,
-                    'title_id'   => $card['title_id']   ?? null,
-                    'title_en'   => $card['title_en']   ?? null,
+                    'slug' => $slug,
+                    'category' => $card['category'] ?? null,
+                    'year' => $card['year'] ?? null,
+                    'image_id' => $card['image_id'] ?? null,
+                    'image_en' => $card['image_en'] ?? null,
+                    'title_id' => $card['title_id'] ?? null,
+                    'title_en' => $card['title_en'] ?? null,
                     'excerpt_id' => $card['excerpt_id'] ?? null,
                     'excerpt_en' => $card['excerpt_en'] ?? null,
-                    'sort'       => $card['sort']       ?? 0,
+                    'sort' => $card['sort'] ?? 0,
                 ];
                 if ($hasUuid) {
                     $attributes['uuid'] = $uuid;

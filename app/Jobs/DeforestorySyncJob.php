@@ -11,6 +11,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 
 /**
  * Kirim laporan Deforestory ke endpoint simontini (sync keluar) saat laporan
@@ -21,12 +22,14 @@ use Illuminate\Support\Facades\Http;
  * lama): simontini pakai Bearer token (bukan HMAC) + shape body sendiri.
  *
  * Endpoint = POST {sync_url}/{uuid} — uuid card simontini ada di URL path
- * (identifier kasus di sisi simontini). Body (7 field):
+ * (identifier kasus di sisi simontini). Body (9 field):
  *   title_id, title_en, description_id, description_en,
- *   target_url_id, target_url_en, published_at
- * `description_*` = excerpt laporan. `target_url_*` = URL publik laporan per
- * locale di pasopati. Gak ada external_id/deforestory_id di body (uuid sudah di
- * path), gak ada image_url, gak ada status.
+ *   image_id, image_en, target_url_id, target_url_en, published_at
+ * `description_*` = excerpt laporan. `image_*` = gambar laporan per-locale
+ * (fallback translation->image → laporan->image legacy → case->featured_image,
+ * diresolve ke URL absolut). `target_url_*` = URL publik laporan per locale di
+ * pasopati. Gak ada external_id/deforestory_id di body (uuid sudah di path),
+ * gak ada status.
  *
  * `deforestory_id` (uuid card) dicari lewat case.slug == card.slug. Kalau case
  * gak punya card simontini / card gak punya uuid → skip diam-diam: laporan ini
@@ -40,6 +43,7 @@ class DeforestorySyncJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
+
     public int $backoff = 10;
 
     public function __construct(
@@ -69,7 +73,7 @@ class DeforestorySyncJob implements ShouldQueue
         $payload = $this->payload();
 
         // Endpoint simontini: POST /api/deforestory/sync/{uuid}.
-        $endpoint = rtrim($url, '/') . '/' . rawurlencode($card->uuid);
+        $endpoint = rtrim($url, '/').'/'.rawurlencode($card->uuid);
 
         // PENTING: jangan ikuti redirect. Simontini balas 202 Accepted untuk uuid
         // deforestory yang terdaftar, tapi balas 302 redirect ke homepage untuk uuid
@@ -92,8 +96,10 @@ class DeforestorySyncJob implements ShouldQueue
     }
 
     /**
-     * Body simontini (7 field). title/description per-locale dari
-     * DeforestoryLaporanTranslation (description = excerpt). target_url per
+     * Body simontini (9 field). title/description per-locale dari
+     * DeforestoryLaporanTranslation (description = excerpt). image_* per-locale
+     * = gambar laporan dengan fallback (translation->image → laporan->image
+     * legacy → case->featured_image), diresolve ke URL absolut. target_url per
      * locale = URL publik laporan di pasopati.
      */
     protected function payload(): array
@@ -108,6 +114,8 @@ class DeforestorySyncJob implements ShouldQueue
             'title_en' => $enTrans?->title,
             'description_id' => $idTrans?->excerpt,
             'description_en' => $enTrans?->excerpt,
+            'image_id' => $this->laporanImage('id'),
+            'image_en' => $this->laporanImage('en'),
             'target_url_id' => route('deforestory.case.laporan', [
                 'locale' => 'id',
                 'slug' => $this->case->slug,
@@ -120,5 +128,27 @@ class DeforestorySyncJob implements ShouldQueue
             ]),
             'published_at' => $publishedAt,
         ];
+    }
+
+    /**
+     * Image laporan per-locale untuk payload sync. Fallback sama dengan
+     * DeforestoryApiController::laporanImage: translation($locale)->image →
+     * laporan->image (legacy) → case->featured_image. Path relatif diresolve ke
+     * URL absolut via asset('storage/...'); path http(s) sudah absolut dilewat
+     * apa adanya. Null kalau semua kosong.
+     */
+    protected function laporanImage(string $locale): ?string
+    {
+        $image = $this->laporan->translation($locale)?->image
+            ?: $this->laporan->image
+            ?: $this->case->featured_image;
+
+        if (! $image) {
+            return null;
+        }
+
+        return Str::startsWith($image, ['http://', 'https://'])
+            ? $image
+            : asset('storage/'.$image);
     }
 }

@@ -2,10 +2,9 @@
 
 namespace Database\Seeders;
 
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
-use Carbon\Carbon;
 
 class ExposeEudrDummySeeder extends Seeder
 {
@@ -14,27 +13,27 @@ class ExposeEudrDummySeeder extends Seeder
         $slug = 'pasca-laporan-risky-business-perubahan-kini-pada-perdagangan-kayu-indonesia-eu-membuktikan-pentingnya-eudr';
 
         $pageId = DB::table('pages')->insertGetId([
-            'slug'           => $slug,
-            'type'           => 'parallax',
-            'page_type'      => 'expose',
+            'slug' => $slug,
+            'type' => 'parallax',
+            'page_type' => 'expose',
             'featured_image' => null,
-            'expose_type'    => json_encode(['deforestasi', 'pulp']),
-            'published_at'   => Carbon::now()->subDays(2),
-            'status'         => 'active',
-            'source_type'    => 'manual',
-            'source_file'    => null,
-            'user_id'        => 1,
-            'created_at'     => now(),
-            'updated_at'     => now(),
+            'expose_type' => json_encode(['deforestasi', 'pulp']),
+            'published_at' => Carbon::now()->subDays(2),
+            'status' => 'active',
+            'source_type' => 'manual',
+            'source_file' => null,
+            'user_id' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         // ID translation
         DB::table('page_translations')->insert([
-            'page_id'    => $pageId,
-            'locale'     => 'id',
-            'title'      => 'Pasca laporan Risky Business: Perubahan kini pada perdagangan kayu Indonesia-EU membuktikan pentingnya EUDR',
-            'excerpt'    => 'Regulasi ini berpeluang menghadirkan perbaikan yang dibutuhkan guna menghentikan hilangnya hutan alam tersisa.',
-            'content'    => '<p>Konten lama — gunakan content_blocks.</p>',
+            'page_id' => $pageId,
+            'locale' => 'id',
+            'title' => 'Pasca laporan Risky Business: Perubahan kini pada perdagangan kayu Indonesia-EU membuktikan pentingnya EUDR',
+            'excerpt' => 'Regulasi ini berpeluang menghadirkan perbaikan yang dibutuhkan guna menghentikan hilangnya hutan alam tersisa.',
+            'content' => '<p>Konten lama — gunakan content_blocks.</p>',
             'content_blocks' => json_encode([
                 [
                     'type' => 'paragraph',
@@ -75,8 +74,8 @@ class ExposeEudrDummySeeder extends Seeder
                 [
                     'type' => 'image',
                     'data' => [
-                        'src'       => 'pages/default-image.jpg',
-                        'caption'   => 'Kayu gelondongan dari hutan alam yang ditebang di kawasan konsesi kelapa sawit PT Bina Sarana Sawit Utama di Kalimantan Tengah, Kalimantan, November 2024. Label kuning tersebut menandakan bahwa kayu gelondongan tersebut telah terdaftar secara sah dalam sistem penelusuran kayu Indonesia © Auriga / Earthsight',
+                        'src' => 'pages/default-image.jpg',
+                        'caption' => 'Kayu gelondongan dari hutan alam yang ditebang di kawasan konsesi kelapa sawit PT Bina Sarana Sawit Utama di Kalimantan Tengah, Kalimantan, November 2024. Label kuning tersebut menandakan bahwa kayu gelondongan tersebut telah terdaftar secara sah dalam sistem penelusuran kayu Indonesia © Auriga / Earthsight',
                         'alignment' => 'center',
                     ],
                 ],
@@ -107,7 +106,7 @@ class ExposeEudrDummySeeder extends Seeder
                 [
                     'type' => 'quote',
                     'data' => [
-                        'text'  => 'PT Korindo Ariabima Sari berkomitmen untuk memastikan bahwa seluruh rantai pasokan kayu kami bebas dari deforestasi. Kami terus memperkuat sistem pengadaan kami agar transparan, bertanggung jawab, dan selaras dengan peraturan global, termasuk EUDR.',
+                        'text' => 'PT Korindo Ariabima Sari berkomitmen untuk memastikan bahwa seluruh rantai pasokan kayu kami bebas dari deforestasi. Kami terus memperkuat sistem pengadaan kami agar transparan, bertanggung jawab, dan selaras dengan peraturan global, termasuk EUDR.',
                         'source' => 'Kim Young Man, Direktur Utama PT Korindo Ariabima Sari',
                     ],
                 ],
@@ -120,8 +119,8 @@ class ExposeEudrDummySeeder extends Seeder
                 [
                     'type' => 'image',
                     'data' => [
-                        'src'       => 'pages/default-image.jpg',
-                        'caption'   => 'Pembukaan hutan di konsesi perusahaan perkebunan kelapa sawit PT Bina Sarana Sawit Utama di Kalimantan Tengah, Kalimantan, November 2024. © Auriga / Earthsight',
+                        'src' => 'pages/default-image.jpg',
+                        'caption' => 'Pembukaan hutan di konsesi perusahaan perkebunan kelapa sawit PT Bina Sarana Sawit Utama di Kalimantan Tengah, Kalimantan, November 2024. © Auriga / Earthsight',
                         'alignment' => 'center',
                     ],
                 ],
@@ -134,7 +133,7 @@ class ExposeEudrDummySeeder extends Seeder
                 [
                     'type' => 'quote',
                     'data' => [
-                        'text'  => 'Bahkan jika bahan tersebut tidak digunakan untuk produk yang diproduksi untuk kami, kami akan menghentikan kerja sama tersebut semata-mata karena kami tidak ingin dikaitkan dengan pemasok yang terlibat dalam deforestasi.',
+                        'text' => 'Bahkan jika bahan tersebut tidak digunakan untuk produk yang diproduksi untuk kami, kami akan menghentikan kerja sama tersebut semata-mata karena kami tidak ingin dikaitkan dengan pemasok yang terlibat dalam deforestasi.',
                         'source' => 'Alexander de Groot, Direktur Utama Fepco International',
                     ],
                 ],
@@ -165,8 +164,8 @@ class ExposeEudrDummySeeder extends Seeder
                 [
                     'type' => 'image',
                     'data' => [
-                        'src'       => 'pages/default-image.jpg',
-                        'caption'   => 'Deforestasi di kawasan konsesi PT Indosubur Sukses Makmur, Kalimantan Timur, Februari 2024–November 2025. Sumber gambar: Sentinel-2 melalui Copernicus Browser',
+                        'src' => 'pages/default-image.jpg',
+                        'caption' => 'Deforestasi di kawasan konsesi PT Indosubur Sukses Makmur, Kalimantan Timur, Februari 2024–November 2025. Sumber gambar: Sentinel-2 melalui Copernicus Browser',
                         'alignment' => 'full',
                     ],
                 ],
@@ -185,7 +184,7 @@ class ExposeEudrDummySeeder extends Seeder
                 [
                     'type' => 'quote',
                     'data' => [
-                        'text'  => 'Singkatnya, kami sudah siap, dan siap menyesuaikan sumber pasokan kami sesuai kebutuhan untuk memastikan bahwa semua yang kami peroleh telah dipastikan sesuai persyaratan.',
+                        'text' => 'Singkatnya, kami sudah siap, dan siap menyesuaikan sumber pasokan kami sesuai kebutuhan untuk memastikan bahwa semua yang kami peroleh telah dipastikan sesuai persyaratan.',
                         'source' => 'Alexander de Groot, Fepco International',
                     ],
                 ],
@@ -224,11 +223,11 @@ class ExposeEudrDummySeeder extends Seeder
 
         // EN translation
         DB::table('page_translations')->insert([
-            'page_id'    => $pageId,
-            'locale'     => 'en',
-            'title'      => 'After the Risky Business report: Changes in Indonesia-EU timber trade prove the importance of EUDR',
-            'excerpt'    => 'This regulation has the potential to bring much-needed improvements to stop the loss of remaining natural forests.',
-            'content'    => '<p>Legacy content — use content_blocks.</p>',
+            'page_id' => $pageId,
+            'locale' => 'en',
+            'title' => 'After the Risky Business report: Changes in Indonesia-EU timber trade prove the importance of EUDR',
+            'excerpt' => 'This regulation has the potential to bring much-needed improvements to stop the loss of remaining natural forests.',
+            'content' => '<p>Legacy content — use content_blocks.</p>',
             'content_blocks' => json_encode([
                 [
                     'type' => 'paragraph',
@@ -268,7 +267,7 @@ class ExposeEudrDummySeeder extends Seeder
                 [
                     'type' => 'quote',
                     'data' => [
-                        'text'  => 'PT Korindo Ariabima Sari is committed to ensuring that our entire timber supply chain is free from deforestation. We continue to strengthen our procurement system to be transparent, responsible, and aligned with global regulations, including EUDR.',
+                        'text' => 'PT Korindo Ariabima Sari is committed to ensuring that our entire timber supply chain is free from deforestation. We continue to strengthen our procurement system to be transparent, responsible, and aligned with global regulations, including EUDR.',
                         'source' => 'Kim Young Man, President Director of PT Korindo Ariabima Sari',
                     ],
                 ],
@@ -287,8 +286,8 @@ class ExposeEudrDummySeeder extends Seeder
                 [
                     'type' => 'image',
                     'data' => [
-                        'src'       => 'pages/default-image.jpg',
-                        'caption'   => 'Deforestation in the concession of PT Indosubur Sukses Makmur, East Kalimantan, February 2024–November 2025. Source: Sentinel-2 via Copernicus Browser',
+                        'src' => 'pages/default-image.jpg',
+                        'caption' => 'Deforestation in the concession of PT Indosubur Sukses Makmur, East Kalimantan, February 2024–November 2025. Source: Sentinel-2 via Copernicus Browser',
                         'alignment' => 'full',
                     ],
                 ],

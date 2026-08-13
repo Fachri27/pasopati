@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -15,7 +14,7 @@ class DefaultUserSeeder extends Seeder
     public function run(): void
     {
         // Cek kalau belum ada user dengan email ini
-        if (!User::where('email', 'admin@example.com')->exists()) {
+        if (! User::where('email', 'admin@example.com')->exists()) {
             User::create([
                 'name' => 'Fachri',
                 'email' => 'admin@example.com',

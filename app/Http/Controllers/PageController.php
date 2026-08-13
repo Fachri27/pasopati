@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Fellowship;
+use App\Models\Page;
 use Illuminate\Http\Request;
-use App\Models\{Fellowship, Page};
 
 class PageController extends Controller
 {
@@ -14,8 +15,8 @@ class PageController extends Controller
         $locale = app()->getLocale();
 
         $pages = Page::with(['translations' => function ($q) use ($locale) {
-                $q->where('locale', $locale);
-            }])
+            $q->where('locale', $locale);
+        }])
             ->where('page_type', 'expose')
             ->where('status', 'active')
             ->orderBy('published_at', 'desc')
@@ -37,8 +38,8 @@ class PageController extends Controller
         $locale = app()->getLocale();
         $search = $request->input('search');
         $pages = Page::with(['translations' => function ($q) use ($locale) {
-                $q->where('locale', $locale);
-            }])
+            $q->where('locale', $locale);
+        }])
             ->when($search, function ($query, $search) use ($locale) {
                 $query->whereHas('translations', function ($q) use ($locale, $search) {
                     $q->where('locale', $locale)
@@ -100,7 +101,7 @@ class PageController extends Controller
     public function preview($locale = null, $page_type = null, $slug = null)
     {
         // Fallback jika $locale null (misal akses dari admin preview lama)
-        if (!$locale || !in_array($locale, ['id','en'])) {
+        if (! $locale || ! in_array($locale, ['id', 'en'])) {
             $locale = app()->getLocale() ?? config('app.locale') ?? 'id';
         }
         app()->setLocale($locale);
@@ -109,11 +110,7 @@ class PageController extends Controller
             ->where('slug', $slug)
             ->firstOrFail();
 
-        $related = Page::where('id', '!=', $page->id)
-            ->where('page_type', $page_type)
-            ->latest()
-            ->take(3)
-            ->get();
+        $related = $this->getRelatedArticles($page);
 
         $meta = $page->getSeoData($locale);
 
@@ -165,11 +162,7 @@ class PageController extends Controller
             ->where('slug', $slug)
             ->firstOrFail();
 
-        $related = Page::where('id', '!=', $page->id)
-            ->where('page_type', 'ngopini')
-            ->latest()
-            ->take(3)
-            ->get();
+        $related = $this->getRelatedArticles($page);
 
         $meta = $page->getSeoData($locale);
 
@@ -196,7 +189,7 @@ class PageController extends Controller
             ->where('status', 'active')
             ->where(function ($q) use ($exposeTypes) {
                 foreach ($exposeTypes as $type) {
-                    $q->orWhereJsonContains('expose_type',$type);
+                    $q->orWhereJsonContains('expose_type', $type);
                 }
             })
             ->get();
@@ -216,5 +209,53 @@ class PageController extends Controller
             ->set('type', $meta['type']);
 
         return view('front.show-artikel', compact('pages', 'locale', 'exposeTypes'));
+    }
+
+    /**
+     * Artikel terkait: utamakan yang se-topik (expose_type sama),
+     * sisanya diisi artikel aktif terbaru dengan page_type yang sama.
+     */
+    private function getRelatedArticles(Page $page, $limit = 3)
+    {
+        $locale = app()->getLocale();
+
+        $related = collect();
+
+        $types = is_array($page->expose_type) ? $page->expose_type : [];
+
+        if (! empty($types)) {
+            $related = Page::with(['translations' => function ($q) use ($locale) {
+                $q->where('locale', $locale);
+            }])
+                ->where('page_type', $page->page_type)
+                ->where('id', '!=', $page->id)
+                ->where('status', 'active')
+                ->where(function ($q) use ($types) {
+                    foreach ($types as $type) {
+                        $q->orWhereJsonContains('expose_type', $type);
+                    }
+                })
+                ->latest()
+                ->take($limit)
+                ->get();
+        }
+
+        if ($related->count() < $limit) {
+            $excludedIds = $related->pluck('id')->push($page->id);
+
+            $fill = Page::with(['translations' => function ($q) use ($locale) {
+                $q->where('locale', $locale);
+            }])
+                ->where('page_type', $page->page_type)
+                ->whereNotIn('id', $excludedIds)
+                ->where('status', 'active')
+                ->latest()
+                ->take($limit - $related->count())
+                ->get();
+
+            $related = $related->merge($fill);
+        }
+
+        return $related;
     }
 }

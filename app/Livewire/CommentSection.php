@@ -129,6 +129,11 @@ class CommentSection extends Component
 
         $this->dispatch('captcha:reset');
 
+        // Tangkap parent SEBELUM reset — supaya sinyal 'comment-posted' tahu
+        // ini balasan ke komentar mana (untuk buka thread + kosongkan editor
+        // balasan yang dipakai, bukan editor root).
+        $postedParentId = $isReply ? (int) ($this->replyingTo ?? 0) : 0;
+
         if ($isReply) {
             $this->reset(['replyBody', 'replyingTo', 'replyingToName', 'website', 'captchaToken']);
         } else {
@@ -137,7 +142,7 @@ class CommentSection extends Component
 
         // Beri sinyal ke Alpine supaya thread balasan (jika ada) tetap terbuka
         // setelah Livewire me-re-render komponen.
-        $this->dispatch('comment-posted', parentId: $this->replyingTo ?? 0);
+        $this->dispatch('comment-posted', parentId: $postedParentId);
     }
 
     private function verifyTurnstile(): bool
@@ -211,10 +216,11 @@ class CommentSection extends Component
     {
         if (in_array($commentId, $this->translatedComments)) {
             $this->translatedComments = array_values(array_diff($this->translatedComments, [$commentId]));
+
             return;
         }
 
-        if (!isset($this->translations[$commentId])) {
+        if (! isset($this->translations[$commentId])) {
             $comment = Comment::query()->findOrFail($commentId);
             $browserLang = request()->getPreferredLanguage();
             $target = $browserLang ? substr($browserLang, 0, 2) : (app()->getLocale() === 'id' ? 'en' : 'id');

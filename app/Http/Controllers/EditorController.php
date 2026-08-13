@@ -11,19 +11,18 @@ class EditorController extends Controller
     {
         $image = $request->image;
 
-        if (!$image) {
+        if (! $image) {
             return response()->json(['error' => 'No image found'], 422);
         }
 
         // nama file unik
-        $fileName = 'editor_' . time() . '.png';
+        $fileName = 'editor_'.time().'.png';
 
         // simpan ke storage/app/public/photos
-        Storage::disk('public')->put('photos/' . $fileName, base64_decode($image));
+        Storage::disk('public')->put('photos/'.$fileName, base64_decode($image));
 
         return response()->json([
-            'url' => asset('storage/photos/' . $fileName)
+            'url' => asset('storage/photos/'.$fileName),
         ]);
     }
 }
-

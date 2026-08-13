@@ -17,17 +17,16 @@ class LoginController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'email'    => 'required|email',
+            'email' => 'required|email',
             'password' => 'required',
         ]);
-
 
         // Cek email & password valid
         if (Auth::attempt($request->only('email', 'password'))) {
             $request->session()->regenerate();
 
             return redirect()->intended('dashboard')
-                             ->with('success', 'Login berhasil!');
+                ->with('success', 'Login berhasil!');
         }
 
         // Kalau gagal login
@@ -45,6 +44,6 @@ class LoginController extends Controller
         $request->session()->regenerateToken();
 
         return redirect()->route('login')
-                         ->with('success', 'Anda sudah logout.');
+            ->with('success', 'Anda sudah logout.');
     }
 }

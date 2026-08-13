@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class FellowshipTranslation extends Model
 {
-     protected $fillable = [
+    protected $fillable = [
         'title',
         'sub_judul',
         'excerpt',
@@ -28,6 +28,6 @@ class FellowshipTranslation extends Model
      */
     public function plainText(): string
     {
-        return strip_tags(trim(($this->title ?? '') . ' ' . ($this->sub_judul ?? '') . ' ' . ($this->excerpt ?? '')));
+        return strip_tags(trim(($this->title ?? '').' '.($this->sub_judul ?? '').' '.($this->excerpt ?? '')));
     }
 }

@@ -4,8 +4,10 @@ namespace App\Jobs;
 
 use App\Mail\DeforestoryCardMail;
 use App\Models\DeforestoryCard;
+use App\Models\DeforestorySentCardEmail;
 use App\Models\DeforestorySubscriber;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Mail;
 
@@ -28,6 +30,17 @@ class DeforestoryCardNotificationJob implements ShouldQueue
     public function __construct(
         public DeforestoryCard $card
     ) {}
+
+    // Sama seperti DeforestoryNotificationJob: queue `database` punya
+    // retry_after=90. $timeout < retry_after + failOnTimeout=true membuat timeout
+    // membuang job ke failed_jobs (bukan silent retry ke worker lain yang
+    // me-loop ulang subscriber). $tries membatasi retry exception; idempotensi di
+    // bawah menahan retry tetap aman dari email ganda.
+    public int $tries = 3;
+
+    public int $timeout = 60;
+
+    public bool $failOnTimeout = true;
 
     public function handle(): void
     {
@@ -54,6 +67,22 @@ class DeforestoryCardNotificationJob implements ShouldQueue
         }
 
         foreach ($subscribers as $subscriber) {
+            // Catat SEBELUM queue. Kalau baris sudah ada (unique violation) =
+            // pernah dikirim untuk (subscriber, card, event) ini → skip, jangan
+            // antri mailable lagi. Insert-before-queue memilih aman ke arah
+            // "tidak spam": bila job crash setelah insert tapi sebelum queue,
+            // retry melewatkan baris itu (email satu subscriber hilang, bukan
+            // ganda) — itu lebih baik daripada sebaliknya.
+            try {
+                DeforestorySentCardEmail::create([
+                    'subscriber_id' => $subscriber->id,
+                    'card_id' => $this->card->id,
+                    'event' => 'created',
+                ]);
+            } catch (UniqueConstraintViolationException $e) {
+                continue;
+            }
+
             Mail::to($subscriber->email)
                 ->queue(new DeforestoryCardMail($this->card, $subscriber));
         }

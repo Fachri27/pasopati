@@ -22,6 +22,7 @@ class DeforestoryCaseTable extends Component
     use WithPagination;
 
     public $search = '';
+
     public $locale = 'id';
 
     public function refreshList()
@@ -106,7 +107,8 @@ class DeforestoryCaseTable extends Component
         $case = DeforestoryCase::where('slug', $slug)->first();
 
         if (! $card && ! $case) {
-            session()->flash('error', 'Kartu "' . $slug . '" tidak ditemukan.');
+            session()->flash('error', 'Kartu "'.$slug.'" tidak ditemukan.');
+
             return;
         }
 
@@ -117,6 +119,6 @@ class DeforestoryCaseTable extends Component
             $case->delete();
         }
 
-        session()->flash('success', 'Kartu "' . $slug . '" beserta konten detailnya dihapus.');
+        session()->flash('success', 'Kartu "'.$slug.'" beserta konten detailnya dihapus.');
     }
 }

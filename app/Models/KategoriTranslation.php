@@ -23,6 +23,6 @@ class KategoriTranslation extends Model
      */
     public function plainText(): string
     {
-        return strip_tags(trim(($this->kategori_name ?? '') . ' ' . ($this->content ?? '')));
+        return strip_tags(trim(($this->kategori_name ?? '').' '.($this->content ?? '')));
     }
 }

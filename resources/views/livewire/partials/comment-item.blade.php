@@ -26,12 +26,12 @@
                 <time class="text-[10px] uppercase tracking-[0.08em] text-auriga-muted">{{ $dateLabel }}</time>
             </div>
 
-            <p class="mt-1 text-sm leading-5 text-auriga-ink/75">
+            <div class="mt-1 text-sm leading-5 text-auriga-ink/75">
                 @if ($isReply && $comment->mention_name)
                     <span class="mr-1 font-semibold text-[#2B5343]">@ {{ $comment->mention_name }}</span>
                 @endif
                 {!! App\Models\Comment::formatBody($comment->body) !!}
-            </p>
+            </div>
 
             <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
                 @if ($canReply)
@@ -67,7 +67,7 @@
 
                     <div class="@if ($isGuest) mt-3 @endif overflow-hidden bg-[#f5f5f5]">
                         <label for="ta-reply-{{ $id }}" class="sr-only">{{ $t['balas'] }}</label>
-                        <textarea id="ta-reply-{{ $id }}" wire:model="replyBody" x-model="replyBodyDraft" rows="4" maxlength="1000" placeholder="{{ $t['reply_placeholder'] }}" class="block min-h-28 w-full resize-none border-0 bg-transparent px-4 py-3 text-sm leading-6 outline-none placeholder:text-auriga-muted/45 focus:ring-0"></textarea>
+                        <div id="ta-reply-{{ $id }}" wire:ignore contenteditable="true" role="textbox" aria-multiline="true" aria-label="{{ $t['balas'] }}" data-placeholder="{{ $t['reply_placeholder'] }}" x-on:input="syncEditor($el)" class="ce-input block min-h-28 w-full whitespace-pre-wrap break-words border-0 bg-transparent px-4 py-3 text-sm leading-6 outline-none focus:ring-0"></div>
                         @error('replyBody') <p class="px-4 pb-3 text-xs text-auriga-red">{{ $message }}</p> @enderror
 
                         @if ($isGuest && $siteKey)
@@ -83,6 +83,12 @@
                                 <button type="button" x-on:click="fmt('bold')" class="font-serif text-lg font-bold transition hover:text-auriga-ink" aria-label="Tebal">B</button>
                                 <button type="button" x-on:click="fmt('italic')" class="font-serif text-lg italic transition hover:text-auriga-ink" aria-label="Miring">i</button>
                                 <button type="button" x-on:click="fmt('link')" class="text-base transition hover:text-auriga-ink" aria-label="Tautan">↗</button>
+                                <button type="button" x-on:click="fmt('bullet')" class="transition hover:text-auriga-ink" aria-label="Daftar poin">
+                                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="4" cy="6" r="1.4" fill="currentColor" stroke="none"/><line x1="9" y1="6" x2="21" y2="6"/><circle cx="4" cy="12" r="1.4" fill="currentColor" stroke="none"/><line x1="9" y1="12" x2="21" y2="12"/><circle cx="4" cy="18" r="1.4" fill="currentColor" stroke="none"/><line x1="9" y1="18" x2="21" y2="18"/></svg>
+                                </button>
+                                <button type="button" x-on:click="fmt('number')" class="transition hover:text-auriga-ink" aria-label="Daftar bernomor">
+                                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><text x="1.5" y="8" font-size="7.5" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" font-weight="700" fill="currentColor" stroke="none">1.</text><line x1="10" y1="6" x2="21" y2="6"/><text x="1.5" y="15" font-size="7.5" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" font-weight="700" fill="currentColor" stroke="none">2.</text><line x1="10" y1="13" x2="21" y2="13"/><text x="1.5" y="22" font-size="7.5" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" font-weight="700" fill="currentColor" stroke="none">3.</text><line x1="10" y1="20" x2="21" y2="20"/></svg>
+                                </button>
                             </div>
                             <div class="flex items-center gap-2">
                                 <button type="button" x-on:click="cancelReply()" class="px-2 py-2 text-[10px] font-medium text-auriga-ink transition hover:text-[#2B5343]">{{ $t['batal'] }}</button>

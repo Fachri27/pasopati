@@ -21,7 +21,7 @@ class DeforestorySubscriberTable extends Component
         $subscribers = DeforestorySubscriber::query()
             ->with('case.translations')
             ->when($this->search, function ($query) {
-                $query->where('email', 'like', '%' . $this->search . '%');
+                $query->where('email', 'like', '%'.$this->search.'%');
             })
             ->when($this->status !== 'all', function ($query) {
                 $query->where('active', $this->status === 'active');

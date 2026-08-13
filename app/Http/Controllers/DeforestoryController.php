@@ -107,7 +107,7 @@ class DeforestoryController extends Controller
         $laporanImage = $laporan->image
             ? (\Illuminate\Support\Str::startsWith($laporan->image, ['http://', 'https://'])
                 ? $laporan->image
-                : asset('storage/' . $laporan->image))
+                : asset('storage/'.$laporan->image))
             : $meta['image'];
 
         seo()->setLocale($locale)

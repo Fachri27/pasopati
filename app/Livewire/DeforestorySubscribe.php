@@ -109,6 +109,7 @@ class DeforestorySubscribe extends Component
                 ? 'Verifikasi captcha gagal. Silakan coba lagi.'
                 : 'Captcha verification failed. Please try again.');
             $this->dispatch('captcha:reset');
+
             return;
         }
 
@@ -133,6 +134,7 @@ class DeforestorySubscribe extends Component
             }
 
             $this->resetForm();
+
             return;
         }
 

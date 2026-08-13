@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class PetitionSeeder extends Seeder
 {
@@ -131,7 +131,7 @@ class PetitionSeeder extends Seeder
             $publishedAt = $data['published_at'];
 
             $petitionId = DB::table('petitions')->insertGetId([
-                'slug' => Str::slug($data['title_id']) . '-' . ($i + 1),
+                'slug' => Str::slug($data['title_id']).'-'.($i + 1),
                 'target_name' => $data['target_name'],
                 'demands' => json_encode($data['demands']),
                 'cover_image' => null,

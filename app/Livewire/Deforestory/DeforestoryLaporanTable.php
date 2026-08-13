@@ -24,7 +24,9 @@ class DeforestoryLaporanTable extends Component
     use WithPagination;
 
     public $caseSlug;
+
     public $case;
+
     public $search = '';
 
     public function mount($caseSlug = null)

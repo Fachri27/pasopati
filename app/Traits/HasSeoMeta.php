@@ -19,12 +19,11 @@ trait HasSeoMeta
         ];
     }
 
-
     protected function getSeoImage(string $locale = 'id')
     {
         $translation = $this->translations->where('locale', $locale)->first();
 
-        $imagePath = 
+        $imagePath =
             $translation->image ??
             $translation->image ??
             $this->featured_image ??
@@ -38,14 +37,12 @@ trait HasSeoMeta
         $filename = basename($imagePath);
 
         // cek apakah ada versi meta 1200x630
-        $metaPath = 'pages/meta/' . $filename;
+        $metaPath = 'pages/meta/'.$filename;
 
-        if (file_exists(storage_path('app/public/' . $metaPath))) {
-            return asset('storage/' . $metaPath);
+        if (file_exists(storage_path('app/public/'.$metaPath))) {
+            return asset('storage/'.$metaPath);
         }
 
-        return asset('storage/' . $imagePath);
+        return asset('storage/'.$imagePath);
     }
-
-
 }

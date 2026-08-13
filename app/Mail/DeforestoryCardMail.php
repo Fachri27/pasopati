@@ -22,7 +22,9 @@ class DeforestoryCardMail extends Mailable
     use Queueable, SerializesModels;
 
     public DeforestoryCard $card;
+
     public DeforestorySubscriber $subscriber;
+
     public string $subscriberLocale;
 
     public function __construct(DeforestoryCard $card, DeforestorySubscriber $subscriber)

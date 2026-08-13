@@ -1,4 +1,5 @@
-<?php 
-return[
+<?php
+
+return [
     'welcome' => 'Selamat datang di Pasopati',
 ];

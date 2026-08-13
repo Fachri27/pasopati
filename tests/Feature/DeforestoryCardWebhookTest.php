@@ -18,10 +18,12 @@ class DeforestoryCardWebhookTest extends TestCase
     use RefreshDatabase;
 
     private const KEY = 'card-api-key';
+
     private const ENDPOINT = '/api/deforestory/cards';
 
     /** uuid caller-owned (stabil & portabel) — dipakai sebagai key upsert. */
     private const UUID_MAYAWANA = '11111111-1111-4111-8111-111111111111';
+
     private const UUID_PULAU_LAUT = '22222222-2222-4222-8222-222222222222';
 
     /** Payload contoh: 2 card (id + en lengkap). */
@@ -64,7 +66,7 @@ class DeforestoryCardWebhookTest extends TestCase
         $headers = ['Content-Type' => 'application/json'];
         $server = ['CONTENT_TYPE' => 'application/json'];
         if ($key) {
-            $server['HTTP_AUTHORIZATION'] = 'Bearer ' . $key;
+            $server['HTTP_AUTHORIZATION'] = 'Bearer '.$key;
         }
         if ($delivery) {
             $server['HTTP_X_DEFORESTORY_DELIVERY'] = $delivery;
@@ -449,9 +451,9 @@ class DeforestoryCardWebhookTest extends TestCase
         // baru (uuid baru → dispatch). Delivery beda supaya gak kena dedup.
         $updated = ['cards' => [
             ['uuid' => self::UUID_MAYAWANA, 'slug' => 'mayawana', 'category' => 'mining', 'title_id' => 'Mayawana (baru)',
-             'title_en' => 'Mayawana (new)', 'excerpt_id' => 'x', 'excerpt_en' => 'y', 'sort' => 1],
+                'title_en' => 'Mayawana (new)', 'excerpt_id' => 'x', 'excerpt_en' => 'y', 'sort' => 1],
             ['uuid' => '44444444-4444-4444-8444-444444444444', 'slug' => 'baru-lagi', 'title_id' => 'Baru', 'title_en' => 'New2',
-             'excerpt_id' => 'a', 'excerpt_en' => 'b', 'sort' => 2],
+                'excerpt_id' => 'a', 'excerpt_en' => 'b', 'sort' => 2],
         ]];
         $this->postCards($updated, Str::uuid()->toString())
             ->assertStatus(200)
@@ -466,11 +468,11 @@ class DeforestoryCardWebhookTest extends TestCase
     {
         $server = ['CONTENT_TYPE' => 'application/json'];
         if ($key) {
-            $server['HTTP_AUTHORIZATION'] = 'Bearer ' . $key;
+            $server['HTTP_AUTHORIZATION'] = 'Bearer '.$key;
         }
 
         return $this->call(
-            'PUT', self::ENDPOINT . '/' . $uuid, [], [], [], $server,
+            'PUT', self::ENDPOINT.'/'.$uuid, [], [], [], $server,
             json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
         );
     }
@@ -633,9 +635,9 @@ class DeforestoryCardWebhookTest extends TestCase
 
         $uuid = $this->cardUuid('mayawana');
 
-        $server = ['CONTENT_TYPE' => 'application/json', 'HTTP_AUTHORIZATION' => 'Bearer ' . self::KEY];
+        $server = ['CONTENT_TYPE' => 'application/json', 'HTTP_AUTHORIZATION' => 'Bearer '.self::KEY];
         $response = $this->call(
-            'PATCH', self::ENDPOINT . '/' . $uuid, [], [], [], $server,
+            'PATCH', self::ENDPOINT.'/'.$uuid, [], [], [], $server,
             json_encode(['category' => 'pulp-paper'], JSON_UNESCAPED_UNICODE)
         );
 

@@ -64,7 +64,7 @@ class DeforestoryApiTranslationTest extends TestCase
 
     private function translationsUrl(string $caseSlug = 'mayawana', string $laporanSlug = 'jejak-deforestasi-mayawana'): string
     {
-        return "/api/deforestory/cases/{$caseSlug}/laporan/{$laporanSlug}/translations?token=" . self::TOKEN;
+        return "/api/deforestory/cases/{$caseSlug}/laporan/{$laporanSlug}/translations?token=".self::TOKEN;
     }
 
     // ---- per-locale image --------------------------------------------------
@@ -175,9 +175,9 @@ class DeforestoryApiTranslationTest extends TestCase
             ]);
         }
 
-        $idRes = $this->get('/api/deforestory/cases/mayawana/laporan?token=' . self::TOKEN . '&locale=id')
+        $idRes = $this->get('/api/deforestory/cases/mayawana/laporan?token='.self::TOKEN.'&locale=id')
             ->assertStatus(200);
-        $enRes = $this->get('/api/deforestory/cases/mayawana/laporan?token=' . self::TOKEN . '&locale=en')
+        $enRes = $this->get('/api/deforestory/cases/mayawana/laporan?token='.self::TOKEN.'&locale=en')
             ->assertStatus(200);
 
         $this->assertSame('https://cdn.test/sum-id.jpg', $idRes->json('data.0.image'));

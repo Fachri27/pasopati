@@ -58,7 +58,24 @@
     @endif
 
     @if ($laporanContent)
-        <div class="prose prose-lg max-w-none text-ink-2 [&_p]:leading-[1.85] [&_p]:text-[1.05rem] [&_h2]:font-display [&_h2]:font-bold [&_h2]:text-ink [&_h2]:text-[1.35rem] [&_h2]:mt-12 [&_h2]:mb-5 [&_blockquote]:border-l-[4px] [&_blockquote]:border-pasopati [&_blockquote]:bg-surface/50 [&_blockquote]:py-6 [&_blockquote]:pl-6 [&_blockquote]:pr-5 [&_li]:text-ink-2">
+        <div class="
+            prose
+            max-w-2xl mx-auto
+            px-5
+            poppins-regular
+
+            md:text-md sm:text-base text-[16px]
+            text-left
+
+            prose-p:tracking-[0.020em]
+            prose-p:my-[1em]
+
+            prose-h2:text-[24px]
+            prose-h2:mt-8 prose-h2:mb-4 prose-h2:font-bold
+
+            prose-h3:text-[21px]
+            prose-h3:mt-6 prose-h3:mb-3 prose-h3:font-semibold
+        ">
             {!! $laporanContent !!}
         </div>
     @else

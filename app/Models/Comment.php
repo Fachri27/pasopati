@@ -7,23 +7,23 @@ use Illuminate\Database\Eloquent\Model;
 class Comment extends Model
 {
     protected $fillable = [
-        "page_id",
-        "commentable_type",
-        "commentable_id",
-        "user_id",
-        "name",
-        "email",
-        "body",
-        "ip_address",
-        "is_approved",
-        "parent_id",
-        "mention_name",
+        'page_id',
+        'commentable_type',
+        'commentable_id',
+        'user_id',
+        'name',
+        'email',
+        'body',
+        'ip_address',
+        'is_approved',
+        'parent_id',
+        'mention_name',
     ];
 
     protected function casts(): array
     {
         return [
-            "is_approved" => "boolean",
+            'is_approved' => 'boolean',
         ];
     }
 
@@ -44,12 +44,12 @@ class Comment extends Model
 
     public function parent()
     {
-        return $this->belongsTo(Comment::class, "parent_id");
+        return $this->belongsTo(Comment::class, 'parent_id');
     }
 
     public function replies()
     {
-        return $this->hasMany(Comment::class, "parent_id");
+        return $this->hasMany(Comment::class, 'parent_id');
     }
 
     public function reactions()
@@ -112,9 +112,10 @@ class Comment extends Model
 
     /**
      * Render body komentar menjadi HTML aman. Markup ringan gaya markdown
-     * (**tebal**, _miring_, [teks](https://...)) yang disisipkan tombol
-     * format di editor dikonversi ke <strong>/<em>/<a>; sisanya di-escape
-     * supaya tidak ada injeksi HTML. URL hanya http/https.
+     * (**tebal**, _miring_, [teks](https://...), daftar '- '/'1. ') yang
+     * disisipkan tombol format di editor dikonversi ke <strong>/<em>/<a>/
+     * <ul>/<ol>/<li>; sisanya di-escape supaya tidak ada injeksi HTML.
+     * URL hanya http/https. Daftar bersarang pakai indent 2 spasi.
      */
     public static function formatBody(string $body): string
     {
@@ -124,6 +125,73 @@ class Comment extends Model
         $escaped = preg_replace_callback('/_([^_]+)_/', fn ($m) => '<em>'.$m[1].'</em>', $escaped);
         $escaped = preg_replace_callback('/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/', fn ($m) => '<a href="'.e($m[2]).'" target="_blank" rel="noopener noreferrer nofollow" class="text-[#2B5343] underline">'.e($m[1]).'</a>', $escaped);
 
+        // Blok daftar diparse sebelum nl2br supaya <li> tidak dipecah <br>.
+        $escaped = self::listsToHtml($escaped);
+
         return nl2br($escaped);
+    }
+
+    /**
+     * Ubah baris-baris markdown daftar ('- ' / '1. ') menjadi <ul>/<ol>/<li>.
+     * Baris berurutan dengan marker sama + indent sama jadi satu list; indent
+     * lebih dalam = list bersarang di dalam <li> sebelumnya.
+     */
+    protected static function listsToHtml(string $text): string
+    {
+        $lines = preg_split('/\r\n|\r|\n/', $text);
+        $out = '';
+        $i = 0;
+        $n = count($lines);
+        while ($i < $n) {
+            if (preg_match('/^(\s*)(-|\d+\.)\s+(.*)$/', $lines[$i])) {
+                $block = self::parseListBlock($lines, $i);
+                $out .= $block['html'];
+                $i = $block['next'];
+            } else {
+                $out .= $lines[$i]."\n";
+                $i++;
+            }
+        }
+
+        return $out;
+    }
+
+    protected static function parseListBlock(array $lines, int $i): array
+    {
+        preg_match('/^(\s*)(-|\d+\.)\s+(.*)$/', $lines[$i], $first);
+        $baseIndent = strlen(str_replace("\t", '  ', $first[1]));
+        $ordered = (bool) preg_match('/\d+\./', $first[2]);
+        $tag = $ordered ? 'ol' : 'ul';
+        $html = '<'.$tag.'>';
+        $n = count($lines);
+        while ($i < $n) {
+            if (! preg_match('/^(\s*)(-|\d+\.)\s+(.*)$/', $lines[$i], $m)) {
+                break;
+            }
+            $indent = strlen(str_replace("\t", '  ', $m[1]));
+            if ($indent !== $baseIndent) {
+                break;
+            }
+            if ((bool) preg_match('/\d+\./', $m[2]) !== $ordered) {
+                break;
+            }
+            $content = $m[3];
+            $i++;
+            $nested = '';
+            while ($i < $n) {
+                if (preg_match('/^(\s*)(-|\d+\.)\s+(.*)$/', $lines[$i], $nm)
+                    && strlen(str_replace("\t", '  ', $nm[1])) > $baseIndent) {
+                    $block = self::parseListBlock($lines, $i);
+                    $nested .= $block['html'];
+                    $i = $block['next'];
+                } else {
+                    break;
+                }
+            }
+            $html .= '<li>'.$content.$nested.'</li>';
+        }
+        $html .= '</'.$tag.'>';
+
+        return ['html' => $html, 'next' => $i];
     }
 }

@@ -60,16 +60,17 @@ class Fellowship extends Model
     public function kategoris()
     {
         return $this->belongsToMany(
-        Kategori::class,
-        'kategori_fellowships',   // nama pivot table kamu
-        'fellowship_id',
-        'kategori_id'
-        ) 
-        ->withPivot(['status', 'content_id', 'content_en'])
-        ->withTimestamps();  
+            Kategori::class,
+            'kategori_fellowships',   // nama pivot table kamu
+            'fellowship_id',
+            'kategori_id'
+        )
+            ->withPivot(['status', 'content_id', 'content_en'])
+            ->withTimestamps();
     }
 
-    public function user() {
+    public function user()
+    {
         return $this->belongsTo(User::class);
     }
 }

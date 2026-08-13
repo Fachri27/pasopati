@@ -1,0 +1,59 @@
+/**
+ * Varian responsif navbar halaman Fire.
+ *
+ * Halaman ini memuat dua build Tailwind: build Vite (app.css, sumber gaya
+ * navbar yang disalin dari situs utama) lalu dist/style.css (build khusus
+ * halaman Fire). Urutan itu tidak bisa dibalik — bila dist dimuat lebih dulu,
+ * kelas polos milik app.css mengalahkan varian `panggung:` milik dist dan tata
+ * letak kanvas 1920x1080 halaman ini rusak.
+ *
+ * Harganya: untuk kelas bernama sama, dist yang menang. Yang jadi korban adalah
+ * varian responsif navbar, karena keduanya berspesifisitas satu kelas —
+ * `.hidden` milik dist (dimuat belakangan) mengalahkan `.md\:flex` milik
+ * app.css, jadi kolom pencarian tersembunyi di semua lebar layar.
+ *
+ * Berkas ini memulihkannya. Aturannya sengaja DI LUAR @layer: CSS tanpa lapisan
+ * selalu menang atas CSS berlapis, berapa pun urutan pemuatannya, jadi tidak
+ * perlu !important dan tidak ikut berebut dengan kedua build itu.
+ *
+ * Nilai dan ambang layarnya disalin apa adanya dari build produksi
+ * (public/build/assets/app-*.css) supaya benar-benar sama dengan situs utama:
+ * sm = 40rem, md = 48rem, --spacing = .25rem, --text-2xl = 1.5rem/2rem.
+ */
+
+@media (min-width: 40rem) {
+  .sm\:w-\[75vw\] {
+    width: 75vw;
+  }
+}
+
+@media (min-width: 48rem) {
+  .md\:flex {
+    display: flex;
+  }
+
+  .md\:hidden {
+    display: none;
+  }
+
+  .md\:inline-block {
+    display: inline-block;
+  }
+
+  .md\:ml-0 {
+    margin-left: 0;
+  }
+
+  .md\:text-2xl {
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+
+  .md\:w-100 {
+    width: 25rem; /* calc(.25rem * 100) */
+  }
+
+  .md\:w-\[400px\] {
+    width: 400px;
+  }
+}

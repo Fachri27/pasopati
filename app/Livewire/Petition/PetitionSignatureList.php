@@ -55,7 +55,7 @@ class PetitionSignatureList extends Component
 
         $locale = app()->getLocale();
         $title = $this->petition->translation($locale)?->title ?? $this->petition->slug;
-        $filename = Str::slug($title) . '-tanda-tangan.csv';
+        $filename = Str::slug($title).'-tanda-tangan.csv';
 
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',

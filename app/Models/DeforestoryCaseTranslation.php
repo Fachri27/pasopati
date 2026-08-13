@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Str;
 
 class DeforestoryCaseTranslation extends Model
 {
@@ -39,11 +38,11 @@ class DeforestoryCaseTranslation extends Model
      */
     public function plainText(): string
     {
-        $text = $this->intro . ' ' . $this->laporan_content;
+        $text = $this->intro.' '.$this->laporan_content;
 
         if ($this->chapters) {
             foreach ($this->chapters as $chapter) {
-                $text .= ' ' . ($chapter['title'] ?? '') . ' ' . ($chapter['body'] ?? '');
+                $text .= ' '.($chapter['title'] ?? '').' '.($chapter['body'] ?? '');
             }
         }
 

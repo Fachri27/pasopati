@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Jobs\DeforestoryWebhookJob;
 use App\Jobs\DeforestoryNotificationJob;
+use App\Jobs\DeforestoryWebhookJob;
 use App\Livewire\Deforestory\DeforestoryLaporanForm;
 use App\Models\DeforestoryCase;
 use App\Models\DeforestoryCaseTranslation;
@@ -20,6 +20,7 @@ class DeforestoryWebhookTest extends TestCase
     use RefreshDatabase;
 
     private const SECRET = 'webhook-secret';
+
     private const TARGET = 'https://other-site.example/webhook/deforestory';
 
     private function makeLaporan(): array
@@ -92,6 +93,7 @@ class DeforestoryWebhookTest extends TestCase
 
             // Payload berisi identitas kasus + laporan shape slim.
             $data = json_decode($request->body(), true);
+
             return $data['event'] === 'created'
                 && $data['case']['slug'] === 'mayawana'
                 && $data['laporan']['slug'] === 'dampak-di-luar-peta'

@@ -6,7 +6,7 @@ import typography from '@tailwindcss/typography'
 export default defineConfig({
     plugins: [
         laravel({
-            input: ['resources/css/app.css', 'resources/js/app.js'],
+            input: ['resources/css/app.css', 'resources/js/app.js', 'resources/js/event.js'],
             refresh: true,
         }),
         tailwindcss(),

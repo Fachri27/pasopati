@@ -46,7 +46,7 @@ class PetitionController extends Controller
         seo()->setLocale($locale)
             ->set('title', ['id' => $trans?->title ?? $petition->slug, 'en' => $trans?->title ?? $petition->slug])
             ->set('description', ['id' => Str::limit(strip_tags($trans?->description ?? ''), 160), 'en' => Str::limit(strip_tags($trans?->description ?? ''), 160)])
-            ->set('image', $petition->cover_image ? asset('storage/' . $petition->cover_image) : asset('img/image.png'))
+            ->set('image', $petition->cover_image ? asset('storage/'.$petition->cover_image) : asset('img/image.png'))
             ->set('type', 'article');
 
         return view('front.petition.show', compact('petition', 'locale'));

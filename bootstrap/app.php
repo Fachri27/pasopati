@@ -21,7 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             RedirectOldPublicUrls::class,
         ]);
-        
+
         $middleware->alias(aliases: [
             'setlocale' => SetLocale::class,
             'redirect.old.urls' => RedirectOldUrls::class,

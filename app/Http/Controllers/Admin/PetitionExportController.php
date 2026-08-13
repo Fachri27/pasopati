@@ -22,7 +22,7 @@ class PetitionExportController extends Controller
         $includeSignatures = true;
         $signatureChunks = collect();
 
-        if ($verifiedCount > 5000 && !$request->boolean('include_all')) {
+        if ($verifiedCount > 5000 && ! $request->boolean('include_all')) {
             $includeSignatures = false;
         } elseif ($verifiedCount > 0) {
             $signatureChunks = $petition->verifiedSignatures()
@@ -34,10 +34,10 @@ class PetitionExportController extends Controller
         $description = strip_tags($petition->translation($locale)?->description ?? '');
         $demands = is_array($petition->demands) ? $petition->demands : [];
 
-        $exportDate = now()->locale('id')->isoFormat('D MMMM YYYY, HH:mm') . ' WIB';
+        $exportDate = now()->locale('id')->isoFormat('D MMMM YYYY, HH:mm').' WIB';
         $petitionDate = $petition->created_at->locale('id')->isoFormat('D MMMM YYYY');
 
-        $filename = Str::slug($title) . '-dokumen-petisi.pdf';
+        $filename = Str::slug($title).'-dokumen-petisi.pdf';
 
         $pdf = Pdf::loadView('pdf.petition-export', compact(
             'petition',

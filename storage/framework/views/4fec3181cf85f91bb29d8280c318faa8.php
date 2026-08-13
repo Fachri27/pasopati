@@ -1,0 +1,46 @@
+<div x-show="lang === 'id'" x-data="{
+                    laporan_content_id: <?php if ((object) ('laporan_content_id') instanceof \Livewire\WireDirective) : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('laporan_content_id'->value()); ?>')<?php echo e('laporan_content_id'->hasModifier('live') ? '.live' : ''); ?><?php else : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('laporan_content_id'); ?>')<?php endif; ?>,
+                    initEditor() {
+                        let self = this;
+                        if (tinymce.get('laporan_editor_id')) tinymce.get('laporan_editor_id').remove();
+                        tinymce.init({
+                            target: this.$refs.laporan_editor_id,
+                            plugins: 'advlist anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount code fullscreen insertdatetime help preview',
+                            toolbar: 'undo redo | styles | bold italic underline strikethrough forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image media table | code removeformat | fullscreen preview',
+                            font_size_formats: '8pt 10pt 12pt 14pt 16pt 18pt 24pt 36pt 48pt',
+                            menubar: 'file edit view insert format tools table',
+                            skin: true,
+                            content_css: true,
+                            license_key: 'gpl',
+                            style_formats:[
+                                {title:'Text Styles',items:[
+                                {title:'Paragraph',format:'p'},
+                                {title:'Headings',items:[{title:'H1',format:'h1'},{title:'H2',format:'h2'},{title:'H3',format:'h3'},{title:'H4',format:'h4'},{title:'H5',format:'h5'},{title:'H6',format:'h6'}]}
+                                ]}
+                            ],
+                            block_formats: 'Paragraph=p; Heading 1=h1; Heading 2=h2; Heading 3=h3; Heading 4=h4; Heading 5=h5; Heading 6=h6',
+                            toolbar_sticky: true,
+                            promotion: false,
+                            branding: false,
+                            statusbar: true,
+                            elementpath: false,
+                            resize: true,
+                            forced_root_block: 'p',
+                            valid_elements: '*[*]',
+                            forced_root_block: '',
+                            br_in_pre: false,
+                            entity_encoding: 'raw',
+                            setup(editor) {
+                                editor.on('init', () => {
+                                    editor.setContent(self.laporan_content_id || '');
+                                });
+                                editor.on('change keyup', () => {
+                                    self.laporan_content_id = editor.getContent();
+                                });
+                            },
+                        });
+                    }
+                }" x-init="initEditor" wire:ignore>
+    <label class="block font-medium mb-1">Isi Laporan (ID)</label>
+    <textarea x-ref="laporan_editor_id" id="laporan_editor_id"></textarea>
+</div><?php /**PATH /Users/aiti/pasopati/resources/views/front/partials/tinymce-deforestory-laporan-id.blade.php ENDPATH**/ ?>

@@ -14,7 +14,9 @@ class PetitionExportPdfTest extends TestCase
     use RefreshDatabase;
 
     private User $admin;
+
     private User $editor;
+
     private Petition $petition;
 
     protected function setUp(): void

@@ -34,16 +34,18 @@ class PageTranslation extends Model
                 $parts[] = match ($block['type'] ?? '') {
                     'paragraph' => strip_tags($block['data']['html'] ?? ''),
                     'image' => $block['data']['caption'] ?? '',
-                    'event_info_box' => ($block['data']['format'] ?? '') . ' ' . ($block['data']['notes'] ?? ''),
+                    'event_info_box' => ($block['data']['format'] ?? '').' '.($block['data']['notes'] ?? ''),
                     'agenda_day' => collect($block['data']['sessions'] ?? [])
                         ->pluck('title')->implode(' '),
-                    'speaker_bio' => ($block['data']['name'] ?? '') . ' ' . ($block['data']['title'] ?? '') . ' ' . strip_tags($block['data']['bio'] ?? ''),
-                    'quote' => ($block['data']['text'] ?? '') . ' ' . ($block['data']['source'] ?? ''),
+                    'speaker_bio' => ($block['data']['name'] ?? '').' '.($block['data']['title'] ?? '').' '.strip_tags($block['data']['bio'] ?? ''),
+                    'quote' => ($block['data']['text'] ?? '').' '.($block['data']['source'] ?? ''),
                     default => '',
                 };
             }
+
             return implode(' ', $parts);
         }
+
         return strip_tags($this->content ?? '');
     }
 }

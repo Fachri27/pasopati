@@ -9,13 +9,16 @@ use Livewire\Component;
 class KategoriForm extends Component
 {
     public $kategori_id;
+
     public $kategori_name_id;
+
     public $kategori_name_en;
 
     public $isEdit = false;
 
-    public function mount($kategoriId = null) {
-        if($kategoriId) {
+    public function mount($kategoriId = null)
+    {
+        if ($kategoriId) {
             $this->kategori_id = $kategoriId;
             $this->isEdit = true;
 
@@ -38,7 +41,7 @@ class KategoriForm extends Component
             'kategori_name_en' => 'required|string|max:100',
         ]);
 
-         if ($this->isEdit) {
+        if ($this->isEdit) {
             // UPDATE
             $kategori = Kategori::findOrFail($this->kategori_id);
         } else {
@@ -55,21 +58,20 @@ class KategoriForm extends Component
             );
         }
 
-            if($this->kategori_name_en === null && $this->kategori_name_id === null) {
-                session()->flash('error','Form belum diisi!!');
-            }
-            
-            session()->flash('success', $this->isEdit
-                ? 'Kategori berhasil diperbarui.'
-                : 'Kategori berhasil ditambahkan.');
+        if ($this->kategori_name_en === null && $this->kategori_name_id === null) {
+            session()->flash('error', 'Form belum diisi!!');
+        }
+
+        session()->flash('success', $this->isEdit
+            ? 'Kategori berhasil diperbarui.'
+            : 'Kategori berhasil ditambahkan.');
 
         return redirect()->route('kategori.index');
     }
+
     public function render()
     {
         return view('livewire.kategori-form')
-        ->layout('layouts.admin');
+            ->layout('layouts.admin');
     }
-
-    
 }

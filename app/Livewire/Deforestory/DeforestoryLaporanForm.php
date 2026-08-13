@@ -2,17 +2,17 @@
 
 namespace App\Livewire\Deforestory;
 
-use App\Models\DeforestoryCase;
-use App\Models\DeforestoryLaporan;
-use App\Models\DeforestoryLaporanTranslation;
 use App\Jobs\DeforestoryNotificationJob;
 use App\Jobs\DeforestorySyncJob;
 use App\Jobs\DeforestoryWebhookJob;
+use App\Models\DeforestoryCase;
+use App\Models\DeforestoryLaporan;
+use App\Models\DeforestoryLaporanTranslation;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
-use Livewire\Component;
 
 /**
  * Form satu laporan Deforestory (mengikuti pola PageForm / CMS artikel).
@@ -27,23 +27,39 @@ class DeforestoryLaporanForm extends Component
     use WithFileUploads;
 
     public $laporan;
+
     public $laporanId;
+
     public $caseId;
+
     public $caseSlug;
 
     public $title_id;
+
     public $title_en;
+
     public $slug;
+
     public $excerpt_id;
+
     public $excerpt_en;
+
     public $laporan_content_id = '';
+
     public $laporan_content_en = '';
+
     public $image_id;
+
     public $image_en;
+
     public $old_image_id;
+
     public $old_image_en;
+
     public $status = 'draft';
+
     public $sort = 0;
+
     public $published_at;
 
     public static $sanitizeHtml = false;
@@ -101,7 +117,7 @@ class DeforestoryLaporanForm extends Component
             if ($old && Storage::disk('public')->exists($old)) {
                 Storage::disk('public')->delete($old);
             }
-            $filename = $slug . '-' . $locale . '-' . time() . '.' . $upload->getClientOriginalExtension();
+            $filename = $slug.'-'.$locale.'-'.time().'.'.$upload->getClientOriginalExtension();
 
             return $upload->storeAs('deforestory/laporans', $filename, 'public');
         }

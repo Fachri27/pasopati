@@ -7,15 +7,15 @@ use Livewire\Component;
 
 class UserTable extends Component
 {
-
     public $search = '';
+
     public function render()
     {
         return view('livewire.users.user-table', [
-            'users' => User::where('name', 'like', '%' . $this->search . '%')->latest()->paginate(5), 
-                    
+            'users' => User::where('name', 'like', '%'.$this->search.'%')->latest()->paginate(5),
+
         ])
-        ->layout('layouts.admin');
+            ->layout('layouts.admin');
     }
 
     public function delete(User $user)

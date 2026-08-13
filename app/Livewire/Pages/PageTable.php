@@ -22,7 +22,6 @@ class PageTable extends Component
 
     protected $updatesQueryString = ['search', 'status', 'author', 'start_date', 'end_date', 'dataRange'];
 
-
     public function render()
     {
         $pages = Page::with('translations')

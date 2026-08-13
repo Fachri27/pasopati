@@ -42,13 +42,21 @@ class AppServiceProvider extends ServiceProvider
             ]);
         }
 
-        view()->composer(['layouts.app', 'layouts.deforestory'], function ($view) {
+        // Ditempelkan pada partial navigasinya, bukan hanya pada layout:
+        // halaman /fire memakai layout sendiri (pasopati.layout) dengan salinan
+        // navbar yang juga menampilkan menu Fellowship, sehingga tanpa ini
+        // $yearPosts tidak terisi dan navbarnya menggagalkan seluruh halaman.
+        view()->composer([
+            'layouts.app',
+            'layouts.deforestory',
+            'pasopati.nav',
+        ], function ($view) {
             $yearPosts = Fellowship::with('translations')
                 ->where('status', 'active')
                 ->orderBy('start_date', 'desc')
                 ->take(5)
                 ->get()
-                ->groupBy(fn($item) => $item->start_date?->year);
+                ->groupBy(fn ($item) => $item->start_date?->year);
 
             $view->with('yearPosts', $yearPosts);
         });

@@ -2,13 +2,15 @@
 
 namespace App\Livewire\Pages;
 
+use App\Models\Page;
+use App\Models\PageTranslation;
+use App\Services\ImportToHtmlService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use App\Models\{Page, PageTranslation};
-use App\Services\ImportToHtmlService;
 use Intervention\Image\ImageManager;
-use Livewire\{Component, WithFileUploads};
+use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Livewire\WithFileUploads;
 
 class PageForm extends Component
 {
@@ -105,7 +107,7 @@ class PageForm extends Component
                 'status' => $this->page->status,
                 'featured_image' => $this->page->featured_image,
                 'source_type' => $this->page->source_type,
-                'expose_type' =>  $this->page->expose_type ?? [],
+                'expose_type' => $this->page->expose_type ?? [],
                 'file_import_id' => $this->page->source_file,
                 'file_import_en' => $this->page->source_file,
                 'published_at' => $this->page->published_at,
@@ -124,7 +126,7 @@ class PageForm extends Component
 
     public function addBlock($locale, $type)
     {
-        $prop = 'content_blocks_' . $locale;
+        $prop = 'content_blocks_'.$locale;
         $defaults = [
             'paragraph' => ['html' => '', 'mt' => null, 'mb' => null],
             'image' => ['src' => '', 'caption' => '', 'alignment' => 'center', 'mt' => null, 'mb' => null],
@@ -141,7 +143,7 @@ class PageForm extends Component
 
     public function removeBlock($locale, $index)
     {
-        $prop = 'content_blocks_' . $locale;
+        $prop = 'content_blocks_'.$locale;
         $blocks = $this->$prop;
         unset($blocks[$index]);
         $this->$prop = array_values($blocks);
@@ -150,8 +152,10 @@ class PageForm extends Component
 
     public function moveBlockUp($locale, $index)
     {
-        if ($index === 0) return;
-        $prop = 'content_blocks_' . $locale;
+        if ($index === 0) {
+            return;
+        }
+        $prop = 'content_blocks_'.$locale;
         $blocks = $this->$prop;
         $tmp = $blocks[$index - 1];
         $blocks[$index - 1] = $blocks[$index];
@@ -162,9 +166,11 @@ class PageForm extends Component
 
     public function moveBlockDown($locale, $index)
     {
-        $prop = 'content_blocks_' . $locale;
+        $prop = 'content_blocks_'.$locale;
         $blocks = $this->$prop;
-        if ($index >= count($blocks) - 1) return;
+        if ($index >= count($blocks) - 1) {
+            return;
+        }
         $tmp = $blocks[$index + 1];
         $blocks[$index + 1] = $blocks[$index];
         $blocks[$index] = $tmp;
@@ -174,7 +180,7 @@ class PageForm extends Component
 
     public function addRegLink($locale, $blockIndex)
     {
-        $prop = 'content_blocks_' . $locale;
+        $prop = 'content_blocks_'.$locale;
         $blocks = $this->$prop;
         $links = $blocks[$blockIndex]['data']['registration_links'] ?? [];
         $links[] = ['day' => '', 'url' => ''];
@@ -184,7 +190,7 @@ class PageForm extends Component
 
     public function removeRegLink($locale, $blockIndex, $linkIndex)
     {
-        $prop = 'content_blocks_' . $locale;
+        $prop = 'content_blocks_'.$locale;
         $blocks = $this->$prop;
         unset($blocks[$blockIndex]['data']['registration_links'][$linkIndex]);
         $blocks[$blockIndex]['data']['registration_links'] = array_values($blocks[$blockIndex]['data']['registration_links'] ?? []);
@@ -193,7 +199,7 @@ class PageForm extends Component
 
     public function addSession($locale, $blockIndex)
     {
-        $prop = 'content_blocks_' . $locale;
+        $prop = 'content_blocks_'.$locale;
         $blocks = $this->$prop;
         $sessions = $blocks[$blockIndex]['data']['sessions'] ?? [];
         $sessions[] = ['time' => '', 'title' => '', 'description' => '', 'moderator' => '', 'commentator' => '', 'speakers' => ''];
@@ -203,7 +209,7 @@ class PageForm extends Component
 
     public function removeSession($locale, $blockIndex, $sessionIndex)
     {
-        $prop = 'content_blocks_' . $locale;
+        $prop = 'content_blocks_'.$locale;
         $blocks = $this->$prop;
         unset($blocks[$blockIndex]['data']['sessions'][$sessionIndex]);
         $blocks[$blockIndex]['data']['sessions'] = array_values($blocks[$blockIndex]['data']['sessions'] ?? []);
@@ -293,7 +299,7 @@ class PageForm extends Component
         $page->refresh();
 
         foreach (['id', 'en'] as $locale) {
-            $contentBlocksProp = 'content_blocks_' . $locale;
+            $contentBlocksProp = 'content_blocks_'.$locale;
             $blocks = $this->$contentBlocksProp;
             if (is_array($blocks)) {
                 foreach ($blocks as $i => $block) {
@@ -312,7 +318,7 @@ class PageForm extends Component
                     'title' => $locale === 'id' ? $this->title_id : $this->title_en,
                     'excerpt' => $locale === 'id' ? $this->excerpt_id : $this->excerpt_en,
                     'content' => $locale === 'id' ? $this->content_id : $this->content_en,
-                    'content_blocks' => !empty($this->$contentBlocksProp) ? $this->$contentBlocksProp : null,
+                    'content_blocks' => ! empty($this->$contentBlocksProp) ? $this->$contentBlocksProp : null,
                 ]
             );
         }

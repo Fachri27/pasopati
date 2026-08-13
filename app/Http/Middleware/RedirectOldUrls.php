@@ -14,7 +14,7 @@ class RedirectOldUrls
     public function handle(Request $request, Closure $next): Response
     {
         $path = $request->getPathInfo();
-        
+
         // Check if path starts with /en/ or /id/ - if yes, it's a new-style URL, let it through
         if (preg_match('#^/(en|id)(/|$)#', $path)) {
             return $next($request);
@@ -28,7 +28,7 @@ class RedirectOldUrls
         // List of public route patterns that should redirect to locale-prefixed versions
         $publicRoutes = [
             'expose', 'ngopini', 'artikel', 'fellowship', 'cbi',
-            'artikel-fellowship', 'artikel-landing', 'ngopini-artikel'
+            'artikel-fellowship', 'artikel-landing', 'ngopini-artikel',
         ];
 
         // Check if the path starts with any of these public routes
@@ -39,7 +39,8 @@ class RedirectOldUrls
             // Redirect old URL to new URL with /en/ prefix by default
             // Or use session locale if available
             $locale = session('locale') ?? 'en';
-            $newPath = '/' . $locale . $path;
+            $newPath = '/'.$locale.$path;
+
             return redirect($newPath, 301); // 301 = permanent redirect for SEO
         }
 

@@ -96,4 +96,51 @@ class DeforestoryNotificationRoutingTest extends TestCase
 
         Mail::assertNothingQueued();
     }
+
+    /**
+     * Idempotensi: job di-handle dua kali (simulasi retry/timeout me-loop ulang)
+     * untuk (subscriber, case, event) yang sama hanya boleh antri email sekali.
+     * Ini inti dari pencegahan spam email ganda.
+     */
+    public function test_retry_does_not_queue_duplicate_email(): void
+    {
+        Mail::fake();
+        $case = $this->makeCase('case-a');
+        $this->makeSubscriber('all@example.com', 'all');
+
+        (new DeforestoryNotificationJob($case, 'created'))->handle();
+        (new DeforestoryNotificationJob($case, 'created'))->handle();
+
+        Mail::assertQueuedCount(1);
+        Mail::assertQueued(DeforestoryUpdateMail::class, fn ($m) => $m->hasTo('all@example.com'));
+    }
+
+    /** Event berbeda untuk case+subscriber yang sama tetap dikirim (bukan diblokir). */
+    public function test_different_event_still_sends(): void
+    {
+        Mail::fake();
+        $case = $this->makeCase('case-a');
+        $this->makeSubscriber('all@example.com', 'all');
+
+        (new DeforestoryNotificationJob($case, 'created'))->handle();
+        (new DeforestoryNotificationJob($case, 'updated'))->handle();
+
+        Mail::assertQueuedCount(2);
+    }
+
+    /** Subscriber berbeda tetap masing-masing dapat email (idempotensi per-subscriber). */
+    public function test_idempotency_is_per_subscriber(): void
+    {
+        Mail::fake();
+        $case = $this->makeCase('case-a');
+        $this->makeSubscriber('one@example.com', 'all');
+        $this->makeSubscriber('two@example.com', 'all');
+
+        (new DeforestoryNotificationJob($case, 'created'))->handle();
+        (new DeforestoryNotificationJob($case, 'created'))->handle();
+
+        Mail::assertQueuedCount(2);
+        Mail::assertQueued(DeforestoryUpdateMail::class, fn ($m) => $m->hasTo('one@example.com'));
+        Mail::assertQueued(DeforestoryUpdateMail::class, fn ($m) => $m->hasTo('two@example.com'));
+    }
 }

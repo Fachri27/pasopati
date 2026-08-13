@@ -2,10 +2,12 @@
 
 namespace App\Livewire\Petition;
 
+use App\Models\Petition;
+use App\Models\PetitionTranslation;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use App\Models\{Petition, PetitionTranslation};
-use Livewire\{Component, WithFileUploads};
+use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class PetitionForm extends Component
 {
@@ -14,18 +16,29 @@ class PetitionForm extends Component
     public $petition;
 
     public $title_id;
+
     public $title_en;
+
     public $slug;
+
     public $target_name;
+
     public $demands = [];
+
     public $demandInput = '';
+
     public $cover_image;
+
     public $old_cover_image;
+
     public $goal_count;
+
     public $status = 'draft';
+
     public $published_at;
 
     public $description_id = '';
+
     public $description_en = '';
 
     protected $rules = [
@@ -105,7 +118,7 @@ class PetitionForm extends Component
                 Storage::disk('public')->delete($this->old_cover_image);
             }
 
-            $filename = Str::slug($this->title_id) . '-' . time() . '.' . $this->cover_image->getClientOriginalExtension();
+            $filename = Str::slug($this->title_id).'-'.time().'.'.$this->cover_image->getClientOriginalExtension();
             $data['cover_image'] = $this->cover_image->storeAs('petitions', $filename, 'public');
         } else {
             $data['cover_image'] = $this->old_cover_image;

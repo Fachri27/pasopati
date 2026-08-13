@@ -9,7 +9,6 @@ use App\Models\Page;
 use App\Models\Petition;
 use App\Models\PetitionSignature;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
