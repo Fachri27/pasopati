@@ -15,7 +15,8 @@ use Tests\TestCase;
  */
 class TurnstileKeySourceTest extends TestCase
 {
-    private const TEST_SITE_KEY = '1x00000000000000000000AA';
+    /* Varian invisible dari test key Cloudflare — tanpa kotak widget. */
+    private const TEST_SITE_KEY = '1x00000000000000000000BB';
 
     public function test_real_key_is_used_by_default(): void
     {

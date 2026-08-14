@@ -39,6 +39,11 @@
  *   pergeserannya terlihat selama animasi snap dan tidak pernah menyingkap tepi.
  */
 (function () {
+  /* Versi GSAP (js/parallax-gsap.js) mengambil alih bila ScrollTrigger termuat.
+     Berkas ini tetap ada sebagai cadangan: kalau CDN GSAP gagal dimuat,
+     paralaks dan tepi lunak tetap jalan seperti biasa. */
+  if (window.gsap && window.ScrollTrigger) return;
+
   /* Kaitan JS berupa atribut: kelas dipakai untuk gaya (utility Tailwind).
      `.layar__foto` masih diterima selama ada halaman lama yang memakainya. */
   var foto = document.querySelectorAll("[data-foto-latar], .layar__foto");
@@ -69,16 +74,51 @@
 
   var pas = null; /* permintaan animasi yang tertunda */
 
+  /* Nilai terakhir yang benar-benar ditulis ke DOM, supaya frame yang tidak
+     mengubah apa pun tidak menyentuh style sama sekali. */
+  var terakhirFoto = [];
+  var terakhirPahlawan = [];
+  var terakhirTepi = [];
+
+  /* --kabur-tepi menggerakkan masker gradien DAN backdrop-filter blur yang
+     radiusnya ikut berubah — keduanya memaksa cat ulang seluruh section di
+     bawahnya setiap kali nilainya berganti. Dibulatkan agar frame dengan
+     pergeseran sangat kecil tidak memicu hitung ulang itu.
+
+     0,005 dipilih setelah menimbang bentuk efeknya: tingginya
+     sisa*(1-sisa)*200svh, jadi langkah terbesar muncul di kedua ujung dan di
+     sana besarnya hanya 1svh — pada jalur yang memang tembus pandang dan
+     buram. Langkah yang lebih kasar (0,02) memang lebih hemat, tetapi
+     lompatannya sampai 4svh dan mulai terlihat sebagai patahan. */
+  var LANGKAH_TEPI = 0.005;
+
   function perbarui() {
     pas = null;
+
+    /* --- fase baca ---
+       Semua pengukuran dikerjakan lebih dulu. Sebelumnya rect dibaca dan
+       transform ditulis berselang-seling di dalam satu perulangan; karena
+       transform ikut mengubah hasil getBoundingClientRect(), tiap bacaan
+       berikutnya memaksa layout sinkron — persis pola yang membuat guliran
+       tersendat. */
     var tinggiViewport = window.innerHeight;
+    var gulir = window.scrollY || window.pageYOffset || 0;
 
+    var rectFoto = [];
     for (var i = 0; i < foto.length; i++) {
-      var f = foto[i];
-      var layar = f.parentElement;
-      if (!layar) continue;
+      var layar = foto[i].parentElement;
+      rectFoto.push(layar ? layar.getBoundingClientRect() : null);
+    }
 
-      var rect = layar.getBoundingClientRect();
+    var rectTepi = [];
+    for (var k = 0; k < tepi.length; k++) {
+      rectTepi.push(tepi[k].getBoundingClientRect());
+    }
+
+    /* --- fase tulis --- */
+    for (i = 0; i < foto.length; i++) {
+      var rect = rectFoto[i];
+      if (!rect) continue;
       /* Lewati layar yang sama sekali di luar viewport. */
       if (rect.bottom < 0 || rect.top > tinggiViewport) continue;
 
@@ -93,9 +133,10 @@
       /* Linear.easeNone: dari 0 ke 80% panjang scene, tanpa pelunakan. Nilai awal
          nol dipertahankan (bukan ditengahkan) supaya posisi diamnya sama seperti
          hero acuan: top -130% + 80% viewport = -50% viewport. */
-      var geser = maju * JELAJAH * DURASI * tinggiViewport;
-
-      f.style.transform = "translate3d(0," + geser.toFixed(2) + "px,0)";
+      var geser = (maju * JELAJAH * DURASI * tinggiViewport).toFixed(2);
+      if (terakhirFoto[i] === geser) continue;
+      terakhirFoto[i] = geser;
+      foto[i].style.transform = "translate3d(0," + geser + "px,0)";
     }
 
     /* Hero di-pin (sticky top:0) hanya di mode panggung; di aliran ia statis
@@ -104,26 +145,30 @@
        selama satu viewport gulir pertama, lalu dibatasi pada AMP. Di panggung
        itu masa section 2 naik menutupi hero; di aliran itu masa hero tergulir
        pergi — keduanya memberi geseran paralaks yang sama. */
-    var gulir = window.scrollY || window.pageYOffset || 0;
     for (var j = 0; j < pahlawan.length; j++) {
-      var p = pahlawan[j];
       var prog = gulir / tinggiViewport;
       if (prog < 0) prog = 0;
       else if (prog > 1) prog = 1;
-      var geserP = prog * AMP * tinggiViewport;
-      p.style.transform = "translate3d(0," + geserP.toFixed(2) + "px,0)";
+      var geserP = (prog * AMP * tinggiViewport).toFixed(2);
+      if (terakhirPahlawan[j] === geserP) continue;
+      terakhirPahlawan[j] = geserP;
+      pahlawan[j].style.transform = "translate3d(0," + geserP + "px,0)";
     }
 
     /* Tepi lunak: sisa jarak tepi atas section ke atas viewport, 0..1.
        Disetel pada section (bukan jalurnya) supaya masker & jalur buram
        membaca nilai yang sama lewat pewarisan custom property. */
-    for (var k = 0; k < tepi.length; k++) {
-      var rt = tepi[k].getBoundingClientRect();
+    for (k = 0; k < tepi.length; k++) {
+      var rt = rectTepi[k];
       if (rt.bottom < 0 || rt.top > tinggiViewport) continue;
       var sisa = rt.top / tinggiViewport;
       if (sisa < 0) sisa = 0;
       else if (sisa > 1) sisa = 1;
-      tepi[k].style.setProperty("--kabur-tepi", sisa.toFixed(3));
+
+      var dibulatkan = (Math.round(sisa / LANGKAH_TEPI) * LANGKAH_TEPI).toFixed(3);
+      if (terakhirTepi[k] === dibulatkan) continue;
+      terakhirTepi[k] = dibulatkan;
+      tepi[k].style.setProperty("--kabur-tepi", dibulatkan);
     }
   }
 

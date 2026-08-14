@@ -620,6 +620,12 @@ document.addEventListener("alpine:init", function () {
         wadah.innerHTML = "";
         this.captchaWidget = window.turnstile.render(wadah, {
           sitekey: wadah.getAttribute("data-site-key"),
+
+          /* Berjalan di balik layar: kotak captcha tidak ditampilkan sama
+             sekali, dan baru muncul kalau Cloudflare memang menilai perlu ada
+             interaksi manusia. Verifikasinya tetap jalan penuh — token tetap
+             dikirim dan tetap diperiksa di server. */
+          appearance: "interaction-only",
           callback: function (token) {
             this.captchaToken = token;
           }.bind(this),

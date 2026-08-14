@@ -39,6 +39,8 @@ class GoogleCommentLoginController extends Controller
             $this->intendedAman($request, $request->query('intended', url()->previous('/')))
         );
 
+        $this->pastikanUriCallback();
+
         return Socialite::driver('google')->redirect();
     }
 
@@ -46,6 +48,8 @@ class GoogleCommentLoginController extends Controller
     public function handleCallback(Request $request)
     {
         try {
+            $this->pastikanUriCallback();
+
             $googleUser = Socialite::driver('google')->user();
         } catch (InvalidStateException $e) {
             // `state` di callback tidak cocok dengan yang tersimpan di sesi.
@@ -108,6 +112,30 @@ class GoogleCommentLoginController extends Controller
         $request->session()->regenerateToken();
 
         return redirect($this->intendedAman($request, $request->query('intended', '/')));
+    }
+
+    /**
+     * redirect_uri yang dikirim ke Google.
+     *
+     * Memakai GOOGLE_REDIRECT_URI bila diisi. Bila kosong, diturunkan dari
+     * host permintaan ini — sehingga alur login selalu kembali ke host yang
+     * sedang dibuka. Nilai yang dipatok ke satu host sementara halaman dibuka
+     * dari host lain adalah penyebab lazim InvalidStateException: cookie sesi
+     * terikat host, jadi `state` tidak pernah ikut terkirim ke callback.
+     *
+     * Host mana pun tetap harus didaftarkan di Google Cloud console sebagai
+     * Authorized redirect URI — Google mencocokkannya persis.
+     */
+    private function pastikanUriCallback(): void
+    {
+        if (trim((string) config('services.google.redirect')) !== '') {
+            return;
+        }
+
+        // Disetel lewat config, bukan ->redirectUrl(): Socialite membaca nilai
+        // ini saat membangun driver, dan cara ini tidak mengubah bentuk
+        // pemanggilan yang sudah ada.
+        config(['services.google.redirect' => route('comment.google.callback')]);
     }
 
     /**

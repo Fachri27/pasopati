@@ -1,0 +1,35 @@
+/**
+ * Melepas backdrop-filter dari jalur tepi lunak.
+ *
+ * dist/style.css menyetel pada .kabur-tepi:
+ *
+ *     backdrop-filter: blur(calc(var(--kabur-tepi, 0) * 26px));
+ *
+ * Deklarasi itu sendiri — bukan besar radiusnya — yang mahal. Adanya
+ * backdrop-filter membuat elemen ini menjadi "backdrop root": peramban harus
+ * mengambil ulang seluruh isi di belakangnya setiap kali isi itu bergeser,
+ * bahkan ketika radiusnya kebetulan 0 dan tidak ada yang terlihat berubah.
+ * Di belakangnya ada peta Leaflet dan foto latar seukuran layar.
+ *
+ * Selama guliran dikerjakan peramban sendiri (compositor thread), biaya itu
+ * tidak terasa. Begitu guliran digerakkan JavaScript — Lenis menyetel scrollTop
+ * tiap frame di main thread — pengambilan latar itu ikut mengantre di frame yang
+ * sama, dan hasilnya guliran terasa berat.
+ *
+ * Catatan penting soal pengukuran: mematikan "tepi lunak" lewat saklar di
+ * parallax-gsap.js hanya melepas mask-image pada .tepi-lunak (elemen SECTION).
+ * backdrop-filter ada pada .kabur-tepi, elemen yang berbeda, jadi ia tetap
+ * hidup selama pengujian itu — karena itu mematikan tepi lunak tampak tidak
+ * mengubah apa pun.
+ *
+ * Yang hilang secara tampilan: kaburan tipis di tepi atas section 2. Gradien
+ * putih dan maskernya tetap ada, jadi peralihannya masih melembut.
+ *
+ * Tanpa @layer supaya menang atas kedua build Tailwind, berapa pun urutannya;
+ * ditulis `none` secara eksplisit agar deklarasi di dist benar-benar ditimpa.
+ */
+
+.kabur-tepi {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}

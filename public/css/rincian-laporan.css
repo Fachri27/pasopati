@@ -178,7 +178,19 @@
 
 .rincian__komen {
   display: flex;
-  gap: 12px;
+  gap: 10px;
+}
+
+/* Keping di baris komentar lebih kecil daripada keping laporan di kepala rel.
+   Sebagian besar bobot baris ini datang dari lingkarannya, bukan hurufnya —
+   mengecilkan teks saja tidak membuat barisnya terasa lebih ringkas. Dibatasi
+   ke dalam .rincian__komen supaya keping laporan di kepala & kapsi tidak ikut
+   mengecil. */
+.rincian__komen .rincian__keping,
+.rincian__komen .rincian__inisial {
+  width: 26px;
+  height: 26px;
+  font-size: 11px;
 }
 
 /* Tidak ada foto profil di sini, jadi kepingnya berisi huruf pertama nama —
@@ -202,8 +214,11 @@
   flex: 1;
 }
 
+/* Sengaja lebih kecil dari .rincian__judul (14px). Judul laporan dan isi
+   komentar adalah dua lapis isi yang berbeda; disamakan ukurannya, keduanya
+   berebut perhatian dan rel ini terbaca seperti satu blok datar. */
 .rincian__komen-teks {
-  font-size: 14px;
+  font-size: 12px;
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
@@ -221,7 +236,7 @@
   align-items: center;
   gap: 14px;
   margin-top: 4px;
-  font-size: 12px;
+  font-size: 11px;
   color: var(--r-redup);
 }
 
@@ -229,7 +244,7 @@
   cursor: pointer;
   border: 0;
   background: transparent;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--r-redup);
   transition: color 0.2s ease;
@@ -261,7 +276,7 @@
   cursor: pointer;
   border: 0;
   background: transparent;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--r-redup);
   transition: color 0.2s ease;

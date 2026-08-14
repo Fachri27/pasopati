@@ -40,7 +40,10 @@ class AppServiceProvider extends ServiceProvider
         // perlindungan botnya sebenarnya mati. Bawaannya sekarang key asli.
         if (config('services.turnstile.test_keys')) {
             config([
-                'services.turnstile.site_key' => '1x00000000000000000000AA',
+                // Varian "invisible" dari test key Cloudflare (…BB, bukan …AA):
+                // sama-sama selalu lolos, tetapi tidak menampilkan kotak widget
+                // beserta spanduk "Hanya untuk pengujian".
+                'services.turnstile.site_key' => '1x00000000000000000000BB',
                 'services.turnstile.secret_key' => '1x0000000000000000000000000000000AA',
             ]);
         }

@@ -40,22 +40,6 @@
                panggung:w-[1920px] panggung:max-w-none panggung:origin-center
                panggung:scale-[var(--skala,1)] panggung:overflow-hidden"
       >
-        <!-- Judul bagian: penanda arah, hanya perlu saat isi ditumpuk. -->
-        <div class="mb-[clamp(14px,4vw,22px)] grid gap-[2px] panggung:hidden">
-          <p
-            class="text-[length:var(--ukuran-eyebrow)] font-medium tracking-[0.14em] uppercase
-                   text-[rgb(26_25_25/0.72)]"
-          >
-            Laporan lapangan
-          </p>
-          <h2
-            class="text-[length:var(--ukuran-bagian)] leading-[1.15] font-bold
-                   [text-shadow:0_1px_12px_rgb(255_255_255/0.6)]"
-          >
-            Berita terkini
-          </h2>
-        </div>
-
         @if (empty($berita))
           <!-- Belum ada Event/Kejadian di CMS. Alih-alih korsel kosong: "rak
                kosong" — tiga slot berukuran sama persis dengan kartu berita
@@ -136,8 +120,11 @@
                 // varian kartu: sebuah event boleh berisi foto ATAU video, dan
                 // keduanya harus menempati kotak yang sama persis. Ditaruh di
                 // variabel supaya keduanya tidak bisa berbeda diam-diam.
-                $mediaVertikal = 'absolute inset-0 h-full w-full object-cover transition-[filter] duration-[550ms]';
-                $mediaLanskap = 'mt-[var(--gambar-jarak)] aspect-[3/2] h-auto max-h-[var(--gambar-tinggi-maks)] w-[var(--gambar-lebar)] cursor-pointer self-center rounded-[10px] object-cover ring-1 ring-black/[0.08] shadow-[0_8px_20px_rgb(0_0_0/0.2)] transition-[filter] duration-[550ms] aliran:aspect-auto aliran:min-h-0 aliran:flex-1';
+                // `kartu-media` bukan utility Tailwind: itu kaitan untuk
+                // css/kartu-kursor.css, yang memberi kursor pointer hanya saat
+                // penunjuk benar-benar berada di atas media kartu tengah.
+                $mediaVertikal = 'kartu-media absolute inset-0 h-full w-full object-cover transition-[filter] duration-[550ms]';
+                $mediaLanskap = 'kartu-media mt-[var(--gambar-jarak)] aspect-[3/2] h-auto max-h-[var(--gambar-tinggi-maks)] w-[var(--gambar-lebar)] self-center rounded-[10px] object-cover ring-1 ring-black/[0.08] shadow-[0_8px_20px_rgb(0_0_0/0.2)] transition-[filter] duration-[550ms] aliran:aspect-auto aliran:min-h-0 aliran:flex-1';
               @endphp
 
               <template x-for="(k, i) in kartu" :key="k.kunci">
@@ -148,6 +135,12 @@
                     i === aktif
                       ? 'z-10 opacity-100 translate-y-[6px] scale-[1.0557]'
                       : 'opacity-45',
+                    /* Penanda 'sudah diam di tengah', kaitan css/kartu-kursor.css.
+                       Sengaja ikut !kunci, bukan i === aktif saja: selama kartu
+                       masih meluncur, tidak ada media yang boleh tampak bisa
+                       diklik, dan pemasangan penanda ini di akhir luncuran yang
+                       membuat peramban menguji ulang posisi penunjuk tikus. */
+                    i === aktif && !kunci ? 'kartu-hidup' : '',
                     k.isi.vertikal
                       ? 'bg-[#f5f5f5] overflow-hidden shadow-[0_10px_30px_rgb(0_0_0/0.28)]'
                       : (i === aktif
@@ -167,11 +160,11 @@
                       <div aria-hidden="true" class="absolute inset-0 bg-white"></div>
                       <template x-if="!k.isi.video">
                         <img
-                          x-on:click.stop="bukaRincian(k.asli)"
                           :src="k.isi.gambar"
                           :alt="k.isi.alt || ''"
                           loading="eager"
                           decoding="async"
+                          x-on:click="if (i === aktif) { $event.stopPropagation(); bukaRincian(k.asli); }"
                           :class="i === aktif ? 'grayscale-0' : 'grayscale-[0.65]'"
                           class="{{ $mediaVertikal }}"
                         />
@@ -179,7 +172,6 @@
 
                       <template x-if="k.isi.video">
                         <video
-                          x-on:click.stop="bukaRincian(k.asli)"
                           :src="k.isi.video"
                           :poster="k.isi.poster"
                           :aria-label="k.isi.alt || ''"
@@ -189,18 +181,23 @@
                           loop
                           playsinline
                           :preload="k.isi.poster ? 'none' : 'metadata'"
+                          x-on:click="if (i === aktif) { $event.stopPropagation(); bukaRincian(k.asli); }"
                           :class="i === aktif ? 'grayscale-0' : 'grayscale-[0.65]'"
                           class="{{ $mediaVertikal }}"
                         ></video>
                       </template>
-                      <div aria-hidden="true" class="absolute inset-0 bg-[linear-gradient(to_bottom,rgb(0_0_0/0.32)_0%,transparent_34%,transparent_50%,rgb(0_0_0/0.62)_100%)]"></div>
-                      <div class="absolute inset-0 flex flex-col justify-between p-[var(--kartu-pias)] text-left text-white">
+                      <!-- pointer-events-none: gradasi & blok teks menumpang di ATAS foto
+                           (absolute inset-0), jadi keduanya menyerap klik sebelum
+                           sampai ke gambar. Dibuat tembus klik supaya klik di
+                           mana pun pada foto tetap mengenai gambarnya. -->
+                      <div aria-hidden="true" class="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,rgb(0_0_0/0.32)_0%,transparent_34%,transparent_50%,rgb(0_0_0/0.62)_100%)]"></div>
+                      <div class="pointer-events-none absolute inset-0 flex flex-col justify-between p-[var(--kartu-pias)] text-left text-white">
                         <h3 class="text-[length:var(--ukuran-pulau)] leading-[1.2] font-bold" x-text="k.isi.pulau"></h3>
                         <div>
                           <p class="text-[length:var(--ukuran-tanggal)] leading-[1.2] font-normal" x-text="`• ${k.isi.tanggal} •`"></p>
                           <p
                             x-on:click.stop="bukaRincian(k.asli)"
-                            class="mt-[var(--kartu-judul-jarak)] cursor-pointer text-[length:var(--ukuran-judul)] leading-[1.2] font-bold"
+                            class="pointer-events-auto mt-[var(--kartu-judul-jarak)] cursor-pointer text-[length:var(--ukuran-judul)] leading-[1.2] font-bold"
                             x-text="k.isi.judul"
                           ></p>
                         </div>
@@ -222,13 +219,13 @@
                       <div aria-hidden="true" class="flex-1 aliran:hidden"></div>
                       <template x-if="!k.isi.video">
                         <img
-                          x-on:click.stop="bukaRincian(k.asli)"
                           :src="k.isi.gambar"
                           :alt="k.isi.alt || ''"
                           loading="eager"
                           decoding="async"
                           width="462"
                           height="308"
+                          x-on:click="if (i === aktif) { $event.stopPropagation(); bukaRincian(k.asli); }"
                           :class="i === aktif ? 'grayscale-0' : 'grayscale-[0.65]'"
                           class="{{ $mediaLanskap }}"
                         />
@@ -236,7 +233,6 @@
 
                       <template x-if="k.isi.video">
                         <video
-                          x-on:click.stop="bukaRincian(k.asli)"
                           :src="k.isi.video"
                           :poster="k.isi.poster"
                           :aria-label="k.isi.alt || ''"
@@ -248,6 +244,7 @@
                           :preload="k.isi.poster ? 'none' : 'metadata'"
                           width="462"
                           height="308"
+                          x-on:click="if (i === aktif) { $event.stopPropagation(); bukaRincian(k.asli); }"
                           :class="i === aktif ? 'grayscale-0' : 'grayscale-[0.65]'"
                           class="{{ $mediaLanskap }}"
                         ></video>
@@ -455,7 +452,7 @@
                 {{-- Selama belum masuk tidak ada yang bisa diketik, jadi badan hanya
                      setinggi isinya dan sisa ruang rel diberikan ke ajakan masuk
                      yang dipusatkan di sana. --}}
-                <div class="rincian__badan @guest rincian__badan--ringkas @endguest">
+                <div data-lenis-prevent class="rincian__badan @guest rincian__badan--ringkas @endguest">
                   <!-- Kapsi: keping + nama pulau tebal disambung judul, sama
                        seperti baris keterangan pada rujukan. -->
                   <div class="rincian__kapsi">

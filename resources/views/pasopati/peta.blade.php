@@ -34,21 +34,6 @@
                panggung:w-[1920px] panggung:max-w-none panggung:origin-center
                panggung:scale-[var(--skala,1)] panggung:overflow-hidden"
       >
-        <div class="mb-[clamp(14px,4vw,22px)] grid gap-[2px] panggung:hidden">
-          <p
-            class="text-[length:var(--ukuran-eyebrow)] font-medium tracking-[0.14em] uppercase
-                   text-[rgb(26_25_25/0.72)]"
-          >
-            Sebaran
-          </p>
-          <h2
-            class="text-[length:var(--ukuran-bagian)] leading-[1.15] font-bold
-                   [text-shadow:0_1px_12px_rgb(255_255_255/0.6)]"
-          >
-            Wilayah rawan
-          </h2>
-        </div>
-
         <!-- Kotak peta. isolate menahan z-index panel Leaflet (sampai 800) agar
              tidak naik ke atas navbar tetap yang ber-z-index 50. Warna "laut"
              wadahnya disetel di penimpaan .leaflet-container (src/input.css). -->
@@ -509,6 +494,7 @@
                    kanan, garis rambut sebagai pemisah baris. -->
               <div
                 role="tabpanel"
+                data-lenis-prevent
                 :aria-label="labelTab()"
                 class="min-h-0 flex-1 overflow-y-auto px-[clamp(14px,3.4vw,20px)]
                        panggung:px-[28px]"
@@ -525,16 +511,43 @@
                              dengan kartu korsel. Pop-up itu tinggal di komponen
                              "korsel" (#beranda), jadi di sini cukup disiarkan
                              id laporannya lewat window event — kedua komponen
-                             tidak perlu saling mengenal. -->
-                        <img
-                          x-on:click="$dispatch('buka-laporan', { id: b.id })"
-                          :src="b.gambar"
-                          :alt="b.alt || ''"
-                          loading="lazy"
-                          decoding="async"
-                          class="aspect-[3/2] w-[clamp(104px,29vw,180px)] shrink-0
-                                 cursor-pointer object-cover panggung:w-[290px]"
-                        />
+                             tidak perlu saling mengenal.
+
+                             Laporan bervideo memakai <video>, bukan <img>:
+                             `gambar` punya cadangan satu foto bawaan yang sama
+                             untuk semua laporan tanpa thumbnail, jadi barisnya
+                             akan menampilkan gambar yang tidak ada
+                             hubungannya dengan videonya. Dengan <video> tanpa
+                             poster, peramban menggambar frame pertama video
+                             itu sendiri. Kelasnya dipakai bersama supaya kedua
+                             cabang tidak bisa berbeda ukuran. -->
+                        @php
+                          $mediaBerita = 'aspect-[3/2] w-[clamp(104px,29vw,180px)] shrink-0 cursor-pointer object-cover panggung:w-[290px]';
+                        @endphp
+
+                        <template x-if="!b.video">
+                          <img
+                            x-on:click="$dispatch('buka-laporan', { id: b.id })"
+                            :src="b.gambar"
+                            :alt="b.alt || ''"
+                            loading="lazy"
+                            decoding="async"
+                            class="{{ $mediaBerita }}"
+                          />
+                        </template>
+
+                        <template x-if="b.video">
+                          <video
+                            x-on:click="$dispatch('buka-laporan', { id: b.id })"
+                            :src="b.video"
+                            :poster="b.poster"
+                            :aria-label="b.alt || ''"
+                            :preload="b.poster ? 'none' : 'metadata'"
+                            muted
+                            playsinline
+                            class="{{ $mediaBerita }}"
+                          ></video>
+                        </template>
                         <div class="min-w-0">
                           <p
                             class="text-[length:var(--ukuran-tanggal)] leading-[1.2] font-normal"

@@ -39,6 +39,9 @@
     <link rel="stylesheet" href="{{ asset('css/nav-pasopati.css') }}" />
     <link rel="stylesheet" href="{{ asset('css/pantauan-kosong.css') }}" />
     <link rel="stylesheet" href="{{ asset('css/rincian-laporan.css') }}" />
+    <link rel="stylesheet" href="{{ asset('css/tepi-lunak.css') }}" />
+    <link rel="stylesheet" href="{{ asset('css/kartu-kursor.css') }}" />
+    <link rel="stylesheet" href="{{ asset('assets/vendor/lenis/lenis.css') }}" />
   </head>
   <body>
     <h1 class="sr-only">Pantauan kebakaran hutan dan lahan Indonesia</h1>
@@ -56,6 +59,22 @@
     <script defer src="{{ asset('assets/vendor/alpine/alpine.min.js') }}"></script>
     <script src="{{ asset('js/peta.js') }}"></script>
     <script src="{{ asset('js/nav.js') }}"></script>
+    {{-- GSAP ScrollTrigger menggerakkan paralaks & tepi lunak: satu ticker
+         untuk semua pemicu, fase baca dan tulis dipisah. Guliran halamannya
+         tetap bawaan peramban (compositor thread), tidak diambil alih.
+         parallax.js di bawah adalah cadangan bila CDN ini gagal dimuat. --}}
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
+    {{-- Lenis dibuat SEBELUM pemicu ScrollTrigger dibuat — urutan yang dipakai
+         rujukan. Lenis mengubah tinggi html (html.lenis body{height:auto}), dan
+         ScrollTrigger mengukur posisi pemicu saat dibuat; kalau diukur lebih
+         dulu, ukurannya diambil dari tata letak sebelum Lenis menyesuaikannya.
+         Di-vendor (bukan CDN) karena dist Lenis bukan UMD dan `class L`-nya
+         menutupi window.L milik Leaflet. --}}
+    <script src="{{ asset('assets/vendor/lenis/lenis.min.js') }}"></script>
+    <script src="{{ asset('js/gulir-lenis.js') }}"></script>
+
+    <script src="{{ asset('js/parallax-gsap.js') }}"></script>
     <script src="{{ asset('js/parallax.js') }}"></script>
 
     {{-- Turnstile untuk kolom komentar pop-up rincian. Dijaga config yang sama
