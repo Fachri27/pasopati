@@ -41,6 +41,9 @@
     <link rel="stylesheet" href="{{ asset('css/rincian-laporan.css') }}" />
     <link rel="stylesheet" href="{{ asset('css/tepi-lunak.css') }}" />
     <link rel="stylesheet" href="{{ asset('css/kartu-kursor.css') }}" />
+    <link rel="stylesheet" href="{{ asset('css/kartu-video.css') }}" />
+    <link rel="stylesheet" href="{{ asset('css/peta-angka.css') }}" />
+    <link rel="stylesheet" href="{{ asset('css/peta-popup.css') }}" />
     <link rel="stylesheet" href="{{ asset('assets/vendor/lenis/lenis.css') }}" />
   </head>
   <body>

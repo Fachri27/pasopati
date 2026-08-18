@@ -1,3 +1,48 @@
+@php
+    // Lencana durasi + tombol putar ulang video. Dipakai di tiga tempat — dua
+    // varian kartu korsel dan video pop-up rincian — jadi bentuknya ditulis
+    // sekali di sini. %KUNCI% diganti ekspresi Alpine yang menunjuk keadaan
+    // video yang bersangkutan: `k.kunci` di kartu, `'rincian'` di pop-up.
+    //
+    // Ditaruh di LUAR @if(empty($berita)) karena pop-up rincian juga di luar
+    // sana: kalau didefinisikan di dalam cabang @else, ia tidak ada saat CMS
+    // belum berisi laporan.
+    //
+    // Penanda penutup heredoc di kolom 0 dengan sengaja: PHP membuang indentasi
+    // penanda itu dari tiap baris isinya, jadi yang tertulis di sini persis
+    // yang keluar di HTML. Nowdoc (kutip tunggal) supaya $el milik Alpine tidak
+    // ikut ditafsirkan PHP.
+    $alatVideo = fn (string $kunci) => str_replace('%KUNCI%', $kunci, <<<'BLADE'
+                      <template x-if="durasiVideo[%KUNCI%]">
+                        <p class="kartu-durasi" aria-hidden="true" x-text="durasiVideo[%KUNCI%]"></p>
+                      </template>
+
+                      <template x-if="videoUsai[%KUNCI%]">
+                        <div class="kartu-ulang-wadah">
+                          <button
+                            type="button"
+                            class="kartu-ulang"
+                            aria-label="Putar ulang video"
+                            x-on:click.stop="ulangVideo($el, %KUNCI%)"
+                          >
+                            <svg
+                              viewBox="0 0 24 24"
+                              aria-hidden="true"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                            >
+                              <path d="M3 12a9 9 0 1 0 3-6.7" />
+                              <path d="M3 4.5V10h5.5" />
+                            </svg>
+                          </button>
+                        </div>
+                      </template>
+BLADE);
+@endphp
+
 <!-- ===================== Layar 1 — Beranda =====================
          Section ini mandiri: seluruh gayanya menempel pada markup sebagai
          utility Tailwind, dan perilakunya ada di komponen Alpine "korsel"
@@ -124,7 +169,18 @@
                 // css/kartu-kursor.css, yang memberi kursor pointer hanya saat
                 // penunjuk benar-benar berada di atas media kartu tengah.
                 $mediaVertikal = 'kartu-media absolute inset-0 h-full w-full object-cover transition-[filter] duration-[550ms]';
-                $mediaLanskap = 'kartu-media mt-[var(--gambar-jarak)] aspect-[3/2] h-auto max-h-[var(--gambar-tinggi-maks)] w-[var(--gambar-lebar)] self-center rounded-[10px] object-cover ring-1 ring-black/[0.08] shadow-[0_8px_20px_rgb(0_0_0/0.2)] transition-[filter] duration-[550ms] aliran:aspect-auto aliran:min-h-0 aliran:flex-1';
+
+                // Varian lanskap dipecah dua karena videonya butuh pembungkus
+                // ber-posisi (tempat lencana durasi & tombol putar ulang duduk),
+                // sedangkan fotonya tidak. Yang dipecah hanya PENEMPATANNYA:
+                // $kotakLanskap menentukan kotaknya, $rupaLanskap menentukan
+                // tampangnya, dan keduanya tetap satu sumber — foto dan video
+                // masih menempati kotak yang sama persis, hanya saja pada video
+                // kotaknya dipegang pembungkus.
+                $kotakLanskap = 'mt-[var(--gambar-jarak)] aspect-[3/2] h-auto max-h-[var(--gambar-tinggi-maks)] w-[var(--gambar-lebar)] self-center aliran:aspect-auto aliran:min-h-0 aliran:flex-1';
+                $rupaLanskap = 'rounded-[10px] object-cover ring-1 ring-black/[0.08] shadow-[0_8px_20px_rgb(0_0_0/0.2)] transition-[filter] duration-[550ms]';
+                $mediaLanskap = 'kartu-media ' . $kotakLanskap . ' ' . $rupaLanskap;
+                $videoLanskap = 'kartu-media absolute inset-0 h-full w-full ' . $rupaLanskap;
               @endphp
 
               <template x-for="(k, i) in kartu" :key="k.kunci">
@@ -156,7 +212,7 @@
                   <!-- ===== Varian vertikal: bingkai putih, foto memenuhi bingkai,
                        teks putih menumpang di atasnya. ===== -->
                   <template x-if="k.isi.vertikal">
-                    <div class="absolute inset-[var(--kartu-pias)] overflow-hidden rounded-[8px]">
+                    <div class="kartu-bingkai absolute inset-[var(--kartu-pias)] overflow-hidden rounded-[8px]">
                       <div aria-hidden="true" class="absolute inset-0 bg-white"></div>
                       <template x-if="!k.isi.video">
                         <img
@@ -176,9 +232,11 @@
                           :poster="k.isi.poster"
                           :aria-label="k.isi.alt || ''"
                           :controls="kurangiGerak"
-                          x-effect="setelVideo($el, i)"
+                          x-effect="setelVideo($el, i, k.kunci)"
+                          x-on:loadedmetadata="catatDurasi($el, k.kunci)"
+                          x-on:timeupdate="catatDurasi($el, k.kunci)"
+                          x-on:ended="usaiVideo($el, k.kunci)"
                           muted
-                          loop
                           playsinline
                           :preload="k.isi.poster ? 'none' : 'metadata'"
                           x-on:click="if (i === aktif) { $event.stopPropagation(); bukaRincian(k.asli); }"
@@ -202,6 +260,8 @@
                           ></p>
                         </div>
                       </div>
+
+{!! $alatVideo('k.kunci') !!}
                     </div>
                   </template>
 
@@ -232,22 +292,28 @@
                       </template>
 
                       <template x-if="k.isi.video">
-                        <video
-                          :src="k.isi.video"
-                          :poster="k.isi.poster"
-                          :aria-label="k.isi.alt || ''"
-                          :controls="kurangiGerak"
-                          x-effect="setelVideo($el, i)"
-                          muted
-                          loop
-                          playsinline
-                          :preload="k.isi.poster ? 'none' : 'metadata'"
-                          width="462"
-                          height="308"
-                          x-on:click="if (i === aktif) { $event.stopPropagation(); bukaRincian(k.asli); }"
-                          :class="i === aktif ? 'grayscale-0' : 'grayscale-[0.65]'"
-                          class="{{ $mediaLanskap }}"
-                        ></video>
+                        <div class="kartu-bingkai relative {{ $kotakLanskap }}">
+                          <video
+                            :src="k.isi.video"
+                            :poster="k.isi.poster"
+                            :aria-label="k.isi.alt || ''"
+                            :controls="kurangiGerak"
+                            x-effect="setelVideo($el, i, k.kunci)"
+                            x-on:loadedmetadata="catatDurasi($el, k.kunci)"
+                            x-on:timeupdate="catatDurasi($el, k.kunci)"
+                            x-on:ended="usaiVideo($el, k.kunci)"
+                            muted
+                            playsinline
+                            :preload="k.isi.poster ? 'none' : 'metadata'"
+                            width="462"
+                            height="308"
+                            x-on:click="if (i === aktif) { $event.stopPropagation(); bukaRincian(k.asli); }"
+                            :class="i === aktif ? 'grayscale-0' : 'grayscale-[0.65]'"
+                            class="{{ $videoLanskap }}"
+                          ></video>
+
+{!! $alatVideo('k.kunci') !!}
+                        </div>
                       </template>
                     </div>
                   </template>
@@ -400,7 +466,10 @@
               x-init="$el.focus()"
               class="rincian__panel"
             >
-              <div class="rincian__media">
+              <!-- kartu-bingkai: kaitan yang dipakai tombol putar ulang untuk
+                   menemukan <video>-nya lewat closest(). Sama seperti di kartu
+                   korsel; kelasnya sendiri tidak membawa gaya apa pun. -->
+              <div class="rincian__media kartu-bingkai">
                 <template x-if="!berita[sorot].video">
                   <img :src="berita[sorot].gambar" :alt="berita[sorot].alt || ''" />
                 </template>
@@ -411,11 +480,15 @@
                     :poster="berita[sorot].poster"
                     :aria-label="berita[sorot].alt || ''"
                     :autoplay="!kurangiGerak"
+                    x-on:loadedmetadata="catatDurasi($el, 'rincian')"
+                    x-on:timeupdate="catatDurasi($el, 'rincian')"
+                    x-on:ended="usaiVideo($el, 'rincian')"
                     controls
-                    loop
                     playsinline
                   ></video>
                 </template>
+
+{!! $alatVideo("'rincian'") !!}
               </div>
 
               <!-- Satu instans komentarLaporan() untuk seluruh rel: daftar
@@ -571,87 +644,75 @@
                   </section>
                 </div>
 
-                <!-- Kolom kirim dipatok di dasar rel, seperti rujukan.
-                     Berkomentar wajib masuk lewat Google: nama dan foto ikut
-                     akun, jadi tak ada isian nama yang bisa dipalsukan.
-                     Endpoint-nya juga menolak tamu, bukan cuma markup ini. -->
-                @auth
-                  @php
-                    $penggunaKomentar = auth()->user();
-                    $avatarKomentar = $penggunaKomentar->image
-                      ? (Illuminate\Support\Str::startsWith($penggunaKomentar->image, ['http://', 'https://'])
-                          ? $penggunaKomentar->image
-                          : asset('storage/'.$penggunaKomentar->image))
-                      : null;
-                  @endphp
-
-                  <form class="rincian__kirim" x-on:submit.prevent="kirim()">
-                    <div class="rincian__jebakan" aria-hidden="true">
-                      <label>Website<input type="text" tabindex="-1" autocomplete="off" x-model="website" /></label>
-                    </div>
-
-                    <p class="rincian__membalas" x-show="balasKe" x-cloak>
-                      <span>Membalas <strong x-text="balasNama"></strong></span>
-                      <button type="button" class="rincian__batal" x-on:click="batalBalas()">Batal</button>
-                    </p>
-
-                    {{-- Wadah captcha; widget-nya dipasang Alpine setelah
-                         skrip Turnstile siap. Site key ditaruh di atribut,
-                         bukan di JS, supaya berkas js/beranda.js tetap bebas
-                         dari konfigurasi. --}}
-                    @if (! empty(config('services.turnstile.site_key')))
-                      <div
-                        class="rincian__captcha"
-                        data-site-key="{{ config('services.turnstile.site_key') }}"
-                        x-init="pasangCaptcha($el)"
-                      ></div>
-                    @endif
-
-                    <div class="rincian__baris">
-                      @if ($avatarKomentar)
-                        <img class="rincian__keping rincian__keping--kecil" src="{{ $avatarKomentar }}" alt="" aria-hidden="true" />
-                      @else
-                        <span class="rincian__inisial rincian__inisial--kecil" aria-hidden="true">{{ mb_substr($penggunaKomentar->name, 0, 1) }}</span>
-                      @endif
-
-                      <label class="rincian__ketik-bungkus">
-                        <span class="sr-only">Komentar sebagai {{ $penggunaKomentar->name }}</span>
-                        <textarea
-                          class="rincian__ketik"
-                          x-model="isi"
-                          rows="1"
-                          maxlength="2000"
-                          placeholder="Tambahkan komentar…"
-                          x-on:keydown.enter.prevent="kirim()"
-                        ></textarea>
-                      </label>
-
-                      <button
-                        type="submit"
-                        class="rincian__tombol-kirim"
-                        :disabled="mengirim || !isi.trim()"
-                        x-text="mengirim ? 'Mengirim…' : 'Kirim'"
-                      ></button>
-                    </div>
-                  </form>
-                @else
-                  <div class="rincian__masuk">
-                    <p class="rincian__masuk-teks">Masuk dulu untuk ikut berkomentar.</p>
-
-                    <a
-                      class="rincian__masuk-tombol"
-                      :href="tautanMasuk(@js(route('comment.google.login')))"
-                    >
-                      <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path fill="#4285F4" d="M21.6 12.2c0-.7-.1-1.5-.2-2.2H12v4.3h5.4a4.6 4.6 0 0 1-2 3v2.8h3.5c2-1.9 3.2-4.6 3.2-7.9z" />
-                        <path fill="#34A853" d="M12 22c2.9 0 5.3-.9 7-2.6l-3.5-2.8a6.4 6.4 0 0 1-9.6-3.4H2.3V16A10 10 0 0 0 12 22z" />
-                        <path fill="#FBBC05" d="M5.9 13.2A6 6 0 0 1 5.6 12c0-.4.1-.8.2-1.2V8H2.3A10 10 0 0 0 2 12c0 1.4.3 2.8.8 4z" />
-                        <path fill="#EA4335" d="M12 5.6c1.6 0 3 .5 4.1 1.6l3.1-3A10 10 0 0 0 2.3 8l3.6 2.8A6 6 0 0 1 12 5.6z" />
-                      </svg>
-                      Masuk dengan Google
-                    </a>
+                <!-- Kolom komentar. Cukup isi nama dan email, tidak perlu login. -->
+                <form class="rincian__kirim" x-on:submit.prevent="kirim()">
+                  <div class="rincian__jebakan" aria-hidden="true">
+                    <label>Website<input type="text" tabindex="-1" autocomplete="off" x-model="website" /></label>
                   </div>
-                @endauth
+
+                  <p class="rincian__membalas" x-show="balasKe" x-cloak>
+                    <span>Membalas <strong x-text="balasNama"></strong></span>
+                    <button type="button" class="rincian__batal" x-on:click="batalBalas()">Batal</button>
+                  </p>
+
+                  {{-- Wadah captcha; widget-nya dipasang Alpine setelah
+                       skrip Turnstile siap. Site key ditaruh di atribut,
+                       bukan di JS, supaya berkas js/beranda.js tetap bebas
+                       dari konfigurasi. --}}
+                  @if (! empty(config('services.turnstile.site_key')))
+                    <div
+                      class="rincian__captcha"
+                      data-site-key="{{ config('services.turnstile.site_key') }}"
+                      x-init="pasangCaptcha($el)"
+                    ></div>
+                  @endif
+
+                  <div class="rincian__identitas">
+                    <label class="sr-only" for="komentar-nama">Nama</label>
+                    <input
+                      id="komentar-nama"
+                      class="rincian__input"
+                      type="text"
+                      x-model="nama"
+                      maxlength="100"
+                      placeholder="Nama"
+                      required
+                    />
+                    <label class="sr-only" for="komentar-email">Email</label>
+                    <input
+                      id="komentar-email"
+                      class="rincian__input"
+                      type="email"
+                      x-model="email"
+                      maxlength="100"
+                      placeholder="Email"
+                      required
+                    />
+                  </div>
+
+                  <div class="rincian__baris">
+                    <span class="rincian__inisial rincian__inisial--kecil" aria-hidden="true" x-text="nama ? nama.charAt(0).toUpperCase() : '?'"></span>
+
+                    <label class="rincian__ketik-bungkus">
+                      <span class="sr-only">Komentar</span>
+                      <textarea
+                        class="rincian__ketik"
+                        x-model="isi"
+                        rows="1"
+                        maxlength="2000"
+                        placeholder="Tambahkan komentar…"
+                        x-on:keydown.enter.prevent="kirim()"
+                      ></textarea>
+                    </label>
+
+                    <button
+                      type="submit"
+                      class="rincian__tombol-kirim"
+                      :disabled="mengirim || !isi.trim() || !nama.trim() || !email.trim()"
+                      x-text="mengirim ? 'Mengirim…' : 'Kirim'"
+                    ></button>
+                  </div>
+                </form>
               </div>
 
               <button

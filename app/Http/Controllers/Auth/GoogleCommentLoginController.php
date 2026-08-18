@@ -35,13 +35,34 @@ class GoogleCommentLoginController extends Controller
     /** Step 1: simpan URL halaman asal, lalu redirect ke Google. */
     public function redirectToGoogle(Request $request)
     {
-        redirect()->setIntendedUrl(
-            $this->intendedAman($request, $request->query('intended', url()->previous('/')))
+        $tujuan = $this->intendedAman($request, $request->query('intended', url()->previous('/')));
+
+        redirect()->setIntendedUrl($tujuan);
+
+        // Cadangan di luar sesi. Callback pertama memakai nilai di sesi, lalu
+        // nilainya terkonsumsi — callback kedua (halaman callback dimuat ulang,
+        // tombol kembali/maju, atau retry Google) tinggal kebagian cookie ini.
+        // Cookie diatur ulang setiap kali tombol login ditekan, dan nilainya
+        // tetap melewati intendedAman() saat dibaca kembali.
+        //
+        // Socialite::redirect() mengembalikan RedirectResponse sendiri yang
+        // melewati pipeline middleware Laravel, jadi Cookie::queue() tidak
+        // terlampirkan. Cookie ditambahkan langsung ke response.
+        $this->pastikanUriCallback();
+        $respons = Socialite::driver('google')->redirect();
+        $respons->headers->setCookie(
+            \Symfony\Component\HttpFoundation\Cookie::create(
+                'komentar_kembali',
+                $tujuan,
+                time() + (60 * 60 * 24),
+                '/',
+                null,
+                false,
+                true,
+            )
         );
 
-        $this->pastikanUriCallback();
-
-        return Socialite::driver('google')->redirect();
+        return $respons;
     }
 
     /** Step 2: callback Google — cari/buat user, login, balik ke intended. */
@@ -68,7 +89,7 @@ class GoogleCommentLoginController extends Controller
             ]);
 
             return redirect()
-                ->to($this->intendedAman($request, $request->session()->pull('url.intended', '/')))
+                ->to($this->tujuanKembali($request))
                 ->with('error', 'Sesi masuk kedaluwarsa. Silakan coba masuk lagi.');
         }
 
@@ -101,7 +122,7 @@ class GoogleCommentLoginController extends Controller
         Auth::login($user, true);
         $request->session()->regenerate();
 
-        return redirect()->intended('/');
+        return redirect()->to($this->tujuanKembali($request));
     }
 
     /** Logout commenter, balik ke halaman asal (bukan /login). */
@@ -136,6 +157,26 @@ class GoogleCommentLoginController extends Controller
         // ini saat membangun driver, dan cara ini tidak mengubah bentuk
         // pemanggilan yang sudah ada.
         config(['services.google.redirect' => route('comment.google.callback')]);
+    }
+
+    /**
+     * Tujuan kembali setelah login/callback.
+     *
+     * Utamanya `url.intended` dari sesi (diisi redirectToGoogle dari ?intended=).
+     * Bila sesi sudah tidak memegangnya — callback dimuat dua kali sehingga
+     * nilainya terkonsumsi, atau sesi baru — dipakai cookie komentar_kembali
+     * yang disimpan saat tombol login ditekan. Beranda hanya jadi tujuan bila
+     * keduanya tidak ada, bukan saat jalan kembali ke halaman asal gagal.
+     */
+    private function tujuanKembali(Request $request): string
+    {
+        $tujuan = (string) $request->session()->pull('url.intended', '');
+
+        if ($tujuan !== '') {
+            return $tujuan;
+        }
+
+        return $this->intendedAman($request, (string) $request->cookie('komentar_kembali', '/'));
     }
 
     /**

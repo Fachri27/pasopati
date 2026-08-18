@@ -8,7 +8,7 @@
  *
  * Peta tidak memakai citra dasar: wadahnya tembus pandang sehingga foto latar
  * layar plus gradasi merah terlihat sebagai dasar. Di atasnya ditumpangkan
- * choropleth WMS Simontini (KABUPATEN_STADI_2025), lalu poligon provinsi
+ * choropleth WMS Simontini (PROVINSI_STADI_2025), lalu poligon provinsi
  * (data/peta-provinsi.js) yang tembus pandang sebagai penangkap klik.
  *
  * Data: window.PETA_PROVINSI, window.TITIK_PANAS, window.WILAYAH_RAWAN,
@@ -21,7 +21,19 @@ document.addEventListener("alpine:init", function () {
        internalnya tak terduga. Semuanya tinggal di closure ini. */
     var peta = null;
     var provinsi = null;
-    var lapisKabupaten = null;
+    var lapisWilayah = null;
+    var lapisAngka = null;
+    var daftarAngka = []; /* { penanda, kotak } per provinsi yang berangka */
+    /* Peta sudah punya center & zoom? Sebelum itu Leaflet menolak memproyeksikan
+       koordinat ("Set map center and zoom first"), dan penempatan angka memang
+       berjalan lebih dulu: bangunPeta() menyusun lapisannya, fitBounds baru
+       dikerjakan setelMode() sesudahnya. */
+    var petaSiap = false;
+    /* Titik layar tempat pop-up wilayah "tumbuh" — koordinat viewport, bukan
+       koordinat peta. Sengaja begitu: di mode panggung peta duduk di dalam
+       kanvas yang diperkecil transform, dan clientX/clientY sudah menghitung
+       transform itu sedangkan titik peta tidak. */
+    var asalPopup = null;
     var garisHalo = null;
     var garisTerpilih = null;
     var simpananGeometri = {};
@@ -40,10 +52,25 @@ document.addEventListener("alpine:init", function () {
 
     var WMS_URL = "https://aws.simontini.id/geoserver/wms";
     var WFS_URL = "https://aws.simontini.id/geoserver/wfs";
-    var WMS_LAYER = "proteus:KABUPATEN_STADI_2025";
+    /* Choropleth per PROVINSI. Layer kabupaten (KABUPATEN_STADI_2025) masih ada
+       di GeoServer yang sama; bila suatu saat dikembalikan ke sana, yang ikut
+       berubah bukan cuma nama layer ini — atributnya berbeda: kabupaten memakai
+       level_4 (nama) + luas, provinsi memakai level_3 (nama) + deforestas. */
+    var WMS_LAYER = "proteus:PROVINSI_STADI_2025";
+    var BIDANG_NAMA = "level_3"; /* nama provinsi pada layer */
+    var BIDANG_PULAU = "level_2"; /* pulau, mis. "Kalimantan" */
+    var BIDANG_LUAS = "deforestas"; /* luas deforestasi, hektare */
     var MAKS_HASIL = 8; /* hasil pencarian yang ditampilkan sekaligus */
     var JEDA_SOROT = 2400; /* ms; lama baris daftar menyala setelah diketuk */
     var TUNGGU_TILE = 8000; /* ms; tanpa satu pun tile termuat setelah ini = gagal */
+    /* Sisi raster untuk GetFeatureInfo berjendela sendiri (lihat getFeatureInfo)
+       dan patokan halus-kasarnya geometri yang dikembalikan. 256 sudah cukup
+       halus untuk provinsi terkecil sekalipun, dan lebih hemat daripada 512:
+       yang membuat jawaban besar bukan resolusinya melainkan jumlah pulau. */
+    var PIKSEL_QUERY = 256;
+    /* Jarak bebas antar angka, piksel. Dua angka yang kotaknya bersinggungan
+       lebih dekat dari ini dianggap bertumpuk. */
+    var ANGKA_SELA = 3;
 
     /* Kotak pembatas Indonesia — dipakai mengepaskan peta ke wadahnya. */
     var BATAS = [
@@ -52,7 +79,7 @@ document.addEventListener("alpine:init", function () {
     ];
 
     /* Provinsi -> pulau, supaya artikel (di-key per pulau di data/konten.js)
-       bisa diambil dari kabupaten/provinsi yang diklik. */
+       bisa diambil dari provinsi yang diklik. */
     var PROVINSI_KE_PULAU = {
       Aceh: "Sumatra", "Sumatera Utara": "Sumatra", "Sumatera Barat": "Sumatra",
       Riau: "Sumatra", "Kepulauan Riau": "Sumatra", Jambi: "Sumatra",
@@ -70,6 +97,19 @@ document.addEventListener("alpine:init", function () {
       "Nusa Tenggara Timur": "Bali-Nusa",
       Maluku: "Maluku", "Maluku Utara": "Maluku",
       Papua: "Papua", "Papua Barat": "Papua",
+    };
+
+    /* Nama pulau pada layer (level_2) ditulis sedikit berbeda dari kunci pulau
+       di data/konten.js — dua ini yang tidak sama persis. */
+    var ALIAS_PULAU = {
+      Sumatera: "Sumatra",
+      "Bali & Nusa Tenggara": "Bali-Nusa",
+    };
+
+    /* Layer memakai 38 provinsi (termasuk pemecahan Papua 2022); data lokal
+       masih 34 dan menyingkat satu nama. */
+    var ALIAS_LOKAL = {
+      "Daerah Istimewa Yogyakarta": "DI Yogyakarta",
     };
 
     /* Tab pulau pada popup berita. `kunci` dipakai sebagai keadaan tab, `isi`
@@ -101,11 +141,20 @@ document.addEventListener("alpine:init", function () {
     function pulauDariProvinsi(nama) {
       if (!nama) return null;
       if (PROVINSI_KE_PULAU[nama]) return PROVINSI_KE_PULAU[nama];
-      /* Cadangan: kabupaten kadang menulis "Sumatera" lengkap, cek awalan. */
+      /* Cadangan untuk nama yang tak persis sama (mis. provinsi pemecahan
+         Papua, yang di data lokal masih tergabung sebagai "Papua"). */
       var kunci = Object.keys(PROVINSI_KE_PULAU).find(function (k) {
         return nama.indexOf(k) === 0 || k.indexOf(nama) === 0;
       });
       return kunci ? PROVINSI_KE_PULAU[kunci] : null;
+    }
+
+    /* Pulau menurut layer (level_2). Lebih dipercaya daripada pemetaan lokal di
+       atas: layer tahu provinsi hasil pemecahan Papua 2022 dan menulis
+       "Daerah Istimewa Yogyakarta" lengkap — dua hal yang meleset di sana. */
+    function pulauDariLayer(nilai) {
+      if (!nilai) return null;
+      return ALIAS_PULAU[nilai] || nilai;
     }
 
     function tabDariPulau(pulau) {
@@ -205,7 +254,7 @@ document.addEventListener("alpine:init", function () {
     }
 
     /* Kotak pembatas sebuah provinsi dari data lokal — dipakai sebagai wilayah
-       pencarian saat melokasikan kabupaten lewat gambar (lihat lokasiKabupaten). */
+       pencarian saat melokasikan provinsi lewat gambar (lihat lokasiWilayah). */
     function bbeksProvinsi(nama) {
       var fitur = (window.PETA_PROVINSI.features || []).filter(function (f) {
         return f.properties.nama === nama;
@@ -225,10 +274,13 @@ document.addEventListener("alpine:init", function () {
       return [minX, minY, maksX, maksY];
     }
 
-    /* Nama provinsi di layer kabupaten kadang beda ejaan dengan data lokal
-       (mis. provinsi Papua hasil pemecahan 2022 belum ada di data 34 provinsi). */
+    /* Nama provinsi di layer kadang beda ejaan dengan data lokal (mis. provinsi
+       hasil pemecahan Papua 2022 belum ada di data 34 provinsi; yang terdekat
+       di sana adalah induk lamanya). Padanannya cuma pendekatan — pemakainya,
+       lokasiWilayah, sudah menyiapkan jalan lain kalau ternyata meleset. */
     function provinsiLokal(nama) {
       if (!nama) return null;
+      nama = ALIAS_LOKAL[nama] || nama;
       var semua = (window.PETA_PROVINSI.features || []).map(function (f) {
         return f.properties.nama;
       });
@@ -236,7 +288,110 @@ document.addEventListener("alpine:init", function () {
       var cocok = semua.filter(function (n) {
         return nama.indexOf(n) === 0 || n.indexOf(nama) === 0;
       });
+      /* Yang TERPANJANG, bukan yang pertama ketemu: "Papua Barat Daya" cocok
+         dengan "Papua" maupun "Papua Barat", dan hanya yang kedua yang kotaknya
+         benar-benar memuat wilayah itu — Papua lokal cuma separuh timur. */
+      cocok.sort(function (a, b) {
+        return b.length - a.length;
+      });
       return cocok[0] || null;
+    }
+
+    /* Tempat angka jumlah kebakaran diletakkan pada sebuah provinsi.
+
+       Pusat kotak pembatas tidak dipakai: pada provinsi yang melengkung atau
+       terpecah banyak pulau (Maluku, Kepulauan Riau, Sulawesi) titik itu jatuh
+       di laut, jauh dari daratan mana pun. Yang dicari di sini adalah titik
+       yang benar-benar berada DI DALAM daratan terbesarnya.
+
+       Dikembalikan sekalian kotak pembatas cincin terbesar itu — bukan kotak
+       seluruh provinsi — karena cincin itulah yang harus cukup lapang untuk
+       memuat angkanya. Kepulauan Riau kotak provinsinya raksasa sementara tiap
+       pulaunya sebesar titik; memakai kotak provinsi, angkanya akan tetap
+       digambar padahal tak ada tempat untuk berdiri. */
+    function tempatAngka(geometri) {
+      var poligon = poligonFitur(geometri);
+      var terbesar = null;
+      var luasTerbesar = -1;
+
+      for (var p = 0; p < poligon.length; p++) {
+        var cincin = poligon[p][0]; /* cincin luar; hole diabaikan untuk ukuran */
+        if (!cincin || cincin.length < 3) continue;
+        var luas = Math.abs(luasCincin(cincin));
+        if (luas > luasTerbesar) {
+          luasTerbesar = luas;
+          terbesar = cincin;
+        }
+      }
+
+      if (!terbesar) return null;
+
+      var kotak = kotakCincin(terbesar);
+      var pusat = pusatMassaCincin(terbesar);
+
+      /* Pusat massa sudah cukup untuk bentuk yang cembung. */
+      if (pusat && titikDalamCincin(pusat[0], pusat[1], terbesar)) {
+        return { titik: pusat, kotak: kotak };
+      }
+
+      /* Bentuk cekung (Sulawesi yang seperti huruf K): pusat massanya di luar
+         daratan. Sapu kisi di dalam kotaknya, ambil titik dalam yang paling
+         dekat ke pusat massa — masih terbaca sebagai "tengah" tanpa perlu
+         hitungan pole-of-inaccessibility yang jauh lebih mahal. */
+      var KISI = 32;
+      var pilihan = null;
+      var jarakTerdekat = Infinity;
+      var acuan = pusat || [(kotak[0] + kotak[2]) / 2, (kotak[1] + kotak[3]) / 2];
+
+      for (var bx = 0; bx < KISI; bx++) {
+        for (var by = 0; by < KISI; by++) {
+          var x = kotak[0] + ((bx + 0.5) / KISI) * (kotak[2] - kotak[0]);
+          var y = kotak[1] + ((by + 0.5) / KISI) * (kotak[3] - kotak[1]);
+          if (!titikDalamCincin(x, y, terbesar)) continue;
+          var d = (x - acuan[0]) * (x - acuan[0]) + (y - acuan[1]) * (y - acuan[1]);
+          if (d < jarakTerdekat) {
+            jarakTerdekat = d;
+            pilihan = [x, y];
+          }
+        }
+      }
+
+      return pilihan ? { titik: pilihan, kotak: kotak } : null;
+    }
+
+    /* Luas bertanda (rumus tali sepatu). Tandanya tidak dipakai, hanya besarnya. */
+    function luasCincin(cincin) {
+      var jumlah = 0;
+      for (var i = 0, j = cincin.length - 1; i < cincin.length; j = i++) {
+        jumlah += cincin[j][0] * cincin[i][1] - cincin[i][0] * cincin[j][1];
+      }
+      return jumlah / 2;
+    }
+
+    function kotakCincin(cincin) {
+      var minX = Infinity, maksX = -Infinity, minY = Infinity, maksY = -Infinity;
+      for (var i = 0; i < cincin.length; i++) {
+        if (cincin[i][0] < minX) minX = cincin[i][0];
+        if (cincin[i][0] > maksX) maksX = cincin[i][0];
+        if (cincin[i][1] < minY) minY = cincin[i][1];
+        if (cincin[i][1] > maksY) maksY = cincin[i][1];
+      }
+      return [minX, minY, maksX, maksY];
+    }
+
+    /* Pusat massa poligon — bukan rata-rata titik sudutnya, yang tertarik ke
+       sisi yang simpulnya paling rapat. */
+    function pusatMassaCincin(cincin) {
+      var luas = luasCincin(cincin);
+      if (!luas) return null;
+      var x = 0;
+      var y = 0;
+      for (var i = 0, j = cincin.length - 1; i < cincin.length; j = i++) {
+        var silang = cincin[j][0] * cincin[i][1] - cincin[i][0] * cincin[j][1];
+        x += (cincin[j][0] + cincin[i][0]) * silang;
+        y += (cincin[j][1] + cincin[i][1]) * silang;
+      }
+      return [x / (6 * luas), y / (6 * luas)];
     }
 
     /* Titik di dalam poligon? Uji lempar sinar; hole ikut terhitung karena
@@ -281,13 +436,13 @@ document.addEventListener("alpine:init", function () {
       kalender: null,
       kabar: false, /* layanan peta luar gagal */
       cadangan: false, /* choropleth provinsi dipakai sebagai ganti WMS */
-      barisSorot: null, /* nama kabupaten yang barisnya menyala */
-      /* Tiga kabupaten dengan luas deforestasi terbesar — data nyata dari layer
+      barisSorot: null, /* nama provinsi yang barisnya menyala */
+      /* Tiga provinsi dengan luas deforestasi terbesar — data nyata dari layer
          yang sama dengan yang mewarnai peta (gaya layer: "Choropleth Deforestasi
-         per Kabupaten"), diambil lewat WFS dengan sortBy=luas. */
+         per Provinsi"), diambil lewat WFS dengan sortBy=deforestas. */
       atas: [],
       atasGagal: false,
-      /* Pencarian kabupaten: indeks 515 nama diambil sekali (67 KB, tanpa
+      /* Pencarian provinsi: indeks 38 nama diambil sekali (beberapa KB, tanpa
          geometri) saat kotak cari pertama kali dipakai, lalu disaring lokal. */
       cari: "",
       indeks: [],
@@ -353,31 +508,38 @@ document.addEventListener("alpine:init", function () {
           maxBoundsViscosity: 1,
         });
 
-        peta.createPane("kabupatenPane");
-        peta.getPane("kabupatenPane").style.zIndex = 350;
+        peta.createPane("wilayahPane");
+        peta.getPane("wilayahPane").style.zIndex = 350;
 
-        /* Pane batas kabupaten terpilih, DI BAWAH poligon provinsi (overlayPane
+        /* Pane batas provinsi terpilih, DI BAWAH poligon provinsi (overlayPane
            z-index 400) supaya tidak menahan klik. Provinsi sendiri tembus
            pandang, jadi outline di bawahnya tetap kelihatan. */
         peta.createPane("batasPane");
         peta.getPane("batasPane").style.zIndex = 380;
         peta.getPane("batasPane").style.pointerEvents = "none";
 
-        lapisKabupaten = L.tileLayer.wms(WMS_URL, {
+        /* Angka jumlah kebakaran, DI ATAS poligon provinsi (overlayPane 400)
+           supaya tidak tertutup, dan tembus klik supaya provinsi di bawahnya
+           tetap bisa ditekan — angkanya penanda, bukan sasaran. */
+        peta.createPane("angkaPane");
+        peta.getPane("angkaPane").style.zIndex = 450;
+        peta.getPane("angkaPane").style.pointerEvents = "none";
+
+        lapisWilayah = L.tileLayer.wms(WMS_URL, {
           layers: WMS_LAYER,
           format: "image/png",
           transparent: true,
           version: "1.1.0",
-          pane: "kabupatenPane",
+          pane: "wilayahPane",
         });
-        lapisKabupaten.addTo(peta);
+        lapisWilayah.addTo(peta);
 
-        lapisKabupaten.on("tileload", function () {
+        lapisWilayah.on("tileload", function () {
           tileTermuat = true;
           if (pengawasTile) window.clearTimeout(pengawasTile);
         });
 
-        lapisKabupaten.on(
+        lapisWilayah.on(
           "tileerror",
           function () {
             tileGagal++;
@@ -386,8 +548,8 @@ document.addEventListener("alpine:init", function () {
           }.bind(this)
         );
 
-        /* Outline kabupaten terpilih: halo putih tebal di bawah, garis tinta di
-           atas — garis hitam tunggal hilang di atas kabupaten yang gelap. */
+        /* Outline provinsi terpilih: halo putih tebal di bawah, garis tinta di
+           atas — garis hitam tunggal hilang di atas provinsi yang gelap. */
         garisHalo = L.geoJSON(null, {
           interactive: false,
           pane: "batasPane",
@@ -417,11 +579,153 @@ document.addEventListener("alpine:init", function () {
                    yang difokus ke dalam pandangan, dan guliran itu menggeser
                    peta di bawah kursor. Tab keyboard tetap menjangkau. */
                 if (asli && asli.preventDefault) asli.preventDefault();
+                this.catatAsal(asli);
                 this.pilihDariTitik(e.latlng, nama, lapis.feature.geometry);
               }.bind(this),
             });
           }.bind(this),
         }).addTo(peta);
+
+        this.bangunAngka();
+      },
+
+      /* --------------------- angka jumlah kebakaran ---------------------- */
+
+      /* Satu angka per provinsi, diletakkan di dalam daratan terbesarnya.
+         Sumbernya sama dengan yang dipakai panel dan tabel setara
+         (window.TITIK_PANAS), jadi ketiganya tidak mungkin berbeda. */
+      bangunAngka: function () {
+        lapisAngka = L.layerGroup([], { pane: "angkaPane" }).addTo(peta);
+        daftarAngka = [];
+
+        provinsi.eachLayer(
+          function (lapis) {
+            var nama = lapis.feature.properties.nama;
+            var jumlah = this.angka(nama);
+            if (jumlah === null) return; /* tanpa data: tanpa angka */
+
+            var tempat = tempatAngka(lapis.feature.geometry);
+            if (!tempat) return;
+
+            var penanda = L.marker([tempat.titik[1], tempat.titik[0]], {
+              pane: "angkaPane",
+              interactive: false,
+              keyboard: false,
+              /* Ukuran nol: penempatannya diserahkan ke CSS. Leaflet menulis
+                 transform pada elemen ikon untuk memposisikannya, jadi elemen
+                 itu sendiri tidak bisa dipusatkan dengan transform lagi —
+                 yang dipusatkan adalah <span> di dalamnya. */
+              icon: L.divIcon({
+                className: "peta-angka",
+                iconSize: [0, 0],
+                /* aria-hidden: dibacakan satu per satu, angka-angka ini hanya
+                   deretan bilangan tanpa konteks. Isi yang sama sudah disajikan
+                   dengan nama provinsinya di tabel setara (bangunTabel). */
+                html:
+                  '<span class="peta-angka__nilai" aria-hidden="true">' +
+                  jumlah.toLocaleString("id-ID") +
+                  "</span>",
+              }),
+            });
+
+            penanda.addTo(lapisAngka);
+            daftarAngka.push({
+              penanda: penanda,
+              titik: [tempat.titik[1], tempat.titik[0]],
+              kotakDeg: tempat.kotak, /* kotak daratan terbesarnya, derajat */
+              elemen: null,
+            });
+          }.bind(this)
+        );
+
+        /* TIDAK dihitung di sini: saat ini peta belum punya center & zoom.
+           setelMode() yang memanggilnya, tepat setelah fitBounds.
+
+           Peta ini tidak digeser saat halaman digulir, jadi pendengar di bawah
+           hanya berjalan saat zum/geser sungguhan atau saat wadahnya diukur
+           ulang. */
+        peta.on("zoomend moveend", this.perbaruiAngka.bind(this));
+      },
+
+      /* Sembunyikan angka yang benar-benar BERTUMPUK dengan angka lain.
+
+         Sebelumnya yang diuji ukuran wilayahnya: angka disembunyikan kalau
+         daratan provinsinya terlihat lebih sempit daripada sekian piksel. Itu
+         ukuran yang salah — ia menyembunyikan angka yang sebenarnya punya
+         banyak ruang kosong di sekelilingnya (Bali, Gorontalo, Bangka Belitung),
+         sementara yang jadi masalah sejak awal hanya satu: dua angka saling
+         menutupi sampai keduanya tak terbaca. Di kanvas panggung, menguji
+         tumpukan langsung membuat ke-34 angka tampil tanpa satu pun bertabrakan.
+
+         Yang lebih luas menang. Provinsi besar yang kehilangan angkanya karena
+         kalah dari tetangga kecil akan terlihat seperti wilayah tanpa data,
+         sedangkan provinsi kecil yang angkanya tersembunyi hanya tampak padat —
+         dan angkanya tetap terbaca lewat panelnya saat ditekan. */
+      perbaruiAngka: function () {
+        if (!petaSiap || !daftarAngka.length) return;
+
+        var i;
+
+        /* Semua ditampilkan lebih dulu: elemen ber-display:none tidak punya
+           ukuran, padahal ukurannya yang menentukan siapa yang boleh tampil. */
+        for (i = 0; i < daftarAngka.length; i++) {
+          var el = daftarAngka[i].penanda.getElement();
+          daftarAngka[i].elemen = el || null;
+          if (el) el.classList.remove("peta-angka--bertumpuk");
+        }
+
+        /* Fase baca, tanpa satu pun tulisan di sela-selanya: offsetWidth memaksa
+           tata letak dihitung, dan menyelinginya dengan perubahan kelas membuat
+           peramban menghitung ulang di tiap putaran. */
+        var kotak = [];
+        for (i = 0; i < daftarAngka.length; i++) {
+          var baris = daftarAngka[i];
+          if (!baris.elemen) continue;
+
+          /* offsetWidth, bukan getBoundingClientRect: yang pertama memberi
+             ukuran tata letak, tidak terpengaruh transform kanvas panggung —
+             satu satuan dengan latLngToContainerPoint. */
+          var isi = baris.elemen.firstElementChild;
+          var pusat = peta.latLngToContainerPoint(baris.titik);
+          var d = baris.kotakDeg;
+          var ka = peta.latLngToContainerPoint([d[3], d[0]]);
+          var kb = peta.latLngToContainerPoint([d[1], d[2]]);
+
+          kotak.push({
+            urut: i,
+            x: pusat.x,
+            y: pusat.y,
+            w: (isi ? isi.offsetWidth : 0) + ANGKA_SELA,
+            h: (isi ? isi.offsetHeight : 0) + ANGKA_SELA,
+            /* Luas daratan terbesarnya di layar — dipakai sebagai urutan
+               kemenangan, bukan sebagai ambang. */
+            luas: Math.abs(kb.x - ka.x) * Math.abs(kb.y - ka.y),
+          });
+        }
+
+        kotak.sort(function (a, b) {
+          return b.luas - a.luas;
+        });
+
+        var ditempatkan = [];
+        for (i = 0; i < kotak.length; i++) {
+          var c = kotak[i];
+          var bertumpuk = false;
+
+          for (var j = 0; j < ditempatkan.length; j++) {
+            var t = ditempatkan[j];
+            if (
+              Math.abs(c.x - t.x) * 2 < c.w + t.w &&
+              Math.abs(c.y - t.y) * 2 < c.h + t.h
+            ) {
+              bertumpuk = true;
+              break;
+            }
+          }
+
+          if (bertumpuk) daftarAngka[c.urut].elemen.classList.add("peta-angka--bertumpuk");
+          else ditempatkan.push(c);
+        }
       },
 
       gaya: function (fitur) {
@@ -447,7 +751,11 @@ document.addEventListener("alpine:init", function () {
 
       /* --------------------------- data & angka -------------------------- */
       angka: function (nama) {
-        var n = (window.TITIK_PANAS || {})[nama];
+        /* Layer menulis "Daerah Istimewa Yogyakarta", data contoh menyingkatnya.
+           Hanya alias yang benar-benar nama sama yang dipakai di sini — provinsi
+           pemecahan Papua sengaja TIDAK dipetakan ke induknya, karena angka
+           induk bukan angka pecahannya. */
+        var n = (window.TITIK_PANAS || {})[ALIAS_LOKAL[nama] || nama];
         return typeof n === "number" ? n : null;
       },
 
@@ -471,12 +779,81 @@ document.addEventListener("alpine:init", function () {
         return n === null ? "belum ada data" : n.toLocaleString("id-ID") + " titik";
       },
 
+      /* ------------------------- asal pop-up ----------------------------- */
+
+      /* Dari mana pop-up terlihat tumbuh. Dicatat saat wilayahnya dipilih —
+         bukan saat pop-up dibuat — karena hanya di sanalah masih ada peristiwa
+         yang tahu di mana pengguna menekan. */
+      catatAsal: function (peristiwa) {
+        asalPopup = null;
+        if (!peristiwa) return;
+
+        /* Klik tetikus atau ketukan: titik sebenarnya. Tombol yang ditekan
+           lewat papan ketik mengirim clientX/clientY nol — itu bukan titik,
+           jadi yang dipakai tengah elemennya. */
+        if (peristiwa.clientX || peristiwa.clientY) {
+          asalPopup = { x: peristiwa.clientX, y: peristiwa.clientY };
+          return;
+        }
+
+        var el = peristiwa.currentTarget || peristiwa.target || peristiwa;
+        if (!el || !el.getBoundingClientRect) return;
+        var kotak = el.getBoundingClientRect();
+        if (!kotak.width && !kotak.height) return;
+        asalPopup = { x: kotak.left + kotak.width / 2, y: kotak.top + kotak.height / 2 };
+      },
+
+      /* Dipanggil x-init pop-up: pasang titik jangkar, lalu lepaskan animasinya
+         setelah isi panel selesai ditata. */
+      pasangAsal: function (el) {
+        if (!el) return;
+
+        if (asalPopup) {
+          var kotak = el.getBoundingClientRect();
+          if (kotak.width && kotak.height) {
+            /* Dijepit ke dalam panel: wilayah yang ditekan bisa berada di
+               luarnya (peta lebih lebar daripada panel di sebagian ukuran
+               layar), dan transform-origin di luar kotak membuat panel melesat
+               masuk dari samping alih-alih tumbuh. */
+            var x = Math.max(0, Math.min(kotak.width, asalPopup.x - kotak.left));
+            var y = Math.max(0, Math.min(kotak.height, asalPopup.y - kotak.top));
+            el.style.transformOrigin = x + "px " + y + "px";
+          }
+        }
+
+        /* Animasinya ditahan CSS (animation-play-state: paused) dan dilepas di
+           sini, dua frame kemudian.
+
+           Sebabnya: panel ini lahir di frame yang sibuk. Di frame yang sama
+           daftar beritanya dibangun, flatpickr dipasang, fokus dipindah, dan
+           kunciGulir() menyetel body{overflow:hidden} — yang menata ulang
+           seluruh halaman dan menghilangkan bilah gulirnya. Animasi yang mulai
+           di situ kehilangan frame-frame pertamanya, dan awal animasi justru
+           bagian yang paling terlihat.
+
+           Dua frame, bukan satu: yang pertama untuk menuntaskan tata letak,
+           yang kedua memberi compositor waktu menyiapkan lapisan yang diminta
+           will-change sebelum bingkai pertama benar-benar digambar. */
+        window.requestAnimationFrame(function () {
+          window.requestAnimationFrame(function () {
+            el.classList.add("peta-popup--jalan");
+          });
+        });
+
+        /* Selesai: animasi dan lapisannya dilepas. Dijaga target-nya — peristiwa
+           animationend menggelembung, dan isi panel punya animasinya sendiri. */
+        el.addEventListener("animationend", function (e) {
+          if (e.target !== el) return;
+          el.classList.add("peta-popup--diam");
+        });
+      },
+
       /* ------------------------------ panel ------------------------------ */
       pilihDariTitik: function (latlng, namaProvinsi, geometriProvinsi) {
 
         if (!latlng) {
           this.hapusBatas();
-          this.isiPanel(namaProvinsi, null, geometriProvinsi);
+          this.isiPanel(namaProvinsi, geometriProvinsi);
           return;
         }
 
@@ -485,13 +862,15 @@ document.addEventListener("alpine:init", function () {
         if (tersimpan) {
           nomorPermintaan++;
           this.gambarBatas(tersimpan.geometri);
-          this.isiPanel(tersimpan.level_3, tersimpan.level_4, tersimpan.geometri);
+          this.isiPanel(tersimpan.nama, tersimpan.geometri);
           return;
         }
 
-        /* Belum tersimpan: outline menunggu geometri kabupaten (~0,2 detik) —
-           tidak digambar outline provinsi sebagai pengganti sementara, karena
-           yang ditandai harus kabupaten. Panel yang berubah jadi penandanya. */
+        /* Belum tersimpan: outline menunggu geometri dari layer (~0,2 detik).
+           Poligon lokal TIDAK dipakai sebagai pengganti sementara: layer memakai
+           38 provinsi sedangkan data lokal 34, jadi di Papua poligon lokal
+           menutupi beberapa provinsi layer sekaligus dan outline-nya akan
+           menciut begitu jawaban datang. Panel yang berubah jadi penandanya. */
         var nomor = ++nomorPermintaan;
         this.hapusBatas();
         this.pilihan = null;
@@ -503,35 +882,35 @@ document.addEventListener("alpine:init", function () {
           function (fitur) {
             if (nomor !== nomorPermintaan) return; /* wilayah lain sudah ditekan */
             var props = fitur && fitur.properties;
-            if (props && props.level_4) {
-              this.barisSorot = props.level_4; /* baris top-3 menyala bila kena */
-              this.isiPanel(props.level_3 || namaProvinsi, props.level_4, fitur.geometry);
-              this.simpanBatas(props.level_3 || namaProvinsi, props.level_4, fitur.geometry);
+            var nama = props && props[BIDANG_NAMA];
+            if (nama) {
+              this.barisSorot = nama; /* baris top-3 menyala bila kena */
+              this.isiPanel(nama, fitur.geometry, props[BIDANG_PULAU]);
+              this.simpanBatas(nama, fitur.geometry);
             } else {
-              /* GFI gagal/kosong (mis. ditekan di laut) — panel jatuh ke
-                 provinsi, dan tak ada outline: tak ada kabupaten untuk ditandai. */
-              this.isiPanel(namaProvinsi, null, geometriProvinsi);
+              /* GFI gagal/kosong (mis. ditekan di laut) — panel jatuh ke nama
+                 dan poligon provinsi dari data lokal. */
+              this.isiPanel(namaProvinsi, geometriProvinsi);
               this.hapusBatas();
             }
           }.bind(this)
         );
       },
 
-      isiPanel: function (namaProvinsi, kabupaten, geometri) {
-        var pulau = pulauDariProvinsi(namaProvinsi);
-        var jumlah = this.angka(namaProvinsi);
+      /* `pulauLayer` = level_2 dari layer bila pemanggilnya punya; kalau tidak,
+         pulaunya ditebak dari nama provinsi. */
+      isiPanel: function (nama, geometri, pulauLayer) {
+        var pulau = pulauDariLayer(pulauLayer) || pulauDariProvinsi(nama);
+        var jumlah = this.angka(nama);
         var tab = tabDariPulau(pulau);
         if (tab) this.tabAktif = tab;
 
         this.pilihan = {
-          /* Panel selalu punya judul: bila kabupaten tak terkenali, provinsinya
-             yang naik jadi judul — dan tidak diulang pada baris meta. */
-          nama: kabupaten || namaProvinsi || "Wilayah ini",
-          meta: (kabupaten ? [namaProvinsi, pulau] : [pulau]).filter(Boolean).join(" · "),
-          /* Angkanya berskala provinsi, jadi kalimatnya menyebut provinsi —
-             tanpa itu akan terbaca sebagai angka kabupaten yang diklik. */
+          nama: nama || "Wilayah ini",
+          /* Judul sudah provinsi, jadi meta tinggal pulaunya — sebelumnya baris
+             ini menampung "provinsi · pulau" karena judulnya kabupaten. */
+          meta: pulau || "",
           angka: jumlah === null ? null : jumlah.toLocaleString("id-ID"),
-          provinsi: namaProvinsi,
           siluet: geometri ? siluet(geometri) : null,
         };
         this.memuat = false;
@@ -628,13 +1007,47 @@ document.addEventListener("alpine:init", function () {
         this.hapusTanggal();
       },
 
-      /* Identifikasi kabupaten di titik tekan via WMS GetFeatureInfo.
-         Responsnya membawa atribut DAN geometri (1,5–13 KB), jadi satu
-         permintaan ini cukup untuk mengisi panel sekaligus menggambar outline —
-         bukan permintaan lagi berupa belasan tile ber-filter. */
-      getFeatureInfo: function (latlng, kembali) {
-        var ukuran = peta.getSize();
-        var titik = peta.latLngToContainerPoint(latlng);
+      /* Identifikasi provinsi di sebuah titik via WMS GetFeatureInfo.
+         Responsnya membawa atribut DAN geometri, jadi satu permintaan ini cukup
+         untuk mengisi panel sekaligus menggambar outline — bukan permintaan lagi
+         berupa belasan tile ber-filter. GeoServer menyederhanakan geometrinya
+         mengikuti resolusi yang diminta, jadi ukurannya ikut bingkai di bawah.
+
+         `derajat` (opsional) mengganti bingkai peta yang sedang tampil dengan
+         kotak sendiri selebar sekian derajat, berpusat di `latlng` dan ditanya
+         tepat di tengah. Itu perlu pada jalur pilih-lewat-nama: di ponsel peta
+         hanya ~150px untuk seluruh Indonesia, satu piksel query menutupi puluhan
+         kilometer, dan provinsi sekecil DKI Jakarta atau DI Yogyakarta terjawab
+         sebagai tetangganya yang melingkupinya. */
+      getFeatureInfo: function (latlng, kembali, derajat) {
+        var kotak;
+        var lebar;
+        var tinggi;
+        var x;
+        var y;
+
+        if (derajat) {
+          var sisi = derajat / 2;
+          kotak = [
+            latlng.lng - sisi,
+            latlng.lat - sisi,
+            latlng.lng + sisi,
+            latlng.lat + sisi,
+          ].join(",");
+          lebar = PIKSEL_QUERY;
+          tinggi = PIKSEL_QUERY;
+          x = Math.round(PIKSEL_QUERY / 2);
+          y = Math.round(PIKSEL_QUERY / 2);
+        } else {
+          var ukuran = peta.getSize();
+          var titik = peta.latLngToContainerPoint(latlng);
+          kotak = peta.getBounds().toBBoxString();
+          lebar = ukuran.x;
+          tinggi = ukuran.y;
+          x = Math.round(titik.x);
+          y = Math.round(titik.y);
+        }
+
         var params = new URLSearchParams({
           service: "WMS",
           version: "1.1.0",
@@ -644,11 +1057,11 @@ document.addEventListener("alpine:init", function () {
           info_format: "application/json",
           feature_count: "1",
           srs: "EPSG:4326",
-          bbox: peta.getBounds().toBBoxString(),
-          width: String(ukuran.x),
-          height: String(ukuran.y),
-          x: String(Math.round(titik.x)),
-          y: String(Math.round(titik.y)),
+          bbox: kotak,
+          width: String(lebar),
+          height: String(tinggi),
+          x: String(x),
+          y: String(y),
         });
 
         fetch(WMS_URL + "?" + params.toString())
@@ -669,22 +1082,16 @@ document.addEventListener("alpine:init", function () {
         var kunci = Object.keys(simpananGeometri);
         for (var i = 0; i < kunci.length; i++) {
           if (titikDalamGeometri(latlng, simpananGeometri[kunci[i]])) {
-            var bagian = kunci[i].split("|");
-            return {
-              level_3: bagian[0],
-              level_4: bagian[1],
-              geometri: simpananGeometri[kunci[i]],
-            };
+            return { nama: kunci[i], geometri: simpananGeometri[kunci[i]] };
           }
         }
         return null;
       },
 
-      simpanBatas: function (level_3, level_4, geometri) {
-        if (!level_4) return;
-        var kunci = String(level_3) + "|" + String(level_4);
-        if (geometri) simpananGeometri[kunci] = geometri;
-        this.gambarBatas(simpananGeometri[kunci]);
+      simpanBatas: function (nama, geometri) {
+        if (!nama) return;
+        if (geometri) simpananGeometri[nama] = geometri;
+        this.gambarBatas(simpananGeometri[nama]);
       },
 
       hapusBatas: function () {
@@ -693,8 +1100,7 @@ document.addEventListener("alpine:init", function () {
         garisTerpilih.clearLayers();
       },
 
-      /* Hanya batas kabupaten yang digambar di sini: yang ditekan pengguna
-         adalah kabupaten, dan dua outline sekaligus membuat penandanya ambigu. */
+      /* Satu outline saja — provinsi yang ditekan. */
       gambarBatas: function (geometri) {
         this.hapusBatas();
         if (!geometri) return;
@@ -704,9 +1110,9 @@ document.addEventListener("alpine:init", function () {
 
       /* --------------------- tiga teratas & pencarian --------------------- */
 
-      /* Tiga kabupaten dengan luas deforestasi terbesar. sortBy=luas D dengan
+      /* Tiga provinsi dengan luas deforestasi terbesar. Urut menurun dengan
          null dikecualikan — tanpa filter itu server menaruh nilai kosong lebih
-         dulu, dan yang muncul justru kabupaten tanpa data. */
+         dulu, dan yang muncul justru provinsi tanpa data (mis. DKI Jakarta). */
       ambilTiga: function () {
         var alamat =
           WFS_URL +
@@ -716,11 +1122,11 @@ document.addEventListener("alpine:init", function () {
             version: "1.1.0",
             request: "GetFeature",
             typeName: WMS_LAYER,
-            propertyName: "level_3,level_4,luas",
-            sortBy: "luas D",
+            propertyName: BIDANG_PULAU + "," + BIDANG_NAMA + "," + BIDANG_LUAS,
+            sortBy: BIDANG_LUAS + " D",
             maxFeatures: "3",
             outputFormat: "application/json",
-            CQL_FILTER: "luas IS NOT NULL",
+            CQL_FILTER: BIDANG_LUAS + " IS NOT NULL",
           }).toString();
 
         fetch(alamat)
@@ -737,9 +1143,9 @@ document.addEventListener("alpine:init", function () {
               this.atas = fitur.map(function (f, i) {
                 return {
                   peringkat: i + 1,
-                  nama: f.properties.level_4,
-                  provinsi: f.properties.level_3,
-                  luas: Math.round(f.properties.luas).toLocaleString("id-ID"),
+                  nama: f.properties[BIDANG_NAMA],
+                  pulau: pulauDariLayer(f.properties[BIDANG_PULAU]),
+                  luas: Math.round(f.properties[BIDANG_LUAS]).toLocaleString("id-ID"),
                   siluet: null,
                 };
               });
@@ -763,7 +1169,7 @@ document.addEventListener("alpine:init", function () {
         this.atas.forEach(
           function (baris) {
             if (baris.siluet) return;
-            this.geometriKabupaten(baris.nama, baris.provinsi).then(
+            this.geometriWilayah(baris.nama).then(
               function (geometri) {
                 if (geometri) baris.siluet = siluet(geometri);
               }
@@ -772,115 +1178,147 @@ document.addEventListener("alpine:init", function () {
         );
       },
 
-      /* Melokasikan kabupaten dari NAMANYA, tanpa mengunduh geometri penuh.
+      /* Melokasikan provinsi dari NAMANYA, tanpa mengunduh geometri penuh.
 
-         Geometri kabupaten lewat WFS berukuran ~520 KB dan tidak bisa diminta
-         dalam bentuk sederhana. Jalan yang murah: minta GetMap kecil (120x120,
-         ~2 KB) yang hanya menggambar kabupaten itu di dalam kotak provinsinya,
-         lalu baca pikselnya — piksel tergambar yang paling dekat pusat massa
-         pasti berada di dalam wilayahnya. Titik itu lalu dipakai pada
-         GetFeatureInfo, yang mengembalikan geometri versi sederhana (~3-5 KB). */
-      lokasiKabupaten: function (nama, provinsi) {
-        var kotak = bbeksProvinsi(provinsiLokal(provinsi));
-        if (!kotak) return Promise.resolve(null);
+         Geometri lengkap lewat WFS berat (garis pantai penuh, ratusan KB per
+         provinsi) dan tidak bisa diminta dalam bentuk sederhana. Jalan yang
+         murah: minta GetMap kecil yang hanya menggambar provinsi itu, lalu baca
+         pikselnya — piksel tergambar yang paling dekat pusat massa pasti berada
+         di dalam wilayahnya. Titik itu lalu dipakai pada GetFeatureInfo, yang
+         mengembalikan geometri versi sederhana (~3-5 KB). */
+      lokasiWilayah: function (nama) {
+        /* Kotak pindaian pertama: provinsi itu sendiri menurut data lokal, jadi
+           wilayahnya hampir memenuhi kotak dan 120 piksel sudah cukup. */
+        var kotakLokal = bbeksProvinsi(provinsiLokal(nama));
+        /* Cadangan: seluruh Indonesia. Kotak selebar itu perlu raster jauh lebih
+           besar — pada 120 piksel provinsi sekecil DKI Jakarta tidak menyisakan
+           satu piksel pun untuk dibaca. */
+        var kotakNasional = [BATAS[0][1], BATAS[0][0], BATAS[1][1], BATAS[1][0]];
 
-        var LEBAR = 120;
-        var alamat =
-          WMS_URL +
-          "?" +
-          new URLSearchParams({
-            service: "WMS",
-            version: "1.1.0",
-            request: "GetMap",
-            layers: WMS_LAYER,
-            format: "image/png",
-            transparent: "true",
-            srs: "EPSG:4326",
-            bbox: kotak.join(","),
-            width: String(LEBAR),
-            height: String(LEBAR),
-            CQL_FILTER: "level_4='" + String(nama).replace(/'/g, "''") + "'",
-          }).toString();
+        var pindai = function (kotak, LEBAR) {
+          var alamat =
+            WMS_URL +
+            "?" +
+            new URLSearchParams({
+              service: "WMS",
+              version: "1.1.0",
+              request: "GetMap",
+              layers: WMS_LAYER,
+              format: "image/png",
+              transparent: "true",
+              srs: "EPSG:4326",
+              bbox: kotak.join(","),
+              width: String(LEBAR),
+              height: String(LEBAR),
+              CQL_FILTER: BIDANG_NAMA + "='" + String(nama).replace(/'/g, "''") + "'",
+            }).toString();
 
-        return new Promise(function (selesai) {
-          var gambar = new Image();
-          gambar.crossOrigin = "anonymous"; /* layanan mengizinkan; perlu untuk baca piksel */
-          gambar.onload = function () {
-            var kanvas = document.createElement("canvas");
-            kanvas.width = LEBAR;
-            kanvas.height = LEBAR;
-            var ctx = kanvas.getContext("2d");
-            ctx.drawImage(gambar, 0, 0);
-            var data;
-            try {
-              data = ctx.getImageData(0, 0, LEBAR, LEBAR).data;
-            } catch (_) {
-              selesai(null); /* kanvas ternoda: tanpa CORS tidak bisa dibaca */
-              return;
-            }
+          return new Promise(function (selesai) {
+            var gambar = new Image();
+            gambar.crossOrigin = "anonymous"; /* layanan mengizinkan; perlu untuk baca piksel */
+            gambar.onload = function () {
+              var kanvas = document.createElement("canvas");
+              kanvas.width = LEBAR;
+              kanvas.height = LEBAR;
+              var ctx = kanvas.getContext("2d");
+              ctx.drawImage(gambar, 0, 0);
+              var data;
+              try {
+                data = ctx.getImageData(0, 0, LEBAR, LEBAR).data;
+              } catch (_) {
+                selesai(null); /* kanvas ternoda: tanpa CORS tidak bisa dibaca */
+                return;
+              }
 
-            var titik = [];
-            var jumlahX = 0;
-            var jumlahY = 0;
-            for (var y = 0; y < LEBAR; y++) {
-              for (var x = 0; x < LEBAR; x++) {
-                if (data[(y * LEBAR + x) * 4 + 3] > 40) {
-                  titik.push([x, y]);
-                  jumlahX += x;
-                  jumlahY += y;
+              var titik = [];
+              var jumlahX = 0;
+              var jumlahY = 0;
+              for (var y = 0; y < LEBAR; y++) {
+                for (var x = 0; x < LEBAR; x++) {
+                  if (data[(y * LEBAR + x) * 4 + 3] > 40) {
+                    titik.push([x, y]);
+                    jumlahX += x;
+                    jumlahY += y;
+                  }
                 }
               }
-            }
-            if (!titik.length) {
-              selesai(null);
-              return;
-            }
-
-            /* Piksel tergambar terdekat ke pusat massa — pusat massa sendiri
-               bisa jatuh di luar wilayah yang bentuknya cekung. */
-            var px = jumlahX / titik.length;
-            var py = jumlahY / titik.length;
-            var pilih = titik[0];
-            var jarakTerdekat = Infinity;
-            titik.forEach(function (t) {
-              var d = (t[0] - px) * (t[0] - px) + (t[1] - py) * (t[1] - py);
-              if (d < jarakTerdekat) {
-                jarakTerdekat = d;
-                pilih = t;
+              if (!titik.length) {
+                selesai(null);
+                return;
               }
-            });
 
-            selesai({
-              lng: kotak[0] + ((pilih[0] + 0.5) / LEBAR) * (kotak[2] - kotak[0]),
-              lat: kotak[3] - ((pilih[1] + 0.5) / LEBAR) * (kotak[3] - kotak[1]),
-            });
-          };
-          gambar.onerror = function () {
-            selesai(null);
-          };
-          gambar.src = alamat;
+              /* Piksel tergambar terdekat ke pusat massa — pusat massa sendiri
+                 bisa jatuh di luar wilayah yang bentuknya cekung. */
+              var px = jumlahX / titik.length;
+              var py = jumlahY / titik.length;
+              var pilih = titik[0];
+              var jarakTerdekat = Infinity;
+              titik.forEach(function (t) {
+                var d = (t[0] - px) * (t[0] - px) + (t[1] - py) * (t[1] - py);
+                if (d < jarakTerdekat) {
+                  jarakTerdekat = d;
+                  pilih = t;
+                }
+              });
+
+              selesai({
+                lng: kotak[0] + ((pilih[0] + 0.5) / LEBAR) * (kotak[2] - kotak[0]),
+                lat: kotak[3] - ((pilih[1] + 0.5) / LEBAR) * (kotak[3] - kotak[1]),
+              });
+            };
+            gambar.onerror = function () {
+              selesai(null);
+            };
+            gambar.src = alamat;
+          });
+        };
+
+        if (!kotakLokal) return pindai(kotakNasional, 512);
+
+        /* Kotak lokal bisa meleset: data lokal masih 34 provinsi, jadi provinsi
+           baru dipetakan ke induk lamanya dan induk itu belum tentu memuatnya
+           (Papua lokal hanya separuh timur, sedangkan Papua Barat Daya ada di
+           ujung barat). Nol piksel = meleset, dan pindaian nasional yang
+           menjawab — sekali saja, dan hanya saat memang perlu. */
+        return pindai(kotakLokal, 120).then(function (titik) {
+          return titik || pindai(kotakNasional, 512);
         });
       },
 
-      /* Geometri kabupaten: dari simpanan bila ada, kalau tidak lokasikan dulu
+      /* Geometri provinsi: dari simpanan bila ada, kalau tidak lokasikan dulu
          lalu tanya GetFeatureInfo di titik itu. */
-      geometriKabupaten: function (nama, provinsi) {
-        var kunci = String(provinsi) + "|" + String(nama);
+      geometriWilayah: function (nama) {
+        var kunci = String(nama);
         if (simpananGeometri[kunci]) return Promise.resolve(simpananGeometri[kunci]);
 
-        return this.lokasiKabupaten(nama, provinsi).then(
+        /* Bingkai query seukuran provinsinya sendiri, bukan seukuran peta yang
+           sedang tampil — alasannya di getFeatureInfo. */
+        var kotak = bbeksProvinsi(provinsiLokal(nama));
+        var derajat = kotak
+          ? Math.max(kotak[2] - kotak[0], kotak[3] - kotak[1])
+          : 0;
+
+        return this.lokasiWilayah(nama).then(
           function (titik) {
             if (!titik) return null;
             return new Promise(
               function (selesai) {
-                this.getFeatureInfo(titik, function (fitur) {
-                  if (fitur && fitur.geometry) {
-                    simpananGeometri[kunci] = fitur.geometry;
-                    selesai(fitur.geometry);
-                  } else {
-                    selesai(null);
-                  }
-                });
+                this.getFeatureInfo(
+                  titik,
+                  function (fitur) {
+                    var props = fitur && fitur.properties;
+                    /* Namanya harus cocok. Kalau yang terjawab provinsi lain,
+                       lebih baik tanpa outline daripada outline yang salah —
+                       panelnya sudah menyebut nama yang benar. */
+                    if (fitur && fitur.geometry && props[BIDANG_NAMA] === nama) {
+                      simpananGeometri[kunci] = fitur.geometry;
+                      selesai(fitur.geometry);
+                    } else {
+                      selesai(null);
+                    }
+                  },
+                  derajat
+                );
               }.bind(this)
             );
           }.bind(this)
@@ -889,19 +1327,20 @@ document.addEventListener("alpine:init", function () {
 
       /* Dipakai baris daftar maupun hasil pencarian: buka panel, lalu gambar
          outline-nya begitu geometrinya didapat. */
-      pilihKabupaten: function (nama, provinsi) {
+      pilihWilayah: function (nama, pulau, peristiwa) {
+        this.catatAsal(peristiwa);
         var nomor = ++nomorPermintaan;
         this.barisSorot = nama;
         this.hasil = [];
         this.cari = "";
-        this.isiPanel(provinsi, nama, null);
+        this.isiPanel(nama, null, pulau);
         this.hapusBatas();
 
-        this.geometriKabupaten(nama, provinsi).then(
+        this.geometriWilayah(nama).then(
           function (geometri) {
             if (nomor !== nomorPermintaan || !geometri) return;
             this.gambarBatas(geometri);
-            this.isiPanel(provinsi, nama, geometri);
+            this.isiPanel(nama, geometri, pulau);
           }.bind(this)
         );
       },
@@ -919,7 +1358,7 @@ document.addEventListener("alpine:init", function () {
             version: "1.1.0",
             request: "GetFeature",
             typeName: WMS_LAYER,
-            propertyName: "level_3,level_4", /* tanpa geometri: 515 nama, ~67 KB */
+            propertyName: BIDANG_PULAU + "," + BIDANG_NAMA, /* tanpa geometri: 38 nama */
             outputFormat: "application/json",
           }).toString();
 
@@ -931,7 +1370,10 @@ document.addEventListener("alpine:init", function () {
             function (data) {
               this.indeks = ((data && data.features) || [])
                 .map(function (f) {
-                  return { nama: f.properties.level_4, provinsi: f.properties.level_3 };
+                  return {
+                    nama: f.properties[BIDANG_NAMA],
+                    pulau: pulauDariLayer(f.properties[BIDANG_PULAU]),
+                  };
                 })
                 .filter(function (k) {
                   return k.nama;
@@ -1019,7 +1461,7 @@ document.addEventListener("alpine:init", function () {
         this.cadangan = true;
         this.kabar = true;
         if (pengawasTile) window.clearTimeout(pengawasTile);
-        peta.removeLayer(lapisKabupaten); /* berhenti mencoba; tombol memutuskan */
+        peta.removeLayer(lapisWilayah); /* berhenti mencoba; tombol memutuskan */
         provinsi.setStyle(this.gaya.bind(this));
       },
 
@@ -1027,8 +1469,8 @@ document.addEventListener("alpine:init", function () {
         this.cadangan = false;
         this.kabar = false;
         provinsi.setStyle(this.gaya.bind(this));
-        lapisKabupaten.addTo(peta);
-        lapisKabupaten.redraw();
+        lapisWilayah.addTo(peta);
+        lapisWilayah.redraw();
         this.pantauTile();
       },
 
@@ -1076,10 +1518,17 @@ document.addEventListener("alpine:init", function () {
 
         peta.invalidateSize({ animate: false });
         peta.fitBounds(BATAS, { padding: [6, 6], animate: false });
+        petaSiap = true; /* sejak sini koordinat sudah bisa diproyeksikan */
 
         peta.setMinZoom(peta.getZoom());
         peta.setMaxZoom(peta.getZoom() + 3);
         peta.setMaxBounds(peta.getBounds().pad(0.08));
+
+        /* fitBounds di atas memang memicu moveend, tetapi pengepasan mode juga
+           mengubah UKURAN wadah — dan itu sendiri tidak selalu berujung pada
+           peristiwa peta. Dihitung ulang di sini supaya tidak bergantung pada
+           kebetulan. */
+        this.perbaruiAngka();
       },
 
       /* --------------------------- aksesibilitas ------------------------- */
@@ -1100,8 +1549,8 @@ document.addEventListener("alpine:init", function () {
             );
 
             /* Sorotan provinsi HANYA untuk navigasi keyboard: klik tetikus juga
-               memberi fokus, dan di sana penanda yang benar adalah outline
-               kabupaten di titik yang ditekan. */
+               memberi fokus, dan di sana penanda yang benar adalah outline dari
+               layer di titik yang ditekan — bukan poligon lokal ini. */
             var fokusKeyboard = function () {
               try {
                 return elemen.matches(":focus-visible");
@@ -1123,7 +1572,8 @@ document.addEventListener("alpine:init", function () {
                   opacity: 1,
                 });
                 lapis.bringToFront();
-                this.isiPanel(nama, null, lapis.feature.geometry);
+                this.catatAsal(elemen);
+                this.isiPanel(nama, lapis.feature.geometry);
               }.bind(this)
             );
 

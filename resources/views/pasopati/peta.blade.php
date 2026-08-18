@@ -57,8 +57,8 @@
                    backdrop-blur-[6px]"
           >
             <p>
-              Batas kabupaten diambil dari layanan luar (aws.simontini.id) dan sekarang
-              tidak terjangkau. Peta menampilkan warna per provinsi dari data contoh.
+              Warna per provinsi diambil dari layanan luar (aws.simontini.id) dan
+              sekarang tidak terjangkau. Peta menampilkan data contoh.
             </p>
             <button
               type="button"
@@ -75,19 +75,19 @@
         </div>
 
 
-        <!-- Pencarian + tiga kabupaten teratas (mode aliran).
+        <!-- Pencarian + tiga provinsi teratas (mode aliran).
 
              Di lebar ponsel peta hanya sekitar 150px tinggi, jadi menekan satu
-             kabupaten di peta hampir tak mungkin — kotak cari ini jalan masuk
+             provinsi di peta hampir tak mungkin — kotak cari ini jalan masuk
              yang sebenarnya, dan daftarnya memberi tiga yang paling penting
              tanpa perlu mencari.
 
              Angka di sini nyata: diambil dari layer yang sama dengan yang
              mewarnai peta (gaya layer-nya bernama "Choropleth Deforestasi per
-             Kabupaten"), diurutkan server berdasarkan luas. -->
+             Provinsi"), diurutkan server berdasarkan luas deforestasi. -->
         <div class="mt-[clamp(18px,5vw,28px)] panggung:hidden">
           <label class="relative block">
-            <span class="sr-only">Cari kabupaten atau kota</span>
+            <span class="sr-only">Cari provinsi</span>
             <svg
               viewBox="0 0 24 24"
               aria-hidden="true"
@@ -103,7 +103,7 @@
             </svg>
             <input
               type="search"
-              placeholder="Cari kabupaten atau kota…"
+              placeholder="Cari provinsi…"
               autocomplete="off"
               x-model="cari"
               x-on:focus="muatIndeks()"
@@ -123,11 +123,11 @@
               class="mt-[6px] overflow-hidden rounded-[10px] bg-white/95
                      divide-y divide-[rgb(26_25_25/0.07)]"
             >
-              <template x-for="k in hasil" :key="k.provinsi + '|' + k.nama">
+              <template x-for="k in hasil" :key="k.nama">
                 <li>
                   <button
                     type="button"
-                    x-on:click="pilihKabupaten(k.nama, k.provinsi)"
+                    x-on:click="pilihWilayah(k.nama, k.pulau, $event)"
                     class="flex w-full items-baseline justify-between gap-3
                            px-[14px] py-[10px] text-left transition-colors
                            hover:bg-[rgb(26_25_25/0.04)]"
@@ -140,7 +140,7 @@
                     <span
                       class="shrink-0 text-[length:var(--ukuran-catatan)]
                              text-[rgb(26_25_25/0.55)]"
-                      x-text="k.provinsi"
+                      x-text="k.pulau"
                     ></span>
                   </button>
                 </li>
@@ -154,8 +154,8 @@
               class="mt-[6px] rounded-[10px] bg-white/80 px-[14px] py-[10px]
                      text-[length:var(--ukuran-catatan)] text-[rgb(26_25_25/0.6)]"
               x-text="indeks.length
-                ? 'Tidak ada kabupaten yang namanya cocok.'
-                : 'Memuat daftar kabupaten…'"
+                ? 'Tidak ada provinsi yang namanya cocok.'
+                : 'Memuat daftar provinsi…'"
             ></p>
           </template>
 
@@ -165,7 +165,7 @@
                    tracking-[0.14em] uppercase text-[rgb(255_255_255/0.85)]
                    [text-shadow:0_1px_6px_rgb(0_0_0/0.45)]"
           >
-            3 kabupaten dengan deforestasi terluas
+            3 provinsi dengan deforestasi terluas
           </p>
 
           <template x-if="atasGagal">
@@ -183,7 +183,7 @@
               <li>
                 <button
                   type="button"
-                  x-on:click="pilihKabupaten(k.nama, k.provinsi)"
+                  x-on:click="pilihWilayah(k.nama, k.pulau, $event)"
                   x-on:mouseenter="barisSorot = k.nama"
                   x-on:mouseleave="barisSorot = null"
                   :class="barisSorot === k.nama && 'ring-2 ring-[var(--color-api)]'"
@@ -219,7 +219,7 @@
                     <span
                       class="mt-[2px] block text-[length:var(--ukuran-catatan)]
                              text-[rgb(26_25_25/0.55)]"
-                      x-text="k.provinsi"
+                      x-text="k.pulau"
                     ></span>
                     <span class="mt-[6px] flex justify-between gap-4">
                       <span
@@ -287,8 +287,8 @@
           role="dialog"
           aria-label="Berita karhutla wilayah terpilih"
           tabindex="-1"
-          x-init="$el.focus()"
-          class="fixed inset-x-[clamp(10px,4vw,190px)] top-[calc(4rem+clamp(10px,2.4vw,26px))]
+          x-init="$el.focus(); pasangAsal($el)"
+          class="peta-popup fixed inset-x-[clamp(10px,4vw,190px)] top-[calc(4rem+clamp(10px,2.4vw,26px))]
                  bottom-[clamp(10px,2.4vw,26px)] z-[45] flex flex-col overflow-hidden
                  rounded-[14px] bg-white text-[var(--color-tinta)]
                  shadow-[0_26px_70px_rgb(0_0_0/0.45)] outline-none
@@ -345,8 +345,8 @@
                            uppercase text-[var(--color-bara)]"
                     x-text="pilihan?.meta"
                   ></p>
-                  <!-- Angkanya berskala provinsi, jadi kalimatnya menyebut
-                       provinsinya — bukan mengaku angka kabupaten yang ditekan. -->
+                  <!-- Judul panel kini provinsi itu sendiri, jadi kalimat ini tidak
+                       perlu menyebut namanya lagi. -->
                   <p
                     :class="!pilihan?.angka && 'hidden'"
                     class="mt-1 text-[length:var(--ukuran-catatan)] text-[rgb(26_25_25/0.7)]"
@@ -355,7 +355,7 @@
                       class="font-bold text-[var(--color-tinta)]"
                       x-text="pilihan?.angka"
                     ></span>
-                    <span x-text="' titik panas tercatat di ' + (pilihan?.provinsi || '')"></span>
+                    <span>titik panas tercatat</span>
                   </p>
                 </div>
               </div>

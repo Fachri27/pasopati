@@ -39,6 +39,13 @@ document.addEventListener("alpine:init", function () {
       langkah: 0,
       kurangiGerak: false,
 
+      /* Video kartu, dikunci per kartu (k.kunci — unik lintas tiga salinan).
+         Tidak bisa ditaruh di dalam `kartu` itu sendiri: getter itu membuat
+         objek baru setiap kali dibaca, jadi apa pun yang disimpan di sana
+         hilang pada pembacaan berikutnya. */
+      durasiVideo: {}, /* kunci -> "0:42"; sisa waktu saat berjalan */
+      videoUsai: {}, /* kunci -> true saat video habis dan belum diulang */
+
       /* Tiga set kartu berturut-turut. `asli` menandai indeks berita aslinya
          supaya kembaran tidak dibacakan dua kali oleh pembaca layar. */
       get kartu() {
@@ -190,6 +197,7 @@ document.addEventListener("alpine:init", function () {
         /* Kartu digandakan tiga set, jadi indeks yang datang dari x-for perlu
            dikembalikan ke indeks berita aslinya. */
         this.sorot = ((indeks % jumlah) + jumlah) % jumlah;
+        this.setelUlangVideoRincian();
         this.hentikanOtomatis();
         this.kunciGulir(true);
         if (!tenang) this.perbaruiUrlRincian();
@@ -207,7 +215,18 @@ document.addEventListener("alpine:init", function () {
         if (this.sorot === null) return;
         var jumlah = this.berita.length;
         this.sorot = ((this.sorot + arah) % jumlah + jumlah) % jumlah;
+        this.setelUlangVideoRincian();
         this.perbaruiUrlRincian();
+      },
+
+      /* Satu elemen <video> di pop-up dipakai bergantian oleh semua laporan:
+         yang berganti hanya src-nya, elemennya tetap. Jadi lencana durasi dan
+         tanda "sudah habis" milik laporan sebelumnya harus dilepas sendiri —
+         kalau tidak, laporan berikutnya terbuka dengan durasi yang salah dan
+         tombol putar ulang menempel di video yang justru baru mulai. */
+      setelUlangVideoRincian: function () {
+        this.videoUsai.rincian = false;
+        this.durasiVideo.rincian = "";
       },
 
       /* PUSHSTATE: alamat bar mengikuti pop-up yang terbuka — pola Instagram.
@@ -410,7 +429,7 @@ document.addEventListener("alpine:init", function () {
          dan `terlihat` di sini: Alpine yang menjalankan ulang saat salah
          satunya berubah. `preload="none"` di markup membuat berkasnya baru
          diunduh ketika kartunya benar-benar tampil. */
-      setelVideo: function (el, indeks) {
+      setelVideo: function (el, indeks, kunci) {
         if (!el) return;
 
         /* Sebagian browser hanya mengizinkan putar-otomatis bila properti
@@ -420,6 +439,9 @@ document.addEventListener("alpine:init", function () {
         /* Saat pop-up terbuka, video di kartu berhenti: yang ditonton adalah
            salinan di dalam pop-up, bukan yang di belakangnya. */
         if (indeks === this.aktif && this.terlihat && !this.kurangiGerak && this.sorot === null) {
+          /* Kartu ini kembali diputar dari awal, jadi tanda "putar ulang"
+             dilepas — kalau tidak, ia menempel di video yang sedang berjalan. */
+          this.videoUsai[kunci] = false;
           var janji = el.play();
           /* Putar-otomatis masih bisa ditolak (mis. mode hemat daya) — poster
              tetap tampil, jadi tidak ada yang perlu dilakukan. */
@@ -430,6 +452,45 @@ document.addEventListener("alpine:init", function () {
 
         el.pause();
         if (el.currentTime) el.currentTime = 0;
+        this.videoUsai[kunci] = false;
+      },
+
+      /* --- lencana durasi & putar ulang ---
+         Video kartu tidak diulang sendiri (tanpa atribut loop): ia berhenti di
+         bingkai terakhir, lalu tombol putar ulang yang meneruskan. */
+
+      jamVideo: function (detik) {
+        if (!isFinite(detik) || detik < 0) return "";
+        var menit = Math.floor(detik / 60);
+        var sisa = Math.floor(detik % 60);
+        return menit + ":" + (sisa < 10 ? "0" : "") + sisa;
+      },
+
+      /* Dipanggil saat metadata siap dan tiap kali waktunya berjalan. Selama
+         video berjalan yang ditampilkan SISA waktunya (menghitung mundur);
+         sebelum diputar dan sesudah habis, durasi penuhnya. */
+      catatDurasi: function (el, kunci) {
+        if (!el || !isFinite(el.duration) || el.duration <= 0) return;
+        var sisa = el.paused || el.ended ? el.duration : el.duration - el.currentTime;
+        this.durasiVideo[kunci] = this.jamVideo(Math.ceil(sisa));
+      },
+
+      usaiVideo: function (el, kunci) {
+        this.videoUsai[kunci] = true;
+        this.catatDurasi(el, kunci);
+      },
+
+      /* Tombol putar ulang. Elemen videonya dicari dari bingkai kartu yang sama,
+         bukan lewat x-ref: ref di dalam x-for tidak unik antar kartu. */
+      ulangVideo: function (tombol, kunci) {
+        var bingkai = tombol && tombol.closest(".kartu-bingkai");
+        var el = bingkai && bingkai.querySelector("video");
+        if (!el) return;
+
+        this.videoUsai[kunci] = false;
+        el.currentTime = 0;
+        var janji = el.play();
+        if (janji && janji.catch) janji.catch(function () {});
       },
 
       /* Klik kartu samping menjadikannya aktif. */
@@ -532,6 +593,8 @@ document.addEventListener("alpine:init", function () {
       daftar: [],
       memuat: false,
       mengirim: false,
+      nama: "",
+      email: "",
       isi: "",
       balasKe: null,      /* id komentar yang sedang dibalas */
       balasNama: "",      /* namanya, untuk label "Membalas …" */
@@ -551,6 +614,12 @@ document.addEventListener("alpine:init", function () {
         this.galat = "";
         this.batalBalas();
         this.dibuka = [];
+        /* Pulihkan nama & email dari localStorage supaya tidak perlu mengetik
+           ulang setiap kali membuka popup. */
+        try {
+          this.nama = localStorage.getItem("komentar_nama") || "";
+          this.email = localStorage.getItem("komentar_email") || "";
+        } catch (_) { /* storage mungkin diblokir */ }
         this.ambil();
       },
 
@@ -720,6 +789,8 @@ document.addEventListener("alpine:init", function () {
             "X-CSRF-TOKEN": simpul ? simpul.getAttribute("content") : "",
           },
           body: JSON.stringify({
+            nama: this.nama,
+            email: this.email,
             isi: this.isi,
             balas_ke: this.balasKe,
             website: this.website,
@@ -744,6 +815,10 @@ document.addEventListener("alpine:init", function () {
               this.batalBalas();
               this.ulangCaptcha();
               if (akar !== null && this.dibuka.indexOf(akar) === -1) this.dibuka.push(akar);
+              try {
+                localStorage.setItem("komentar_nama", this.nama);
+                localStorage.setItem("komentar_email", this.email);
+              } catch (_) { /* storage mungkin diblokir */ }
             }.bind(this)
           )
           .catch(

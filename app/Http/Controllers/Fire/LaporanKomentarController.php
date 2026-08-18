@@ -8,7 +8,6 @@ use App\Models\Event;
 use App\Services\ProfanityFilter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
@@ -47,15 +46,6 @@ class LaporanKomentarController extends Controller
 
     public function store(Request $request, Event $event): JsonResponse
     {
-        // Hanya pemilik akun yang boleh berkomentar. Pemeriksaan ada di sini,
-        // bukan sekadar di markup: menyembunyikan kolom ketik tidak menghalangi
-        // siapa pun mengirim langsung ke endpoint ini.
-        if (! Auth::check()) {
-            return response()->json([
-                'message' => 'Masuk dengan Google dulu untuk berkomentar.',
-            ], 401);
-        }
-
         if (! $this->turnstileSah($request)) {
             return response()->json([
                 'message' => 'Verifikasi captcha gagal. Coba lagi.',
@@ -70,9 +60,16 @@ class LaporanKomentarController extends Controller
         }
 
         $data = $request->validate([
+            'nama' => ['required', 'string', 'max:100'],
+            'email' => ['required', 'email', 'max:100'],
             'isi' => ['required', 'string', 'max:2000'],
             'balas_ke' => ['nullable', 'integer'],
         ], [
+            'nama.required' => 'Nama wajib diisi.',
+            'nama.max' => 'Nama maksimal 100 karakter.',
+            'email.required' => 'Email wajib diisi.',
+            'email.email' => 'Format email tidak valid.',
+            'email.max' => 'Email maksimal 100 karakter.',
             'isi.required' => 'Komentar wajib diisi.',
             'isi.max' => 'Komentar maksimal 2000 karakter.',
         ]);
@@ -86,15 +83,12 @@ class LaporanKomentarController extends Controller
             ->where('is_approved', true)
             ->find($data['balas_ke']);
 
-        $pengguna = Auth::user();
-
         Comment::query()->create([
             'page_id' => null,
             'commentable_type' => Event::class,
             'commentable_id' => $event->id,
-            'user_id' => $pengguna->id,
-            'name' => $pengguna->name,
-            'email' => $pengguna->email,
+            'name' => $data['nama'],
+            'email' => $data['email'],
             'body' => app(ProfanityFilter::class)->filter($data['isi']),
             'ip_address' => $request->ip(),
             'parent_id' => $induk?->id,
@@ -125,7 +119,6 @@ class LaporanKomentarController extends Controller
             ->where('is_approved', true)
             ->orderBy('created_at')
             ->limit(500)
-            ->with('user:id,image')
             ->get();
 
         $anak = $semua->groupBy(fn (Comment $k) => $k->parent_id ?? 0);

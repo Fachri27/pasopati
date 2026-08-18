@@ -366,6 +366,33 @@
   max-width: 100%;
 }
 
+/* Isian nama + email di atas kolom komentar. */
+.rincian__identitas {
+  display: flex;
+  gap: 8px;
+}
+
+.rincian__input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  border-bottom: 1px solid var(--r-garis);
+  padding: 6px 0;
+  background: transparent;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--r-teks);
+}
+
+.rincian__input::placeholder {
+  color: var(--r-redup);
+}
+
+.rincian__input:focus {
+  outline: none;
+  border-bottom-color: var(--r-tautan);
+}
+
 .rincian__baris {
   display: flex;
   align-items: center;
@@ -440,54 +467,6 @@
   width: 26px;
   height: 26px;
   font-size: 11px;
-}
-
-/* --- Ajakan masuk: menggantikan kolom ketik selama belum masuk ----------
-   Menempati slot yang sama persis dengan form-nya supaya irama dasar rel
-   tidak melompat saat keadaan berganti. */
-.rincian__masuk {
-  display: grid;
-  flex: 1 1 auto;
-  place-content: center;
-  justify-items: center;
-  gap: 14px;
-  border-top: 1px solid var(--r-garis);
-  padding: 24px 16px;
-  text-align: center;
-}
-
-.rincian__masuk-teks {
-  font-size: 13px;
-  line-height: 1.4;
-  color: var(--r-redup);
-}
-
-.rincian__masuk-tombol {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  border-radius: 999px;
-  padding: 9px 16px;
-  border: 1px solid rgb(26 25 25 / 0.16);
-  background: #fff;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--r-teks);
-  transition: background-color 0.2s ease;
-}
-
-.rincian__masuk-tombol:hover {
-  background: rgb(26 25 25 / 0.04);
-}
-
-.rincian__masuk-tombol:focus-visible {
-  outline: 2px solid var(--r-tautan);
-  outline-offset: 2px;
-}
-
-.rincian__masuk-tombol svg {
-  width: 17px;
-  height: 17px;
 }
 
 /* --- Tombol tutup -------------------------------------------------------- */

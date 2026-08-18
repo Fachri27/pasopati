@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\Comment;
 use App\Models\Event;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -39,53 +38,42 @@ class FireLaporanKomentarTest extends TestCase
         ]);
     }
 
-    /**
-     * Berkomentar wajib punya akun (masuk lewat Google). Ditolak di endpoint,
-     * bukan cuma disembunyikan di markup.
-     */
-    public function test_guest_cannot_post_a_comment(): void
+    private function komentarDasar(): array
+    {
+        return ['nama' => 'Warga Tapin', 'email' => 'warga@example.com'];
+    }
+
+    public function test_guest_can_post_a_comment_with_name_and_email(): void
     {
         $event = $this->event();
 
         $this->postJson(route('fire.komentar.store', $event), [
-            'isi' => 'Komentar tanpa akun.',
-        ])->assertUnauthorized();
-
-        $this->assertSame(0, Comment::query()->count());
-    }
-
-    public function test_signed_in_user_can_post_and_read_a_comment(): void
-    {
-        $event = $this->event();
-        $pengguna = User::factory()->create(['name' => 'Warga Tapin', 'role' => 'commenter']);
-
-        $this->actingAs($pengguna)
-            ->postJson(route('fire.komentar.store', $event), [
-                'isi' => 'Asapnya sampai ke desa sebelah.',
-            ])->assertCreated()
+            ...$this->komentarDasar(),
+            'isi' => 'Komentar dari tamu.',
+        ])->assertCreated()
             ->assertJsonPath('komentar.0.nama', 'Warga Tapin')
-            ->assertJsonPath('komentar.0.isi', 'Asapnya sampai ke desa sebelah.');
+            ->assertJsonPath('komentar.0.isi', 'Komentar dari tamu.');
 
         $this->getJson(route('fire.komentar.index', $event))
             ->assertOk()
             ->assertJsonCount(1, 'komentar');
     }
 
-    /**
-     * Nama diambil dari akun, bukan dari isian — kiriman yang mencoba
-     * menentukan namanya sendiri tetap tercatat atas nama pemiliknya.
-     */
-    public function test_name_comes_from_the_account_not_the_request(): void
+    public function test_name_and_email_are_required(): void
     {
-        $event = $this->event();
-        $pengguna = User::factory()->create(['name' => 'Nama Asli', 'role' => 'commenter']);
+        $this->postJson(route('fire.komentar.store', $this->event()), ['isi' => 'Halo.'])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['nama', 'email']);
+    }
 
-        $this->actingAs($pengguna)
-            ->postJson(route('fire.komentar.store', $event), [
-                'nama' => 'Nama Palsu',
-                'isi' => 'Halo.',
-            ])->assertCreated()
-            ->assertJsonPath('komentar.0.nama', 'Nama Asli');
+    public function test_email_must_be_valid(): void
+    {
+        $this->postJson(route('fire.komentar.store', $this->event()), [
+            'nama' => 'Budi',
+            'email' => 'bukan-email',
+            'isi' => 'Halo.',
+        ])->assertStatus(422)
+            ->assertJsonValidationErrors(['email']);
     }
 
     public function test_comment_is_attached_to_that_event_only(): void
@@ -96,10 +84,10 @@ class FireLaporanKomentarTest extends TestCase
             'location_lat', 'location_lng', 'location_geojson', 'orientation',
         ]), ['title_id' => 'Kejadian lain', 'title_en' => 'Another event']));
 
-        $this->actingAs(User::factory()->create())
-            ->postJson(route('fire.komentar.store', $satu), [
-                'isi' => 'Komentar untuk laporan pertama.',
-            ])->assertCreated();
+        $this->postJson(route('fire.komentar.store', $satu), [
+            ...$this->komentarDasar(),
+            'isi' => 'Komentar untuk laporan pertama.',
+        ])->assertCreated();
 
         $this->getJson(route('fire.komentar.index', $dua))
             ->assertOk()
@@ -108,9 +96,10 @@ class FireLaporanKomentarTest extends TestCase
 
     public function test_body_is_required(): void
     {
-        $this->actingAs(User::factory()->create())
-            ->postJson(route('fire.komentar.store', $this->event()), ['isi' => ''])
-            ->assertStatus(422)
+        $this->postJson(route('fire.komentar.store', $this->event()), [
+            ...$this->komentarDasar(),
+            'isi' => '',
+        ])->assertStatus(422)
             ->assertJsonValidationErrors(['isi']);
     }
 
@@ -122,11 +111,11 @@ class FireLaporanKomentarTest extends TestCase
     {
         $event = $this->event();
 
-        $this->actingAs(User::factory()->create())
-            ->postJson(route('fire.komentar.store', $event), [
-                'isi' => 'spam',
-                'website' => 'http://spam.example',
-            ])->assertCreated()->assertJsonCount(0, 'komentar');
+        $this->postJson(route('fire.komentar.store', $event), [
+            ...$this->komentarDasar(),
+            'isi' => 'spam',
+            'website' => 'http://spam.example',
+        ])->assertCreated()->assertJsonCount(0, 'komentar');
 
         $this->assertSame(0, Comment::query()->count());
     }
@@ -151,21 +140,19 @@ class FireLaporanKomentarTest extends TestCase
     public function test_reply_is_nested_under_its_root_comment(): void
     {
         $event = $this->event();
-        $andi = User::factory()->create(['name' => 'Andi']);
-        $budi = User::factory()->create(['name' => 'Budi']);
 
-        $this->actingAs($andi)
-            ->postJson(route('fire.komentar.store', $event), ['isi' => 'Komentar akar.'])
-            ->assertCreated();
+        $this->postJson(route('fire.komentar.store', $event), [
+            'nama' => 'Andi', 'email' => 'andi@example.com',
+            'isi' => 'Komentar akar.',
+        ])->assertCreated();
 
         $akarId = Comment::query()->firstOrFail()->id;
 
-        $this->actingAs($budi)
-            ->postJson(route('fire.komentar.store', $event), [
-                'isi' => 'Balasan untuk Andi.',
-                'balas_ke' => $akarId,
-            ])->assertCreated()
-            // Balasan tidak ikut jadi baris akar.
+        $this->postJson(route('fire.komentar.store', $event), [
+            'nama' => 'Budi', 'email' => 'budi@example.com',
+            'isi' => 'Balasan untuk Andi.',
+            'balas_ke' => $akarId,
+        ])->assertCreated()
             ->assertJsonCount(1, 'komentar')
             ->assertJsonPath('komentar.0.balasan.0.nama', 'Budi')
             ->assertJsonPath('komentar.0.balasan.0.sebutan', 'Andi');
@@ -179,21 +166,23 @@ class FireLaporanKomentarTest extends TestCase
     public function test_reply_to_a_reply_stays_in_the_same_thread(): void
     {
         $event = $this->event();
-        $andi = User::factory()->create(['name' => 'Andi']);
-        $budi = User::factory()->create(['name' => 'Budi']);
 
-        $this->actingAs($andi)->postJson(route('fire.komentar.store', $event), ['isi' => 'Akar.']);
+        $this->postJson(route('fire.komentar.store', $event), [
+            'nama' => 'Andi', 'email' => 'andi@example.com',
+            'isi' => 'Akar.',
+        ]);
         $akarId = Comment::query()->firstOrFail()->id;
 
-        $this->actingAs($budi)->postJson(route('fire.komentar.store', $event), [
+        $this->postJson(route('fire.komentar.store', $event), [
+            'nama' => 'Budi', 'email' => 'budi@example.com',
             'isi' => 'Balasan pertama.', 'balas_ke' => $akarId,
         ]);
         $balasanId = Comment::query()->where('parent_id', $akarId)->firstOrFail()->id;
 
-        $this->actingAs($andi)
-            ->postJson(route('fire.komentar.store', $event), [
-                'isi' => 'Balasan atas balasan.', 'balas_ke' => $balasanId,
-            ])->assertCreated()
+        $this->postJson(route('fire.komentar.store', $event), [
+            'nama' => 'Andi', 'email' => 'andi@example.com',
+            'isi' => 'Balasan atas balasan.', 'balas_ke' => $balasanId,
+        ])->assertCreated()
             ->assertJsonCount(1, 'komentar')
             ->assertJsonCount(2, 'komentar.0.balasan')
             ->assertJsonPath('komentar.0.balasan.1.sebutan', 'Budi');
@@ -208,15 +197,17 @@ class FireLaporanKomentarTest extends TestCase
     public function test_replying_to_yourself_still_carries_a_mention(): void
     {
         $event = $this->event();
-        $andi = User::factory()->create(['name' => 'Andi']);
 
-        $this->actingAs($andi)->postJson(route('fire.komentar.store', $event), ['isi' => 'Akar.']);
+        $this->postJson(route('fire.komentar.store', $event), [
+            'nama' => 'Andi', 'email' => 'andi@example.com',
+            'isi' => 'Akar.',
+        ]);
         $akarId = Comment::query()->firstOrFail()->id;
 
-        $this->actingAs($andi)
-            ->postJson(route('fire.komentar.store', $event), [
-                'isi' => 'Menambahkan.', 'balas_ke' => $akarId,
-            ])->assertCreated()
+        $this->postJson(route('fire.komentar.store', $event), [
+            'nama' => 'Andi', 'email' => 'andi@example.com',
+            'isi' => 'Menambahkan.', 'balas_ke' => $akarId,
+        ])->assertCreated()
             ->assertJsonPath('komentar.0.balasan.0.sebutan', 'Andi');
     }
 
@@ -232,16 +223,17 @@ class FireLaporanKomentarTest extends TestCase
             'location_lat', 'location_lng', 'location_geojson', 'orientation',
         ]), ['title_id' => 'Kejadian lain', 'title_en' => 'Another event']));
 
-        $pengguna = User::factory()->create();
-
-        $this->actingAs($pengguna)->postJson(route('fire.komentar.store', $satu), ['isi' => 'Akar di laporan satu.']);
+        $this->postJson(route('fire.komentar.store', $satu), [
+            ...$this->komentarDasar(),
+            'isi' => 'Akar di laporan satu.',
+        ]);
         $akarLain = Comment::query()->firstOrFail()->id;
 
-        $this->actingAs($pengguna)
-            ->postJson(route('fire.komentar.store', $dua), [
-                'isi' => 'Coba nempel ke utas laporan lain.',
-                'balas_ke' => $akarLain,
-            ])->assertCreated();
+        $this->postJson(route('fire.komentar.store', $dua), [
+            ...$this->komentarDasar(),
+            'isi' => 'Coba nempel ke utas laporan lain.',
+            'balas_ke' => $akarLain,
+        ])->assertCreated();
 
         // Jadi komentar akar biasa di laporannya sendiri, bukan balasan.
         $this->assertNull(Comment::query()->where('commentable_id', $dua->id)->firstOrFail()->parent_id);
@@ -251,25 +243,23 @@ class FireLaporanKomentarTest extends TestCase
     /**
      * Sebutan ikut tersimpan di dalam teks komentarnya (diisikan otomatis saat
      * menekan Balas), sementara `sebutan` dikirim terpisah sebagai penanda
-     * nama yang dibalas. Kolom pop-up memakai keduanya: teks dicocokkan dengan
-     * nama itu untuk memisahkan sebutan dari kalimatnya — nama akun Google
-     * boleh berspasi, jadi memindai token @… dari teks bebas tidak bisa
-     * diandalkan.
+     * nama yang dibalas.
      */
     public function test_mention_is_kept_inside_the_body_and_flagged_separately(): void
     {
         $event = $this->event();
-        $andi = User::factory()->create(['name' => 'Muhamad Fachri']);
-        $budi = User::factory()->create(['name' => 'Budi']);
 
-        $this->actingAs($andi)->postJson(route('fire.komentar.store', $event), ['isi' => 'Akar.']);
+        $this->postJson(route('fire.komentar.store', $event), [
+            'nama' => 'Muhamad Fachri', 'email' => 'fachri@example.com',
+            'isi' => 'Akar.',
+        ]);
         $akarId = Comment::query()->firstOrFail()->id;
 
-        $this->actingAs($budi)
-            ->postJson(route('fire.komentar.store', $event), [
-                'isi' => '@Muhamad Fachri terima kasih infonya.',
-                'balas_ke' => $akarId,
-            ])->assertCreated()
+        $this->postJson(route('fire.komentar.store', $event), [
+            'nama' => 'Budi', 'email' => 'budi@example.com',
+            'isi' => '@Muhamad Fachri terima kasih infonya.',
+            'balas_ke' => $akarId,
+        ])->assertCreated()
             ->assertJsonPath('komentar.0.balasan.0.sebutan', 'Muhamad Fachri')
             ->assertJsonPath('komentar.0.balasan.0.isi', '@Muhamad Fachri terima kasih infonya.');
     }
@@ -279,9 +269,10 @@ class FireLaporanKomentarTest extends TestCase
         config(['services.turnstile.secret_key' => 'rahasia-uji']);
         Http::fake();
 
-        $this->actingAs(User::factory()->create())
-            ->postJson(route('fire.komentar.store', $this->event()), ['isi' => 'Halo.'])
-            ->assertStatus(422);
+        $this->postJson(route('fire.komentar.store', $this->event()), [
+            ...$this->komentarDasar(),
+            'isi' => 'Halo.',
+        ])->assertStatus(422);
 
         $this->assertSame(0, Comment::query()->count());
         Http::assertNothingSent();
@@ -292,11 +283,11 @@ class FireLaporanKomentarTest extends TestCase
         config(['services.turnstile.secret_key' => 'rahasia-uji']);
         Http::fake(['challenges.cloudflare.com/*' => Http::response(['success' => false])]);
 
-        $this->actingAs(User::factory()->create())
-            ->postJson(route('fire.komentar.store', $this->event()), [
-                'isi' => 'Halo.',
-                'captcha_token' => 'token-palsu',
-            ])->assertStatus(422);
+        $this->postJson(route('fire.komentar.store', $this->event()), [
+            ...$this->komentarDasar(),
+            'isi' => 'Halo.',
+            'captcha_token' => 'token-palsu',
+        ])->assertStatus(422);
 
         $this->assertSame(0, Comment::query()->count());
     }
@@ -306,11 +297,11 @@ class FireLaporanKomentarTest extends TestCase
         config(['services.turnstile.secret_key' => 'rahasia-uji']);
         Http::fake(['challenges.cloudflare.com/*' => Http::response(['success' => true])]);
 
-        $this->actingAs(User::factory()->create())
-            ->postJson(route('fire.komentar.store', $this->event()), [
-                'isi' => 'Halo.',
-                'captcha_token' => 'token-sah',
-            ])->assertCreated()
+        $this->postJson(route('fire.komentar.store', $this->event()), [
+            ...$this->komentarDasar(),
+            'isi' => 'Halo.',
+            'captcha_token' => 'token-sah',
+        ])->assertCreated()
             ->assertJsonCount(1, 'komentar');
     }
 
@@ -324,9 +315,10 @@ class FireLaporanKomentarTest extends TestCase
         config(['services.turnstile.secret_key' => '']);
         Http::fake();
 
-        $this->actingAs(User::factory()->create())
-            ->postJson(route('fire.komentar.store', $this->event()), ['isi' => 'Halo.'])
-            ->assertCreated();
+        $this->postJson(route('fire.komentar.store', $this->event()), [
+            ...$this->komentarDasar(),
+            'isi' => 'Halo.',
+        ])->assertCreated();
 
         Http::assertNothingSent();
     }
