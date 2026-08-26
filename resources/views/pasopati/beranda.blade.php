@@ -522,10 +522,9 @@ BLADE);
                   </div>
                 </div>
 
-                {{-- Selama belum masuk tidak ada yang bisa diketik, jadi badan hanya
-                     setinggi isinya dan sisa ruang rel diberikan ke ajakan masuk
-                     yang dipusatkan di sana. --}}
-                <div data-lenis-prevent class="rincian__badan @guest rincian__badan--ringkas @endguest">
+                {{-- Badan selalu meregang mengisi rel, jadi kolom kirim tetap
+                     dipatok di dasarnya walau komentarnya baru satu-dua. --}}
+                <div data-lenis-prevent class="rincian__badan">
                   <!-- Kapsi: keping + nama pulau tebal disambung judul, sama
                        seperti baris keterangan pada rujukan. -->
                   <div class="rincian__kapsi">

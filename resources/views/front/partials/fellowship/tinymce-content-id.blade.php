@@ -3,11 +3,29 @@
                     selectedCategories: @entangle('selectedCategories'),
                     contents: @entangle('selectedKategori'),
     
+                    // Pastikan ada wadah isi untuk kategori ini. Dipanggil sebelum
+                    // apa pun membaca contents[catId]: x-model pada select status
+                    // butuh objeknya sudah ada — beda dengan :value di atasnya yang
+                    // masih bisa dijaga ternary, x-model harus menunjuk properti yang
+                    // benar-benar bisa ditulisi. contents ter-entangle ke
+                    // selectedKategori, dan di sana entri baru dibuat saat editor
+                    // pertama kali mengubah isi, jadi kategori yang baru dicentang
+                    // belum punya apa-apa.
+                    //
+                    // Jangan pakai tanda kutip ganda di komentar mana pun di dalam
+                    // blok ini: seluruh x-data adalah satu atribut HTML berkutip
+                    // ganda, jadi satu saja akan menutup atributnya lebih awal dan
+                    // seluruh komponen gagal di-parse.
+                    ensureContent(catId) {
+                    if (!this.contents[catId]) this.contents[catId] = {};
+                    },
+
                     // toggle saat user klik checkbox
                     toggleCategory(event) {
                     let catId = event.target.value;
                     if (event.target.checked) {
                         if (!this.selectedCategories.includes(catId)) this.selectedCategories.push(catId);
+                        this.ensureContent(catId);
                         this.$nextTick(() => {
                         this.initEditor(catId, 'id');
                         this.initEditor(catId, 'en');
@@ -184,6 +202,10 @@
     
                     // saat page load (edit) -> init editor untuk semua kategori yg sudah terpilih
                     initSelected() {
+                    // Kategori yang sudah terpilih sejak halaman dimuat juga bisa
+                    // belum punya wadah isi — mis. data lama yang tersimpan sebelum
+                    // kolom status ada.
+                    this.selectedCategories.forEach(catId => this.ensureContent(catId));
                     this.$nextTick(() => {
                         this.selectedCategories.forEach(catId => {
                         this.initEditor(catId, 'id');

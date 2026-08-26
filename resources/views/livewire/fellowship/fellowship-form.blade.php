@@ -1,22 +1,22 @@
 <div x-data="{ lang: 'id' }">
-    <div class="max-w-7xl mx-auto bg-white py-8 mb-20 px-8 rounded-xl shadow-md">
+    <div class="max-w-7xl mx-auto bg-admin-surface py-8 mb-20 px-8 rounded-xl shadow-md">
 
         {{-- ================= BREADCRUMB ================= --}}
-        <nav class="text-sm text-gray-600 mb-6 flex items-center gap-2">
-            <a href="{{ route('fellowship.index') }}" class="text-gray-800 hover:text-blue-600 font-medium">
+        <nav class="text-sm text-admin-ash mb-6 flex items-center gap-2">
+            <a href="{{ route('fellowship.index') }}" class="text-admin-smoke hover:text-blue-400 font-medium">
                 Page Fellowship
             </a>
 
-            <span class="text-gray-400">›</span>
+            <span class="text-admin-muted">›</span>
 
-            <span class="text-blue-600 font-semibold">
+            <span class="text-blue-400 font-semibold">
                 {{ isset($fellowship) ? '✏️ Edit Fellowship' : '➕ Add Fellowship' }}
             </span>
         </nav>
 
 
         {{-- ================= TITLE ================= --}}
-        <h1 class="text-2xl font-bold mb-8 text-gray-700">
+        <h1 class="text-2xl font-bold mb-8 text-admin-ash">
             {{ isset($fellowship) ? '✏️ Edit Fellowship' : '➕ Add Fellowship' }}
         </h1>
 
@@ -31,7 +31,7 @@
                 ===================================================== --}}
                 <div class="col-span-12 lg:col-span-4">
 
-                    <div class="bg-gray-50 border rounded-xl p-5 space-y-5 sticky top-6">
+                    <div class="bg-admin-raised border rounded-xl p-5 space-y-5 sticky top-6">
 
                         {{-- ================= LANGUAGE ================= --}}
                         <div>
@@ -61,7 +61,7 @@
 
                             <label class="text-sm mt-2 block">Slug</label>
                             <input type="text" x-model="slug" readonly
-                                class="w-full bg-gray-100 border rounded-lg px-3 py-2">
+                                class="w-full bg-admin-raised border rounded-lg px-3 py-2">
                         </div>
 
 
@@ -119,7 +119,7 @@
                         ===================================================== --}}
                         <div class="border-t pt-4 space-y-5">
 
-                            <h3 class="font-semibold text-gray-700">🖼 Images</h3>
+                            <h3 class="font-semibold text-admin-ash">🖼 Images</h3>
 
 
                             {{-- ================= INDONESIA ================= --}}
@@ -225,7 +225,7 @@
                 <div class="col-span-12 lg:col-span-8 space-y-6">
 
                     {{-- Excerpt --}}
-                    <div class="bg-white border rounded-xl p-4">
+                    <div class="bg-admin-surface border rounded-xl p-4">
                         <h3 class="font-semibold mb-3">Excerpt</h3>
 
                         <div x-show="lang === 'id'">
@@ -239,7 +239,7 @@
 
 
                     {{-- Content --}}
-                    <div class="bg-white border rounded-xl p-4">
+                    <div class="bg-admin-surface border rounded-xl p-4">
                         <h3 class="font-semibold mb-3">Content</h3>
 
                         @include('front.partials.fellowship.tinymce-content-id')
@@ -250,7 +250,7 @@
 
 
                 {{-- ================= SAVE BUTTON ================= --}}
-                <div class="col-span-12 sticky bottom-0 bg-white border-t p-4 flex justify-end">
+                <div class="col-span-12 sticky bottom-0 bg-admin-surface border-t p-4 flex justify-end">
 
                     <button type="submit" wire:loading.attr="disabled" class="bg-blue-600 hover:bg-blue-700 disabled:opacity-60
                                    text-white px-6 py-2 rounded-lg font-medium">

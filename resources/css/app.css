@@ -44,6 +44,21 @@
     --font-mono-ui: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
     --radius-card: 2px;
+
+    /* ── Admin: Thermal Command palette ── */
+    --font-admin: 'DM Sans', 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-admin-display: 'Space Grotesk', 'Poppins', system-ui, sans-serif;
+
+    --color-admin-base: #0f1117;
+    --color-admin-surface: #171b24;
+    --color-admin-raised: #1e2330;
+    --color-admin-line: #2a3040;
+    --color-admin-amber: #f59e0b;
+    --color-admin-ember: #ea580c;
+    --color-admin-red: #dc2626;
+    --color-admin-ash: #94a3b8;
+    --color-admin-smoke: #e2e8f0;
+    --color-admin-muted: #64748b;
 }
 
 /* Cahaya radial halus di hero arsip Deforestory. */
@@ -331,3 +346,122 @@ figure.media-caption figcaption {
         width: 2rem;
       }
     }
+
+/* ================================================================
+   Admin: Thermal Command
+   ================================================================ */
+
+/* Thermobar — the signature gradient. */
+.admin-thermobar {
+    height: 3px;
+    background: linear-gradient(90deg,
+        #f59e0b 0%,
+        #ea580c 35%,
+        #dc2626 65%,
+        #0f1117 100%
+    );
+}
+
+/* Sidebar nav link. */
+.admin-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #94a3b8;
+    transition: color 0.15s, background-color 0.15s;
+    text-decoration: none;
+}
+
+.admin-nav-link:hover {
+    color: #e2e8f0;
+    background-color: #1e2330;
+}
+
+.admin-nav-link.active {
+    color: #f59e0b;
+    background-color: rgba(245, 158, 11, 0.08);
+}
+
+/* Dark form inputs. */
+.admin-input {
+    width: 100%;
+    border-radius: 0.5rem;
+    border: 1px solid #2a3040;
+    background-color: #171b24;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    color: #e2e8f0;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.admin-input::placeholder {
+    color: #64748b;
+}
+
+.admin-input:focus {
+    outline: none;
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.15);
+}
+
+/* Dark select. */
+.admin-select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+}
+
+/* Dark table. */
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.admin-table thead {
+    background-color: #171b24;
+}
+
+.admin-table th {
+    padding: 0.625rem 1rem;
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    border-bottom: 1px solid #2a3040;
+}
+
+.admin-table td {
+    padding: 0.75rem 1rem;
+    color: #e2e8f0;
+    border-bottom: 1px solid #2a3040;
+}
+
+.admin-table tbody tr:hover {
+    background-color: #1e2330;
+}
+
+/* Status badges — dark theme. */
+.badge-active { background-color: rgba(34, 197, 94, 0.12); color: #4ade80; }
+.badge-draft { background-color: rgba(234, 179, 8, 0.12); color: #facc15; }
+.badge-closed { background-color: rgba(239, 68, 68, 0.12); color: #f87171; }
+.badge-pending { background-color: rgba(251, 146, 60, 0.12); color: #fb923c; }
+.badge-info { background-color: rgba(96, 165, 250, 0.12); color: #60a5fa; }
+
+/* Stat card glow on hover. */
+.admin-stat-card {
+    transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.admin-stat-card:hover {
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.06);
+}

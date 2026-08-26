@@ -1,8 +1,8 @@
 <div>
     <div class="flex flex-col justify-center items-center">
-        <div class="bg-white shadow rounded-lg p-6 overflow">
+        <div class="bg-admin-surface shadow rounded-lg p-6 overflow">
             <div class="flex items-center justify-between mb-4">
-                <h2 class="text-lg font-semibold text-gray-800 mb-4">Daftar Halaman</h2>
+                <h2 class="text-lg font-semibold text-admin-smoke mb-4">Daftar Halaman</h2>
                 <a href="{{ route('kategori.create') }}">
                     <button class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium">
                         🚀 Create
@@ -14,7 +14,7 @@
             </div>
             <table id="kategoriTable" class="w-full border-collapse">
                 <thead>
-                    <tr class="bg-gray-100 text-left text-sm font-medium text-gray-600">
+                    <tr class="bg-admin-raised text-left text-sm font-medium text-admin-ash">
                         <th class="p-3">No</th>
                         <th class="p-3">Nama Kategori (ID)</th>
                         <th class="p-3">Nama Kategori (EN)</th>

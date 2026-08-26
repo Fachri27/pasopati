@@ -116,18 +116,20 @@
 }
 
 /* Badan bergulir: kapsi + daftar komentar, persis seperti rujukan yang
-   menggulirkan keduanya bersama. */
+   menggulirkan keduanya bersama.
+
+   `flex: 1` di sini yang memaku kolom kirim di dasar rel. Dulu ada varian
+   --ringkas yang mematikannya selama pengunjung belum masuk, karena sisa
+   ruangnya dipakai ajakan masuk lewat Google yang dipusatkan di tengah. Ajakan
+   itu sudah tidak ada (kolom nama + email kembali dipakai), jadi variannya ikut
+   dilepas: yang tersisa hanya badan yang tidak meregang dan tidak ada apa pun
+   yang mengambil sisa ruangnya — kolom kirim berhenti di tengah rel dengan
+   ruang putih menganga di bawahnya. */
 .rincian__badan {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   padding: 16px;
-}
-
-/* Belum masuk: badan setinggi isinya saja (tetap boleh menyusut dan bergulir
-   kalau komentarnya banyak), sisa ruangnya jatuh ke .rincian__masuk. */
-.rincian__badan--ringkas {
-  flex: 0 1 auto;
 }
 
 .rincian__kapsi {

@@ -74,70 +74,12 @@ window.STATISTIK = [
   { tanggal: "11 Agustus 2026", label: "Statistik 5", nilai: "", keterangan: "" },
 ];
 
-/**
- * Titik panas per provinsi — nilai yang diwarnai pada peta choropleth.
- * Nama provinsi harus sama dengan properti `nama` di data/peta-provinsi.js.
- * SEMUA ANGKA DI SINI CONTOH (mock), BUKAN DATA RESMI.
- *
- * Provinsi yang tidak tercantum dianggap belum ada datanya dan diwarnai netral.
+/*
+ * window.TITIK_PANAS dan window.WILAYAH_RAWAN dulu ada di sini: angka titik
+ * panas contoh per provinsi beserta status "Siaga darurat"/"Waspada"-nya.
+ * Keduanya dilepas begitu peta beralih ke data nyata — jumlah laporan per
+ * provinsi dihitung FireController dari lokasi tiap kejadian di CMS dan
+ * dikirim ke komponen peta sebagai argumen. Dibiarkan di sini, keduanya jadi
+ * sumber kedua yang diam-diam bersaing dengan yang dari server.
  */
-window.TITIK_PANAS = {
-  Riau: 412,
-  "Kalimantan Barat": 356,
-  "Kalimantan Tengah": 289,
-  "Sumatera Selatan": 231,
-  Jambi: 168,
-  "Kalimantan Selatan": 154,
-  "Kalimantan Timur": 122,
-  "Sumatera Utara": 96,
-  Lampung: 74,
-  "Nusa Tenggara Timur": 61,
-  "Kalimantan Utara": 58,
-  Aceh: 47,
-  Papua: 44,
-  "Sumatera Barat": 41,
-  "Sulawesi Selatan": 38,
-  Bengkulu: 33,
-  "Sulawesi Tengah": 31,
-  "Nusa Tenggara Barat": 29,
-  "Jawa Timur": 27,
-  "Kepulauan Riau": 26,
-  "Jawa Barat": 23,
-  "Kepulauan Bangka Belitung": 22,
-  "Sulawesi Tenggara": 19,
-  "Jawa Tengah": 18,
-  "Papua Barat": 17,
-  Maluku: 14,
-  "Sulawesi Barat": 12,
-  "Maluku Utara": 11,
-  "Sulawesi Utara": 9,
-  Banten: 8,
-  Gorontalo: 7,
-  Bali: 4,
-  "DI Yogyakarta": 3,
-  "DKI Jakarta": 0,
-};
 
-/**
- * Rincian tambahan untuk wilayah yang ditandai merah pada desain sumber.
- * Dipakai di daftar wilayah rawan dan sebagai isi tambahan pada tooltip peta.
- * `status` di sini menimpa status yang biasanya diturunkan dari jumlah titik panas.
- * Angka di bawah ini contoh (mock), bukan data resmi.
- */
-window.WILAYAH_RAWAN = {
-  Riau: {
-    titikPanas: "412 titik",
-    luasTerbakar: "6.180 ha",
-    status: "Siaga darurat",
-  },
-  "Kalimantan Barat": {
-    titikPanas: "356 titik",
-    luasTerbakar: "4.940 ha",
-    status: "Siaga darurat",
-  },
-  "Kalimantan Tengah": {
-    titikPanas: "289 titik",
-    luasTerbakar: "3.725 ha",
-    status: "Waspada",
-  },
-};

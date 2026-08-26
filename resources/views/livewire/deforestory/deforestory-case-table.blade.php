@@ -1,9 +1,9 @@
 <div class="flex flex-col justify-center items-center">
-    <div class="bg-white shadow rounded-lg p-6 w-full">
+    <div class="bg-admin-surface shadow rounded-lg p-6 w-full">
         <div class="flex items-center justify-between mb-2">
             <div>
-                <h2 class="text-lg font-semibold text-gray-800">Deforestory — Arsip Kasus</h2>
-                <p class="text-xs text-gray-500 mt-1">
+                <h2 class="text-lg font-semibold text-admin-smoke">Deforestory — Arsip Kasus</h2>
+                <p class="text-xs text-admin-muted mt-1">
                     Daftar kartu kasus berasal dari API. Tiap kasus bisa punya
                     <strong>banyak laporan</strong> (judul, slug, gambar, isi sendiri). Klik
                     <strong>Kelola laporan</strong> untuk menambah/mengedit laporan per kasus.
@@ -12,7 +12,7 @@
                 </p>
             </div>
             <button wire:click="refreshList" wire:loading.attr="disabled"
-                class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium border">
+                class="bg-admin-raised hover:bg-admin-raised text-admin-ash px-4 py-2 rounded-lg text-sm font-medium border">
                 ⟳ Refresh
             </button>
         </div>
@@ -27,13 +27,13 @@
 
         <div class="flex flex-wrap items-center justify-between mb-4 gap-3">
             <input type="text" wire:model.live.debounce.150ms="search" placeholder="Cari judul / slug kartu..." class="border p-2 rounded">
-            <span class="text-xs text-gray-400">Sumber: API ({{ config('services.deforestory_api.url') }})</span>
+            <span class="text-xs text-admin-muted">Sumber: API ({{ config('services.deforestory_api.url') }})</span>
         </div>
 
         <div class="overflow-x-auto">
             <table class="min-w-full border-collapse table-fixed">
                 <thead>
-                    <tr class="bg-gray-100 text-left text-sm font-medium text-gray-600">
+                    <tr class="bg-admin-raised text-left text-sm font-medium text-admin-ash">
                         <th class="p-3 w-24">Gambar</th>
                         <th class="p-3">Kartu (API)</th>
                         <th class="p-3 w-44">UUID Simontini</th>
@@ -43,7 +43,7 @@
                         <th class="p-3 w-56">Aksi</th>
                     </tr>
                 </thead>
-                <tbody class="text-sm text-gray-700">
+                <tbody class="text-sm text-admin-ash">
                     @forelse ($cases as $row)
                         @php
                             $imgUrl = '';
@@ -59,35 +59,35 @@
                                 @if ($imgUrl)
                                     <img src="{{ $imgUrl }}" alt="" class="w-20 h-12 object-cover rounded">
                                 @else
-                                    <span class="text-xs text-gray-400">—</span>
+                                    <span class="text-xs text-admin-muted">—</span>
                                 @endif
                             </td>
                             <td class="p-3">
-                                <span class="text-sm font-medium text-gray-800 block">{{ $row['title'] }}</span>
-                                <span class="text-xs text-gray-400">/{{ $row['slug'] }}</span>
+                                <span class="text-sm font-medium text-admin-smoke block">{{ $row['title'] }}</span>
+                                <span class="text-xs text-admin-muted">/{{ $row['slug'] }}</span>
                             </td>
                             <td class="p-3">
                                 @if (! empty($row['uuid']))
                                     <div x-data="{ copied:false, copy(){ navigator.clipboard?.writeText('{{ e($row['uuid']) }}'); this.copied=true; setTimeout(()=>this.copied=false,1200) } }">
-                                        <code class="block text-[10px] font-mono text-gray-600 break-all leading-tight">{{ $row['uuid'] }}</code>
-                                        <button type="button" @click="copy" class="mt-1 text-[11px] text-blue-600 hover:underline whitespace-nowrap" x-text="copied ? 'Tersalin ✓' : 'Salin'">Salin</button>
+                                        <code class="block text-[10px] font-mono text-admin-ash break-all leading-tight">{{ $row['uuid'] }}</code>
+                                        <button type="button" @click="copy" class="mt-1 text-[11px] text-blue-400 hover:underline whitespace-nowrap" x-text="copied ? 'Tersalin ✓' : 'Salin'">Salin</button>
                                     </div>
                                 @else
-                                    <span class="text-xs text-gray-400">—</span>
+                                    <span class="text-xs text-admin-muted">—</span>
                                 @endif
                             </td>
                             <td class="p-3 text-xs">{{ $row['category'] ?: '-' }}</td>
                             <td class="p-3 text-xs">{{ $row['year'] ?: '-' }}</td>
                             <td class="p-3">
                                 @if ($row['laporan_count'] > 0)
-                                    <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">{{ $row['laporan_count'] }} laporan</span>
+                                    <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-emerald-500/10 text-emerald-400">{{ $row['laporan_count'] }} laporan</span>
                                 @else
-                                    <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-red-50 text-red-600">Belum ada</span>
+                                    <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-red-50 text-red-400">Belum ada</span>
                                 @endif
                             </td>
                             <td class="p-3">
                                 <a href="{{ $publicUrl }}" target="_blank">
-                                    <button class="bg-gray-600 px-3 py-1 rounded text-white text-xs">Lihat</button>
+                                    <button class="bg-admin-raised px-3 py-1 rounded text-white text-xs">Lihat</button>
                                 </a>
                                 <a href="{{ $laporanUrl }}">
                                     <button class="bg-blue-600 px-3 py-1 rounded text-white text-xs">Kelola laporan</button>
@@ -101,7 +101,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td class="p-3 text-center text-gray-400" colspan="7">
+                            <td class="p-3 text-center text-admin-muted" colspan="7">
                                 Tidak ada kartu dari API. Periksa konfigurasi <code>DEFORESTORY_API_URL</code>.
                             </td>
                         </tr>

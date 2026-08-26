@@ -1,26 +1,26 @@
 <div>
     <div class="my-6" x-data="{ lang: 'id' }">
-        <div class="max-w-7xl mx-auto bg-white py-8 mb-20 px-8 rounded-xl shadow-md"
+        <div class="max-w-7xl mx-auto bg-admin-surface py-8 mb-20 px-8 rounded-xl shadow-md"
             x-data="{ page_type: @entangle('page_type') }">
 
             {{-- Breadcrumb --}}
-            <nav class="text-sm text-gray-600 mb-6 flex items-center gap-2">
-                <a href="{{ route('pages.index') }}" class="text-gray-800 hover:text-blue-600 font-medium">
+            <nav class="text-sm text-admin-ash mb-6 flex items-center gap-2">
+                <a href="{{ route('pages.index') }}" class="text-admin-smoke hover:text-blue-400 font-medium">
                     Page Artikel
                 </a>
-                <span class="text-gray-400">›</span>
-                <span class="text-blue-600 font-semibold">
+                <span class="text-admin-muted">›</span>
+                <span class="text-blue-400 font-semibold">
                     {{ $page ? '✏️ Edit Page' : 'Tambah Artikel' }}
                 </span>
             </nav>
 
-            <h1 class="text-2xl font-bold mb-8 text-gray-700">
+            <h1 class="text-2xl font-bold mb-8 text-admin-ash">
                 {{ $page ? '✏️ Edit Page' : '➕ Add Page' }}
             </h1>
 
             <form wire:submit.prevent="save">
                 @if ($errors->any())
-                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+                    <div class="bg-red-500/10 border border-red-400 text-red-400 px-4 py-3 rounded mb-6">
                         <ul class="list-disc pl-5">
                             @foreach ($errors->all() as $error)
                                 <li>{{ $error }}</li>
@@ -32,7 +32,7 @@
 
                     {{-- ================= LEFT COLUMN ================= --}}
                     <div class="col-span-12 lg:col-span-4">
-                        <div class="bg-gray-50 border rounded-xl p-5 space-y-4 sticky top-6">
+                        <div class="bg-admin-raised border rounded-xl p-5 space-y-4 sticky top-6">
 
                             {{-- Language --}}
                             <div>
@@ -57,11 +57,11 @@
                                 <label class="font-medium">Title (ID)</label>
                                 <input type="text" wire:model="title_id" x-model="title" @input="slug = makeSlug(title)"
                                     class="w-full border rounded-lg px-3 py-2 mt-1">
-                                @error('title_id') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                                @error('title_id') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
 
                                 <label class="text-sm mt-2 block">Slug</label>
                                 <input type="text" x-model="slug" readonly
-                                    class="w-full bg-gray-100 border rounded-lg px-3 py-2">
+                                    class="w-full bg-admin-raised border rounded-lg px-3 py-2">
                             </div>
 
                             {{-- Title EN --}}
@@ -77,11 +77,11 @@
                                 <label class="font-medium">Title (EN)</label>
                                 <input type="text" wire:model="title_en" x-model="title" @input="slug = makeSlug(title)"
                                     class="w-full border rounded-lg px-3 py-2 mt-1">
-                                @error('title_en') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                                @error('title_en') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
 
                                 <label class="text-sm mt-2 block">Slug</label>
                                 <input type="text" x-model="slug" readonly
-                                    class="w-full bg-gray-100 border rounded-lg px-3 py-2">
+                                    class="w-full bg-admin-raised border rounded-lg px-3 py-2">
                             </div>
 
                             {{-- Publish + Page Type --}}
@@ -116,14 +116,14 @@
                                 <label class="text-sm">Upload File (ID)</label>
                                 <input type="file" wire:model="file_import_id"
                                     class="w-full border rounded-lg px-2 py-2">
-                                @error('file_import_id') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                                @error('file_import_id') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
                             </div>
 
                             <div x-show="lang === 'en'">
                                 <label class="text-sm">Upload File (EN)</label>
                                 <input type="file" wire:model="file_import_en"
                                     class="w-full border rounded-lg px-2 py-2">
-                                @error('file_import_en') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                                @error('file_import_en') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
                             </div>
 
                             {{-- Featured Image --}}
@@ -171,7 +171,7 @@
                                     <template x-for="item in ['deforestasi','kebakaran','pulp','mining']">
                                         <label class="px-3 py-1 border rounded-full cursor-pointer text-sm" :class="$wire.expose_type.includes(item)
                     ? 'bg-blue-600 text-white'
-                    : 'bg-white text-gray-700'">
+                    : 'bg-admin-surface text-admin-ash'">
 
                                             <input type="checkbox" class="hidden" wire:model="expose_type"
                                                 :value="item">
@@ -190,7 +190,7 @@
                     <div class="col-span-12 lg:col-span-8 space-y-6">
 
                         {{-- Excerpt --}}
-                        <div class="bg-white border rounded-xl p-4">
+                        <div class="bg-admin-surface border rounded-xl p-4">
                             <h3 class="font-semibold mb-3">Excerpt</h3>
 
                             <div x-show="lang === 'id'">
@@ -205,9 +205,9 @@
                         </div>
 
                         {{-- Content Paragraph --}}
-                        <div class="bg-white border rounded-xl p-4">
+                        <div class="bg-admin-surface border rounded-xl p-4">
                             <h3 class="font-semibold mb-3">Konten Paragraf</h3>
-                            <p class="text-xs text-gray-500 mb-2">Gunakan editor ini untuk konten paragraf biasa. Untuk blok khusus (info acara, agenda, dll.) gunakan bagian "Blok Konten Terstruktur" di bawah.</p>
+                            <p class="text-xs text-admin-muted mb-2">Gunakan editor ini untuk konten paragraf biasa. Untuk blok khusus (info acara, agenda, dll.) gunakan bagian "Blok Konten Terstruktur" di bawah.</p>
 
                             <div x-show="lang === 'id'">
                                 @includeWhen(true, 'front.partials.tinymce-content-id')
@@ -219,28 +219,28 @@
                         </div>
 
                         {{-- Content Blocks --}}
-                        <div x-show="page_type === 'expose'" class="bg-white border rounded-xl p-4">
+                        <div x-show="page_type === 'expose'" class="bg-admin-surface border rounded-xl p-4">
                             <h3 class="font-semibold mb-3">Blok Konten Terstruktur</h3>
-                            <p class="text-xs text-gray-500 mb-3">Tambahkan blok khusus seperti info acara, agenda, bio pembicara, quote, atau gambar.</p>
+                            <p class="text-xs text-admin-muted mb-3">Tambahkan blok khusus seperti info acara, agenda, bio pembicara, quote, atau gambar.</p>
 
                             {{-- ID Blocks --}}
                             <div x-show="lang === 'id'" class="space-y-4">
                                 @foreach ($content_blocks_id as $index => $block)
-                                    <div class="border rounded-lg p-4 bg-gray-50" wire:key="block_id_{{ $index }}_{{ $blocksVersion }}">
+                                    <div class="border rounded-lg p-4 bg-admin-raised" wire:key="block_id_{{ $index }}_{{ $blocksVersion }}">
                                         <div class="flex items-center justify-between mb-3">
                                             <span class="inline-block px-3 py-1 text-xs font-semibold rounded-full
-                                                {{ $block['type'] === 'paragraph' ? 'bg-blue-100 text-blue-700' : '' }}
-                                                {{ $block['type'] === 'image' ? 'bg-purple-100 text-purple-700' : '' }}
-                                                {{ $block['type'] === 'event_info_box' ? 'bg-red-100 text-red-700' : '' }}
-                                                {{ $block['type'] === 'agenda_day' ? 'bg-green-100 text-green-700' : '' }}
-                                                {{ $block['type'] === 'speaker_bio' ? 'bg-yellow-100 text-yellow-700' : '' }}
-                                                {{ $block['type'] === 'quote' ? 'bg-gray-200 text-gray-700' : '' }}">
+                                                {{ $block['type'] === 'paragraph' ? 'bg-blue-500/10 text-blue-400' : '' }}
+                                                {{ $block['type'] === 'image' ? 'bg-violet-500/10 text-violet-400' : '' }}
+                                                {{ $block['type'] === 'event_info_box' ? 'bg-red-500/10 text-red-400' : '' }}
+                                                {{ $block['type'] === 'agenda_day' ? 'bg-emerald-500/10 text-emerald-400' : '' }}
+                                                {{ $block['type'] === 'speaker_bio' ? 'bg-amber-500/10 text-amber-400' : '' }}
+                                                {{ $block['type'] === 'quote' ? 'bg-admin-raised text-admin-ash' : '' }}">
                                                 {{ $block['type'] }}
                                             </span>
                                             <div class="flex gap-1">
-                                                <button type="button" wire:click="moveBlockUp('id', {{ $index }})" class="px-2 py-1 text-sm border rounded hover:bg-gray-100" {{ $loop->first ? 'disabled' : '' }}>↑</button>
-                                                <button type="button" wire:click="moveBlockDown('id', {{ $index }})" class="px-2 py-1 text-sm border rounded hover:bg-gray-100" {{ $loop->last ? 'disabled' : '' }}>↓</button>
-                                                <button type="button" wire:click="removeBlock('id', {{ $index }})" class="px-2 py-1 text-sm border rounded text-red-600 hover:bg-red-50">×</button>
+                                                <button type="button" wire:click="moveBlockUp('id', {{ $index }})" class="px-2 py-1 text-sm border rounded hover:bg-admin-raised" {{ $loop->first ? 'disabled' : '' }}>↑</button>
+                                                <button type="button" wire:click="moveBlockDown('id', {{ $index }})" class="px-2 py-1 text-sm border rounded hover:bg-admin-raised" {{ $loop->last ? 'disabled' : '' }}>↓</button>
+                                                <button type="button" wire:click="removeBlock('id', {{ $index }})" class="px-2 py-1 text-sm border rounded text-red-400 hover:bg-red-50">×</button>
                                             </div>
                                         </div>
 
@@ -353,10 +353,10 @@
                                                             <div class="flex gap-2 mb-1" wire:key="reglink_id_{{ $index }}_{{ $linkIndex }}">
                                                                 <input type="text" wire:model="content_blocks_id.{{ $index }}.data.registration_links.{{ $linkIndex }}.day" placeholder="Hari 1" class="w-1/3 border rounded px-2 py-1 text-sm">
                                                                 <input type="url" wire:model="content_blocks_id.{{ $index }}.data.registration_links.{{ $linkIndex }}.url" placeholder="https://..." class="flex-1 border rounded px-2 py-1 text-sm">
-                                                                <button type="button" wire:click="removeRegLink('id', {{ $index }}, {{ $linkIndex }})" class="text-red-500 text-sm px-2">×</button>
+                                                                <button type="button" wire:click="removeRegLink('id', {{ $index }}, {{ $linkIndex }})" class="text-red-400 text-sm px-2">×</button>
                                                             </div>
                                                         @endforeach
-                                                        <button type="button" wire:click="addRegLink('id', {{ $index }})" class="text-sm text-blue-600 hover:underline">+ Tambah Link</button>
+                                                        <button type="button" wire:click="addRegLink('id', {{ $index }})" class="text-sm text-blue-400 hover:underline">+ Tambah Link</button>
                                                     </div>
                                                     <div class="col-span-2">
                                                         <label class="text-xs font-medium">Catatan</label>
@@ -382,10 +382,10 @@
                                                             <input type="text" wire:model="content_blocks_id.{{ $index }}.data.sessions.{{ $sessionIndex }}.commentator" placeholder="Komentator" class="border rounded px-2 py-1">
                                                             <input type="text" wire:model="content_blocks_id.{{ $index }}.data.sessions.{{ $sessionIndex }}.speakers" placeholder="Pembicara (pisahkan koma)" class="border rounded px-2 py-1">
                                                         </div>
-                                                        <button type="button" wire:click="removeSession('id', {{ $index }}, {{ $sessionIndex }})" class="text-xs text-red-500 hover:underline mt-1">Hapus sesi</button>
+                                                        <button type="button" wire:click="removeSession('id', {{ $index }}, {{ $sessionIndex }})" class="text-xs text-red-400 hover:underline mt-1">Hapus sesi</button>
                                                     </div>
                                                 @endforeach
-                                                <button type="button" wire:click="addSession('id', {{ $index }})" class="text-sm text-blue-600 hover:underline">+ Tambah Sesi</button>
+                                                <button type="button" wire:click="addSession('id', {{ $index }})" class="text-sm text-blue-400 hover:underline">+ Tambah Sesi</button>
                                                 @break
                                             @case('speaker_bio')
                                                 <div class="grid grid-cols-2 gap-3" x-data="{
@@ -434,13 +434,13 @@
                                                 </div>
                                                 @break
                                         @endswitch
-                                        <div class="flex gap-3 mt-3 pt-3 border-t border-gray-200">
+                                        <div class="flex gap-3 mt-3 pt-3 border-t border-admin-line">
                                             <div>
-                                                <label class="text-xs font-medium text-gray-500">Margin Top (px)</label>
+                                                <label class="text-xs font-medium text-admin-muted">Margin Top (px)</label>
                                                 <input type="number" wire:model="content_blocks_id.{{ $index }}.data.mt" placeholder="auto" class="w-24 border rounded px-2 py-1 text-sm">
                                             </div>
                                             <div>
-                                                <label class="text-xs font-medium text-gray-500">Margin Bottom (px)</label>
+                                                <label class="text-xs font-medium text-admin-muted">Margin Bottom (px)</label>
                                                 <input type="number" wire:model="content_blocks_id.{{ $index }}.data.mb" placeholder="auto" class="w-24 border rounded px-2 py-1 text-sm">
                                             </div>
                                         </div>
@@ -448,33 +448,33 @@
                                 @endforeach
 
                                 <div class="flex flex-wrap gap-2 pt-2">
-                                    <button type="button" wire:click="addBlock('id', 'paragraph')" class="px-3 py-1.5 text-sm border border-blue-300 text-blue-700 rounded-lg hover:bg-blue-50">+ Paragraph</button>
-                                    <button type="button" wire:click="addBlock('id', 'image')" class="px-3 py-1.5 text-sm border border-purple-300 text-purple-700 rounded-lg hover:bg-purple-50">+ Image</button>
-                                    <button type="button" wire:click="addBlock('id', 'event_info_box')" class="px-3 py-1.5 text-sm border border-red-300 text-red-700 rounded-lg hover:bg-red-50">+ Info Acara</button>
-                                    <button type="button" wire:click="addBlock('id', 'agenda_day')" class="px-3 py-1.5 text-sm border border-green-300 text-green-700 rounded-lg hover:bg-green-50">+ Agenda</button>
-                                    <button type="button" wire:click="addBlock('id', 'speaker_bio')" class="px-3 py-1.5 text-sm border border-yellow-300 text-yellow-700 rounded-lg hover:bg-yellow-50">+ Pembicara</button>
-                                    <button type="button" wire:click="addBlock('id', 'quote')" class="px-3 py-1.5 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">+ Quote</button>
+                                    <button type="button" wire:click="addBlock('id', 'paragraph')" class="px-3 py-1.5 text-sm border border-blue-300 text-blue-400 rounded-lg hover:bg-blue-50">+ Paragraph</button>
+                                    <button type="button" wire:click="addBlock('id', 'image')" class="px-3 py-1.5 text-sm border border-purple-300 text-violet-400 rounded-lg hover:bg-purple-50">+ Image</button>
+                                    <button type="button" wire:click="addBlock('id', 'event_info_box')" class="px-3 py-1.5 text-sm border border-red-300 text-red-400 rounded-lg hover:bg-red-50">+ Info Acara</button>
+                                    <button type="button" wire:click="addBlock('id', 'agenda_day')" class="px-3 py-1.5 text-sm border border-green-300 text-emerald-400 rounded-lg hover:bg-green-50">+ Agenda</button>
+                                    <button type="button" wire:click="addBlock('id', 'speaker_bio')" class="px-3 py-1.5 text-sm border border-yellow-300 text-amber-400 rounded-lg hover:bg-yellow-50">+ Pembicara</button>
+                                    <button type="button" wire:click="addBlock('id', 'quote')" class="px-3 py-1.5 text-sm border border-admin-line text-admin-ash rounded-lg hover:bg-admin-raised">+ Quote</button>
                                 </div>
                             </div>
 
                             {{-- EN Blocks --}}
                             <div x-show="lang === 'en'" class="space-y-4">
                                 @foreach ($content_blocks_en as $index => $block)
-                                    <div class="border rounded-lg p-4 bg-gray-50" wire:key="block_en_{{ $index }}_{{ $blocksVersion }}">
+                                    <div class="border rounded-lg p-4 bg-admin-raised" wire:key="block_en_{{ $index }}_{{ $blocksVersion }}">
                                         <div class="flex items-center justify-between mb-3">
                                             <span class="inline-block px-3 py-1 text-xs font-semibold rounded-full
-                                                {{ $block['type'] === 'paragraph' ? 'bg-blue-100 text-blue-700' : '' }}
-                                                {{ $block['type'] === 'image' ? 'bg-purple-100 text-purple-700' : '' }}
-                                                {{ $block['type'] === 'event_info_box' ? 'bg-red-100 text-red-700' : '' }}
-                                                {{ $block['type'] === 'agenda_day' ? 'bg-green-100 text-green-700' : '' }}
-                                                {{ $block['type'] === 'speaker_bio' ? 'bg-yellow-100 text-yellow-700' : '' }}
-                                                {{ $block['type'] === 'quote' ? 'bg-gray-200 text-gray-700' : '' }}">
+                                                {{ $block['type'] === 'paragraph' ? 'bg-blue-500/10 text-blue-400' : '' }}
+                                                {{ $block['type'] === 'image' ? 'bg-violet-500/10 text-violet-400' : '' }}
+                                                {{ $block['type'] === 'event_info_box' ? 'bg-red-500/10 text-red-400' : '' }}
+                                                {{ $block['type'] === 'agenda_day' ? 'bg-emerald-500/10 text-emerald-400' : '' }}
+                                                {{ $block['type'] === 'speaker_bio' ? 'bg-amber-500/10 text-amber-400' : '' }}
+                                                {{ $block['type'] === 'quote' ? 'bg-admin-raised text-admin-ash' : '' }}">
                                                 {{ $block['type'] }}
                                             </span>
                                             <div class="flex gap-1">
-                                                <button type="button" wire:click="moveBlockUp('en', {{ $index }})" class="px-2 py-1 text-sm border rounded hover:bg-gray-100" {{ $loop->first ? 'disabled' : '' }}>↑</button>
-                                                <button type="button" wire:click="moveBlockDown('en', {{ $index }})" class="px-2 py-1 text-sm border rounded hover:bg-gray-100" {{ $loop->last ? 'disabled' : '' }}>↓</button>
-                                                <button type="button" wire:click="removeBlock('en', {{ $index }})" class="px-2 py-1 text-sm border rounded text-red-600 hover:bg-red-50">×</button>
+                                                <button type="button" wire:click="moveBlockUp('en', {{ $index }})" class="px-2 py-1 text-sm border rounded hover:bg-admin-raised" {{ $loop->first ? 'disabled' : '' }}>↑</button>
+                                                <button type="button" wire:click="moveBlockDown('en', {{ $index }})" class="px-2 py-1 text-sm border rounded hover:bg-admin-raised" {{ $loop->last ? 'disabled' : '' }}>↓</button>
+                                                <button type="button" wire:click="removeBlock('en', {{ $index }})" class="px-2 py-1 text-sm border rounded text-red-400 hover:bg-red-50">×</button>
                                             </div>
                                         </div>
 
@@ -587,10 +587,10 @@
                                                             <div class="flex gap-2 mb-1" wire:key="reglink_en_{{ $index }}_{{ $linkIndex }}">
                                                                 <input type="text" wire:model="content_blocks_en.{{ $index }}.data.registration_links.{{ $linkIndex }}.day" placeholder="Day 1" class="w-1/3 border rounded px-2 py-1 text-sm">
                                                                 <input type="url" wire:model="content_blocks_en.{{ $index }}.data.registration_links.{{ $linkIndex }}.url" placeholder="https://..." class="flex-1 border rounded px-2 py-1 text-sm">
-                                                                <button type="button" wire:click="removeRegLink('en', {{ $index }}, {{ $linkIndex }})" class="text-red-500 text-sm px-2">×</button>
+                                                                <button type="button" wire:click="removeRegLink('en', {{ $index }}, {{ $linkIndex }})" class="text-red-400 text-sm px-2">×</button>
                                                             </div>
                                                         @endforeach
-                                                        <button type="button" wire:click="addRegLink('en', {{ $index }})" class="text-sm text-blue-600 hover:underline">+ Add Link</button>
+                                                        <button type="button" wire:click="addRegLink('en', {{ $index }})" class="text-sm text-blue-400 hover:underline">+ Add Link</button>
                                                     </div>
                                                     <div class="col-span-2">
                                                         <label class="text-xs font-medium">Notes</label>
@@ -616,10 +616,10 @@
                                                             <input type="text" wire:model="content_blocks_en.{{ $index }}.data.sessions.{{ $sessionIndex }}.commentator" placeholder="Commentator" class="border rounded px-2 py-1">
                                                             <input type="text" wire:model="content_blocks_en.{{ $index }}.data.sessions.{{ $sessionIndex }}.speakers" placeholder="Speakers (comma separated)" class="border rounded px-2 py-1">
                                                         </div>
-                                                        <button type="button" wire:click="removeSession('en', {{ $index }}, {{ $sessionIndex }})" class="text-xs text-red-500 hover:underline mt-1">Remove session</button>
+                                                        <button type="button" wire:click="removeSession('en', {{ $index }}, {{ $sessionIndex }})" class="text-xs text-red-400 hover:underline mt-1">Remove session</button>
                                                     </div>
                                                 @endforeach
-                                                <button type="button" wire:click="addSession('en', {{ $index }})" class="text-sm text-blue-600 hover:underline">+ Add Session</button>
+                                                <button type="button" wire:click="addSession('en', {{ $index }})" class="text-sm text-blue-400 hover:underline">+ Add Session</button>
                                                 @break
                                             @case('speaker_bio')
                                                 <div class="grid grid-cols-2 gap-3" x-data="{
@@ -668,13 +668,13 @@
                                                 </div>
                                                 @break
                                         @endswitch
-                                        <div class="flex gap-3 mt-3 pt-3 border-t border-gray-200">
+                                        <div class="flex gap-3 mt-3 pt-3 border-t border-admin-line">
                                             <div>
-                                                <label class="text-xs font-medium text-gray-500">Margin Top (px)</label>
+                                                <label class="text-xs font-medium text-admin-muted">Margin Top (px)</label>
                                                 <input type="number" wire:model="content_blocks_en.{{ $index }}.data.mt" placeholder="auto" class="w-24 border rounded px-2 py-1 text-sm">
                                             </div>
                                             <div>
-                                                <label class="text-xs font-medium text-gray-500">Margin Bottom (px)</label>
+                                                <label class="text-xs font-medium text-admin-muted">Margin Bottom (px)</label>
                                                 <input type="number" wire:model="content_blocks_en.{{ $index }}.data.mb" placeholder="auto" class="w-24 border rounded px-2 py-1 text-sm">
                                             </div>
                                         </div>
@@ -682,19 +682,19 @@
                                 @endforeach
 
                                 <div class="flex flex-wrap gap-2 pt-2">
-                                    <button type="button" wire:click="addBlock('en', 'paragraph')" class="px-3 py-1.5 text-sm border border-blue-300 text-blue-700 rounded-lg hover:bg-blue-50">+ Paragraph</button>
-                                    <button type="button" wire:click="addBlock('en', 'image')" class="px-3 py-1.5 text-sm border border-purple-300 text-purple-700 rounded-lg hover:bg-purple-50">+ Image</button>
-                                    <button type="button" wire:click="addBlock('en', 'event_info_box')" class="px-3 py-1.5 text-sm border border-red-300 text-red-700 rounded-lg hover:bg-red-50">+ Event Info</button>
-                                    <button type="button" wire:click="addBlock('en', 'agenda_day')" class="px-3 py-1.5 text-sm border border-green-300 text-green-700 rounded-lg hover:bg-green-50">+ Agenda</button>
-                                    <button type="button" wire:click="addBlock('en', 'speaker_bio')" class="px-3 py-1.5 text-sm border border-yellow-300 text-yellow-700 rounded-lg hover:bg-yellow-50">+ Speaker</button>
-                                    <button type="button" wire:click="addBlock('en', 'quote')" class="px-3 py-1.5 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">+ Quote</button>
+                                    <button type="button" wire:click="addBlock('en', 'paragraph')" class="px-3 py-1.5 text-sm border border-blue-300 text-blue-400 rounded-lg hover:bg-blue-50">+ Paragraph</button>
+                                    <button type="button" wire:click="addBlock('en', 'image')" class="px-3 py-1.5 text-sm border border-purple-300 text-violet-400 rounded-lg hover:bg-purple-50">+ Image</button>
+                                    <button type="button" wire:click="addBlock('en', 'event_info_box')" class="px-3 py-1.5 text-sm border border-red-300 text-red-400 rounded-lg hover:bg-red-50">+ Event Info</button>
+                                    <button type="button" wire:click="addBlock('en', 'agenda_day')" class="px-3 py-1.5 text-sm border border-green-300 text-emerald-400 rounded-lg hover:bg-green-50">+ Agenda</button>
+                                    <button type="button" wire:click="addBlock('en', 'speaker_bio')" class="px-3 py-1.5 text-sm border border-yellow-300 text-amber-400 rounded-lg hover:bg-yellow-50">+ Speaker</button>
+                                    <button type="button" wire:click="addBlock('en', 'quote')" class="px-3 py-1.5 text-sm border border-admin-line text-admin-ash rounded-lg hover:bg-admin-raised">+ Quote</button>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     {{-- SAVE --}}
-                    <div class="col-span-12 sticky bottom-0 bg-white border-t p-4 flex justify-end">
+                    <div class="col-span-12 sticky bottom-0 bg-admin-surface border-t p-4 flex justify-end">
                         <button type="submit" wire:loading.attr="disabled" class="relative bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed
                text-white px-6 py-2 rounded-lg font-medium flex items-center gap-2">
 

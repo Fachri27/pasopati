@@ -1,17 +1,17 @@
 <div class="flex flex-col justify-center items-center">
-    <div class="bg-white shadow rounded-lg p-6 w-full">
+    <div class="bg-admin-surface shadow rounded-lg p-6 w-full">
 
         {{-- Breadcrumb --}}
-        <nav class="text-sm text-gray-600 mb-3 flex items-center gap-2">
-            <a href="{{ route('deforestory.index') }}" class="text-gray-800 hover:text-blue-600 font-medium">Deforestory</a>
-            <span class="text-gray-400">›</span>
-            <span class="text-blue-600 font-semibold">Laporan /{{ $case->slug }}</span>
+        <nav class="text-sm text-admin-ash mb-3 flex items-center gap-2">
+            <a href="{{ route('deforestory.index') }}" class="text-admin-smoke hover:text-blue-400 font-medium">Deforestory</a>
+            <span class="text-admin-muted">›</span>
+            <span class="text-blue-400 font-semibold">Laporan /{{ $case->slug }}</span>
         </nav>
 
         <div class="flex items-center justify-between mb-2">
             <div>
-                <h2 class="text-lg font-semibold text-gray-800">Laporan kasus /{{ $case->slug }}</h2>
-                <p class="text-xs text-gray-500 mt-1">
+                <h2 class="text-lg font-semibold text-admin-smoke">Laporan kasus /{{ $case->slug }}</h2>
+                <p class="text-xs text-admin-muted mt-1">
                     Tiap laporan = entitas sendiri (judul, slug, gambar, excerpt, isi). Detail publik di
                     <span class="font-mono">/deforestory/{{ $case->slug }}/{slug-laporan}</span>.
                     Judul & identitas kasus diambil dari kartu API.
@@ -31,7 +31,7 @@
         <div class="flex flex-wrap items-center justify-between mb-4 gap-3">
             <input type="text" wire:model.live.debounce.150ms="search" placeholder="Cari judul / slug laporan..." class="border p-2 rounded">
             <a href="{{ route('deforestory.case', ['locale' => 'id', 'slug' => $case->slug]) }}" target="_blank">
-                <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium border">
+                <button class="bg-admin-raised hover:bg-admin-raised text-admin-ash px-4 py-2 rounded-lg text-sm font-medium border">
                     👁 Lihat arsip publik
                 </button>
             </a>
@@ -40,7 +40,7 @@
         <div class="overflow-x-auto">
             <table class="min-w-full border-collapse table-fixed">
                 <thead>
-                    <tr class="bg-gray-100 text-left text-sm font-medium text-gray-600">
+                    <tr class="bg-admin-raised text-left text-sm font-medium text-admin-ash">
                         <th class="p-3 w-20">Gambar</th>
                         <th class="p-3">Judul laporan</th>
                         <th class="p-3 w-40">Slug</th>
@@ -49,7 +49,7 @@
                         <th class="p-3 w-56">Aksi</th>
                     </tr>
                 </thead>
-                <tbody class="text-sm text-gray-700">
+                <tbody class="text-sm text-admin-ash">
                     @forelse ($laporans as $laporan)
                         @php
                             $idTrans = $laporan->translations->firstWhere('locale', 'id');
@@ -70,28 +70,28 @@
                                 @if ($imgUrl)
                                     <img src="{{ $imgUrl }}" alt="" class="w-16 h-10 object-cover rounded">
                                 @else
-                                    <span class="text-xs text-gray-400">—</span>
+                                    <span class="text-xs text-admin-muted">—</span>
                                 @endif
                             </td>
                             <td class="p-3">
-                                <span class="text-sm font-medium text-gray-800 block">{{ $title }}</span>
+                                <span class="text-sm font-medium text-admin-smoke block">{{ $title }}</span>
                             </td>
                             <td class="p-3">
-                                <span class="text-xs font-mono text-gray-500">/{{ $laporan->slug }}</span>
+                                <span class="text-xs font-mono text-admin-muted">/{{ $laporan->slug }}</span>
                             </td>
                             <td class="p-3 text-xs">{{ $laporan->sort }}</td>
                             <td class="p-3">
                                 @if ($laporan->status === 'active')
-                                    <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">Aktif</span>
+                                    <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-emerald-500/10 text-emerald-400">Aktif</span>
                                 @elseif ($laporan->status === 'draft')
-                                    <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-700">Draft</span>
+                                    <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-amber-500/10 text-amber-400">Draft</span>
                                 @else
-                                    <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">Inactive</span>
+                                    <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-admin-raised text-admin-ash">Inactive</span>
                                 @endif
                             </td>
                             <td class="p-3">
                                 <a href="{{ $publicUrl }}" target="_blank">
-                                    <button class="bg-gray-600 px-3 py-1 rounded text-white text-xs">Lihat</button>
+                                    <button class="bg-admin-raised px-3 py-1 rounded text-white text-xs">Lihat</button>
                                 </a>
                                 <a href="{{ route('deforestory.laporan.edit', $laporan->id) }}">
                                     <button class="bg-yellow-600 px-3 py-1 rounded text-white text-xs">Edit</button>
@@ -103,7 +103,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td class="p-3 text-center text-gray-400" colspan="6">
+                            <td class="p-3 text-center text-admin-muted" colspan="6">
                                 Belum ada laporan untuk kasus ini. Klik <strong>Tambah laporan</strong> untuk membuat.
                             </td>
                         </tr>

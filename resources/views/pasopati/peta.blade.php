@@ -7,7 +7,7 @@
     <section
       id="peta"
       aria-label="Peta sebaran"
-      x-data="peta(@js($berita ?? []))"
+      x-data="peta(@js($berita ?? []), @js($jumlahLaporan ?? []))"
       x-on:keydown.window="tutupDenganEscape($event)"
       data-kabur-tepi
       class="tepi-lunak relative z-[2] flex min-h-[100svh] flex-col justify-center overflow-hidden
@@ -242,11 +242,11 @@
         <!-- Tabel setara: peta warna tidak bisa dibaca pembaca layar. -->
         <table class="sr-only">
           <caption>
-            Titik panas karhutla per provinsi (data contoh, bukan data resmi)
+            Jumlah laporan karhutla per provinsi
           </caption>
           <tr>
             <th scope="col">Provinsi</th>
-            <th scope="col">Titik panas</th>
+            <th scope="col">Laporan</th>
             <th scope="col">Status</th>
           </tr>
           <template x-for="p in tabel" :key="p.nama">
@@ -355,7 +355,7 @@
                       class="font-bold text-[var(--color-tinta)]"
                       x-text="pilihan?.angka"
                     ></span>
-                    <span>titik panas tercatat</span>
+                    <span>laporan tercatat</span>
                   </p>
                 </div>
               </div>

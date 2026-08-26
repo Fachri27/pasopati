@@ -24,7 +24,11 @@ document.addEventListener("alpine:init", function () {
          (route fire.event). Dipakai pulihkanDariMasuk membuka pop-up event itu
          saat halaman dimuat. */
       slugDiminta: slugDiminta || null,
+      /* Berapa set kartu dijajarkan, dan apakah gulirannya melingkar tanpa
+         ujung. Keduanya disetel init() menurut banyaknya berita — alasannya
+         panjang, ada di sana. */
       SALINAN: 3,
+      gulung: true,
       JEDA_OTOMATIS: 6000, /* ms; 0 untuk mematikan putar otomatis */
       DURASI: 550, /* selaras dengan durasi transisi pada jalur */
 
@@ -61,7 +65,27 @@ document.addEventListener("alpine:init", function () {
       init: function () {
         if (!this.berita.length) return;
         this.kurangiGerak = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-        this.aktif = this.berita.length + 1; /* set tengah, kartu ke-2 seperti desain */
+
+        /* Digandakan tiga set atau tidak sama sekali, ambangnya TIGA berita.
+
+           Jendela korsel memperlihatkan tiga kartu sekaligus: tetangga kiri,
+           kartu aktif, tetangga kanan. Dengan penggandaan, kartu ke-i memuat
+           berita (i mod n) — jadi tetangga kiri dan kanan menunjuk berita yang
+           sama persis ketika selisih keduanya, 2, habis dibagi n. Itu terjadi
+           untuk n = 1 dan n = 2, dan tidak pernah lagi untuk n >= 3.
+
+           Karena itu ambangnya bukan "lebih dari satu": dengan dua berita pun
+           laporan yang sama tetap terlihat dua kali di kiri dan di kanan, dan
+           halaman terbaca seolah memuat tiga laporan padahal baru dua.
+
+           Di bawah tiga, kartu ditampilkan apa adanya sekali saja dan
+           gulirannya berhenti melingkar — lihat pindah(). */
+        var gulung = this.berita.length >= 3;
+        this.gulung = gulung;
+        this.SALINAN = gulung ? 3 : 1;
+        /* Set tengah, kartu ke-2 seperti desain. Tanpa penggandaan, kartu
+           pertamalah yang berdiri di tengah. */
+        this.aktif = gulung ? this.berita.length + 1 : 0;
 
         /* x-for baru merender setelah init, jadi pengukuran menunggu satu tick. */
         this.$nextTick(
@@ -149,6 +173,14 @@ document.addEventListener("alpine:init", function () {
           window.clearTimeout(this.pengaman);
           this.pengaman = null;
         }
+
+        /* Tanpa penggandaan tidak ada yang perlu dikembalikan: pindah() sudah
+           menjaga indeksnya di dalam set. */
+        if (!this.gulung) {
+          this.kunci = false;
+          return;
+        }
+
         var jumlah = this.berita.length;
         /* Kembalikan indeks ke set tengah tanpa animasi supaya geser tak habis. */
         if (this.aktif < jumlah || this.aktif >= jumlah * 2) {
@@ -161,11 +193,28 @@ document.addEventListener("alpine:init", function () {
       pindah: function (arah) {
         /* Tanpa berita, markup korsel tidak dirender sama sekali (Blade
            menampilkan rak kosong): tombol panah papan ketik masih terpasang di
-           window, jadi jaga di sini supaya tidak menghitung modulo nol. */
-        if (!this.berita.length) return;
+           window, jadi jaga di sini supaya tidak menghitung modulo nol.
+
+           Satu berita juga berhenti di sini: tidak ada kartu lain untuk dituju,
+           dan tanpa penjagaan ini normalkan() akan memindahkan `aktif` ke
+           indeks kartu yang tidak pernah dirender. */
+        if (this.berita.length < 2) return;
         if (this.kunci) return;
         this.kunci = true;
-        this.aktif += arah;
+
+        if (this.gulung) {
+          /* Indeks boleh melewati batas; normalkan() yang mengembalikannya ke
+             set tengah setelah animasi, tanpa terlihat. */
+          this.aktif += arah;
+        } else {
+          /* Tanpa kembaran, indeks harus tetap di dalam satu-satunya set yang
+             dirender. Dua berita jadi bertukar bolak-balik — itu memang yang
+             bisa dilakukan dua kartu, dan lebih baik daripada panah yang
+             ditekan lalu tidak terjadi apa-apa. */
+          var jumlah = this.berita.length;
+          this.aktif = ((this.aktif + arah) % jumlah + jumlah) % jumlah;
+        }
+
         this.terapkan(true);
         if (this.kurangiGerak) {
           this.normalkan();
@@ -556,12 +605,22 @@ document.addEventListener("alpine:init", function () {
       /* --- putar otomatis --- */
 
       mulaiOtomatis: function () {
-        if (!this.berita.length) return; /* rak kosong: tak ada yang diputar */
+        if (this.berita.length < 2) return; /* tak ada kartu lain untuk dituju */
         if (this.sorot !== null) return; /* pop-up terbuka: korsel diam */
         if (!this.JEDA_OTOMATIS || this.kurangiGerak) return;
         this.hentikanOtomatis();
         this.pewaktu = window.setInterval(
           function () {
+            /* Kalau kartu aktif punya video yang belum selesai, tahan dulu —
+               jangan geser sebelum video habis. */
+            var kartuAktif = this.kartu[this.aktif];
+            if (
+              kartuAktif &&
+              kartuAktif.isi.video &&
+              this.videoUsai[kartuAktif.kunci] !== true
+            ) {
+              return;
+            }
             this.pindah(1);
           }.bind(this),
           this.JEDA_OTOMATIS

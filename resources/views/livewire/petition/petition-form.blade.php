@@ -1,19 +1,19 @@
 <div>
     <div class="my-6" x-data="{ lang: 'id' }">
-        <div class="max-w-7xl mx-auto bg-white py-8 mb-20 px-8 rounded-xl shadow-md">
+        <div class="max-w-7xl mx-auto bg-admin-surface py-8 mb-20 px-8 rounded-xl shadow-md">
 
             {{-- Breadcrumb --}}
-            <nav class="text-sm text-gray-600 mb-6 flex items-center gap-2">
-                <a href="{{ route('petition.admin.index') }}" class="text-gray-800 hover:text-blue-600 font-medium">
+            <nav class="text-sm text-admin-ash mb-6 flex items-center gap-2">
+                <a href="{{ route('petition.admin.index') }}" class="text-admin-smoke hover:text-blue-400 font-medium">
                     Petisi
                 </a>
-                <span class="text-gray-400">›</span>
-                <span class="text-blue-600 font-semibold">
+                <span class="text-admin-muted">›</span>
+                <span class="text-blue-400 font-semibold">
                     {{ $petition ? 'Edit Petisi' : 'Tambah Petisi' }}
                 </span>
             </nav>
 
-            <h1 class="text-2xl font-bold mb-8 text-gray-700">
+            <h1 class="text-2xl font-bold mb-8 text-admin-ash">
                 {{ $petition ? '✏️ Edit Petisi' : '➕ Tambah Petisi' }}
             </h1>
 
@@ -22,7 +22,7 @@
 
                     {{-- LEFT COLUMN --}}
                     <div class="col-span-12 lg:col-span-4">
-                        <div class="bg-gray-50 border rounded-xl p-5 space-y-4 sticky top-6">
+                        <div class="bg-admin-raised border rounded-xl p-5 space-y-4 sticky top-6">
 
                             {{-- Language --}}
                             <div>
@@ -102,7 +102,7 @@
                     <div class="col-span-12 lg:col-span-8 space-y-6">
 
                         {{-- Description --}}
-                        <div class="bg-white border rounded-xl p-4">
+                        <div class="bg-admin-surface border rounded-xl p-4">
                             <h3 class="font-semibold mb-3">Deskripsi</h3>
 
                             <div x-show="lang === 'id'">
@@ -116,7 +116,7 @@
                         </div>
 
                         {{-- Demands --}}
-                        <div class="bg-white border rounded-xl p-4">
+                        <div class="bg-admin-surface border rounded-xl p-4">
                             <h3 class="font-semibold mb-3">Poin Tuntutan</h3>
 
                             <div class="flex gap-2 mb-3">
@@ -131,11 +131,11 @@
 
                             <ul class="space-y-2">
                                 @foreach ($demands as $index => $demand)
-                                    <li class="flex items-start gap-2 bg-gray-50 p-2 rounded">
-                                        <span class="text-blue-600 mt-1">•</span>
+                                    <li class="flex items-start gap-2 bg-admin-raised p-2 rounded">
+                                        <span class="text-blue-400 mt-1">•</span>
                                         <span class="flex-1 text-sm">{{ $demand }}</span>
                                         <button type="button" wire:click="removeDemand({{ $index }})"
-                                            class="text-red-500 hover:text-red-700 text-sm">✕</button>
+                                            class="text-red-400 hover:text-red-400 text-sm">✕</button>
                                     </li>
                                 @endforeach
                             </ul>
@@ -144,7 +144,7 @@
                     </div>
 
                     {{-- SAVE --}}
-                    <div class="col-span-12 sticky bottom-0 bg-white border-t p-4 flex justify-end">
+                    <div class="col-span-12 sticky bottom-0 bg-admin-surface border-t p-4 flex justify-end">
                         <button type="submit" wire:loading.attr="disabled"
                             class="relative bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-medium flex items-center gap-2">
 

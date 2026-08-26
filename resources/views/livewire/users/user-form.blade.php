@@ -1,7 +1,7 @@
 <div>
     <section id="hero" class="flex flex-col justify-center items-center">
         <div class="max-w-md mx-auto">
-            <h1 class="text-2xl font-bold mb-6 text-gray-700">
+            <h1 class="text-2xl font-bold mb-6 text-admin-ash">
                 {{ $userId ? '✏️ Edit Profile' : '➕ Add User' }}
             </h1>
 
@@ -9,20 +9,20 @@
                 <div class="flex items-center space-x-2">
                     <div class="mb-3 w-1/2">
                         <input type="text" wire:model.defer="name" placeholder="Name" class="w-full border rounded p-2">
-                        @error('name') <p class="text-red-600 text-sm">{{ $message }}</p> @enderror
+                        @error('name') <p class="text-red-400 text-sm">{{ $message }}</p> @enderror
                     </div>
 
                     <div class="mb-3 w-1/2">
                         <input type="email" wire:model.defer="email" placeholder="Email"
                             class="w-full border rounded p-2">
-                        @error('email') <p class="text-red-600 text-sm">{{ $message }}</p> @enderror
+                        @error('email') <p class="text-red-400 text-sm">{{ $message }}</p> @enderror
                     </div>
                 </div>
 
                 <div class="mb-3">
                     <input type="password" wire:model.defer="password" placeholder="Password"
                         class="w-full border rounded p-2">
-                    @error('password') <p class="text-red-600 text-sm">{{ $message }}</p> @enderror
+                    @error('password') <p class="text-red-400 text-sm">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="mb-3">
@@ -32,7 +32,7 @@
 
                 {{-- <div class="w-full max-w-lg mb-3">
                     <input type="file" wire:model="image" class="w-full">
-                    @error('image') <p class="text-red-600 text-sm">{{ $message }}</p> @enderror
+                    @error('image') <p class="text-red-400 text-sm">{{ $message }}</p> @enderror
 
                     @if ($image)
                     <div class="mt-3">
@@ -55,18 +55,18 @@
                             class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                             @change="fileName = $event.target.files.length ? $event.target.files[0].name : 'No File Selected'">
 
-                        <div class="flex items-center justify-between w-full border border-gray-200 rounded-xl bg-white p-3 
+                        <div class="flex items-center justify-between w-full border border-admin-line rounded-xl bg-admin-surface p-3 
                         transition-all duration-200 ease-in-out
                         focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-400/50
                         group-hover:shadow-md">
                             <div class="flex items-center gap-2">
-                                <div class="bg-gray-100 p-2 rounded-lg text-gray-500">
+                                <div class="bg-admin-raised p-2 rounded-lg text-admin-muted">
                                     📁
                                 </div>
-                                <span x-text="fileName" class="text-gray-500 text-sm truncate w-44"></span>
+                                <span x-text="fileName" class="text-admin-muted text-sm truncate w-44"></span>
                             </div>
 
-                            <div class="text-gray-400">
+                            <div class="text-admin-muted">
                                 📎
                             </div>
                             @if ($image)
@@ -99,7 +99,7 @@
                         <option value="{{ $r }}">{{ ucfirst($r) }}</option>
                         @endforeach
                     </select>
-                    @error('role') <p class="text-red-600 text-sm">{{ $message }}</p> @enderror
+                    @error('role') <p class="text-red-400 text-sm">{{ $message }}</p> @enderror
                 </div>
 
                 <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded w-full">

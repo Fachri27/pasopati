@@ -1,7 +1,7 @@
 <div class="flex flex-col justify-center items-center">
-    <div class="bg-white shadow rounded-lg p-6">
+    <div class="bg-admin-surface shadow rounded-lg p-6">
         <div class="flex items-center justify-between ">
-            <h2 class="text-lg font-semibold text-gray-800 mb-4">Daftar Halaman</h2>
+            <h2 class="text-lg font-semibold text-admin-smoke mb-4">Daftar Halaman</h2>
             <a href="{{ route('fellowship.create') }}">
                 <button class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium">
                     🚀 Create
@@ -14,9 +14,9 @@
 
         <div class="flex items-center justify-between mb-6">
             <div class="flex items-center gap-2">
-                <label for="statusFilter" class="text-sm font-medium text-gray-700">Filter Status:</label>
+                <label for="statusFilter" class="text-sm font-medium text-admin-ash">Filter Status:</label>
                 <select id="statusFilter" wire:model.live.debounce.100ms="status"
-                    class="border-gray-300 rounded-md text-sm">
+                    class="border-admin-line rounded-md text-sm">
                     <option value="">Semua</option>
                     <option value="draft">Draft</option>
                     <option value="active">Active</option>
@@ -24,8 +24,8 @@
                 </select>
             </div>
             <div class="flex items-center gap-2">
-                <label for="userFilter" class="text-sm font-medium text-gray-700">Filter Author:</label>
-                <select id="userFilter" class="border-gray-300 rounded-md text-sm">
+                <label for="userFilter" class="text-sm font-medium text-admin-ash">Filter Author:</label>
+                <select id="userFilter" class="border-admin-line rounded-md text-sm">
                     <option value="">Semua Penulis</option>
                     <option value="me">Saya</option>
                 </select>
@@ -54,7 +54,7 @@
                     readonly>
 
                 <button type="button" @click="resetDate"
-                    class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-2 rounded">
+                    class="bg-admin-raised hover:bg-admin-line text-admin-smoke px-3 py-2 rounded">
                     Reset
                 </button>
 
@@ -66,7 +66,7 @@
         <div class="overflow-x-auto">
             <table id="fellowshipTable" class="min-w-full border-collapse table-fixed">
                 <thead>
-                    <tr class="bg-gray-100 text-left text-sm font-medium text-gray-600">
+                    <tr class="bg-admin-raised text-left text-sm font-medium text-admin-ash">
                         <th class="p-3">Title</th>
                         <th class="p-3">Image</th>
                         <th class="p-3">Start Date</th>
@@ -75,13 +75,13 @@
                         <th class="p-3">Action</th>
                     </tr>
                 </thead>
-                <tbody class="text-sm text-gray-700">
+                <tbody class="text-sm text-admin-ash">
                     @forelse ($fellowship as $data )
                     @php
                     $idTranslation = $data->translations->firstWhere('locale', 'id');
                     @endphp
                     <tr>
-                        <td class="p-3"><span class="text-sm leading-snug text-gray-800 block max-w-xs">{{
+                        <td class="p-3"><span class="text-sm leading-snug text-admin-smoke block max-w-xs">{{
                                 $idTranslation->title }}</span></td>
                         <td class="p-3">
                             <img src="{{ asset('storage/' . $idTranslation->image) }}" alt="{{ $idTranslation->title }}"
@@ -101,7 +101,7 @@
                             </span>
                             @else
                             <span
-                                class="inline-block px-3 py-1 text-white text-xs font-semibold rounded-full bg-gray-500">
+                                class="inline-block px-3 py-1 text-white text-xs font-semibold rounded-full bg-admin-raised0">
                                 inactive
                             </span>
                             @endif
@@ -112,7 +112,7 @@
                         <td class="p-3">
                             <a href="{{ route('fellowship.preview', ['locale' => 'id', 'slug' => $data->slug]) }}"
                                 target="_blank">
-                                <button class="bg-gray-600 px-3 py-1 rounded text-white">Preview</button>
+                                <button class="bg-admin-raised px-3 py-1 rounded text-white">Preview</button>
                             </a>
                             <a href="{{ route('fellowship.edit', $data->id) }}">
                                 <button class="bg-yellow-600 px-3 py-1 rounded text-white">Edit</button>

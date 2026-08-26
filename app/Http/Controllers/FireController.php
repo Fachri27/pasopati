@@ -57,6 +57,100 @@ class FireController extends Controller
     ];
 
     /**
+     * Nama provinsi (Indonesia maupun Inggris) → nama kanonik yang dipakai peta.
+     *
+     * Kanoniknya mengikuti public/data/peta-provinsi.js — 34 poligon yang
+     * digambar peta sebaran. Angka di tengah tiap provinsi dihitung per nama
+     * itu, jadi ejaan apa pun yang datang dari CMS harus bermuara ke sana.
+     *
+     * Perlu versi Inggrisnya karena pencarian lokasi GeoServer di CMS menyimpan
+     * nama berbahasa Inggris: lokasi tersimpan sebagai
+     * "[Abadi Jaya][Sukmajaya][Depok City][West Java][Java][Indonesia][18900]".
+     *
+     * Provinsi pemekaran Papua 2022 sengaja dipetakan ke induk lamanya: peta
+     * lokal masih 34 poligon, jadi tanpa itu laporan dari sana tidak punya
+     * tempat untuk dihitung dan hilang diam-diam.
+     */
+    private const PROVINSI_PETA = [
+        'Aceh' => 'Aceh',
+        'Sumatera Utara' => 'Sumatera Utara',
+        'Sumatra Utara' => 'Sumatera Utara',
+        'North Sumatra' => 'Sumatera Utara',
+        'North Sumatera' => 'Sumatera Utara',
+        'Sumatera Barat' => 'Sumatera Barat',
+        'Sumatra Barat' => 'Sumatera Barat',
+        'West Sumatra' => 'Sumatera Barat',
+        'West Sumatera' => 'Sumatera Barat',
+        'Riau' => 'Riau',
+        'Kepulauan Riau' => 'Kepulauan Riau',
+        'Riau Islands' => 'Kepulauan Riau',
+        'Jambi' => 'Jambi',
+        'Sumatera Selatan' => 'Sumatera Selatan',
+        'Sumatra Selatan' => 'Sumatera Selatan',
+        'South Sumatra' => 'Sumatera Selatan',
+        'South Sumatera' => 'Sumatera Selatan',
+        'Kepulauan Bangka Belitung' => 'Kepulauan Bangka Belitung',
+        'Bangka Belitung' => 'Kepulauan Bangka Belitung',
+        'Bangka Belitung Islands' => 'Kepulauan Bangka Belitung',
+        'Bengkulu' => 'Bengkulu',
+        'Lampung' => 'Lampung',
+        'Banten' => 'Banten',
+        'DKI Jakarta' => 'DKI Jakarta',
+        'Jakarta' => 'DKI Jakarta',
+        'Special Capital Region of Jakarta' => 'DKI Jakarta',
+        'Jawa Barat' => 'Jawa Barat',
+        'West Java' => 'Jawa Barat',
+        'Jawa Tengah' => 'Jawa Tengah',
+        'Central Java' => 'Jawa Tengah',
+        'DI Yogyakarta' => 'DI Yogyakarta',
+        'Daerah Istimewa Yogyakarta' => 'DI Yogyakarta',
+        'Yogyakarta' => 'DI Yogyakarta',
+        'Special Region of Yogyakarta' => 'DI Yogyakarta',
+        'Jawa Timur' => 'Jawa Timur',
+        'East Java' => 'Jawa Timur',
+        'Bali' => 'Bali',
+        'Nusa Tenggara Barat' => 'Nusa Tenggara Barat',
+        'West Nusa Tenggara' => 'Nusa Tenggara Barat',
+        'Nusa Tenggara Timur' => 'Nusa Tenggara Timur',
+        'East Nusa Tenggara' => 'Nusa Tenggara Timur',
+        'Kalimantan Barat' => 'Kalimantan Barat',
+        'West Kalimantan' => 'Kalimantan Barat',
+        'Kalimantan Tengah' => 'Kalimantan Tengah',
+        'Central Kalimantan' => 'Kalimantan Tengah',
+        'Kalimantan Selatan' => 'Kalimantan Selatan',
+        'South Kalimantan' => 'Kalimantan Selatan',
+        'Kalimantan Timur' => 'Kalimantan Timur',
+        'East Kalimantan' => 'Kalimantan Timur',
+        'Kalimantan Utara' => 'Kalimantan Utara',
+        'North Kalimantan' => 'Kalimantan Utara',
+        'Sulawesi Utara' => 'Sulawesi Utara',
+        'North Sulawesi' => 'Sulawesi Utara',
+        'Gorontalo' => 'Gorontalo',
+        'Sulawesi Tengah' => 'Sulawesi Tengah',
+        'Central Sulawesi' => 'Sulawesi Tengah',
+        'Sulawesi Barat' => 'Sulawesi Barat',
+        'West Sulawesi' => 'Sulawesi Barat',
+        'Sulawesi Selatan' => 'Sulawesi Selatan',
+        'South Sulawesi' => 'Sulawesi Selatan',
+        'Sulawesi Tenggara' => 'Sulawesi Tenggara',
+        'Southeast Sulawesi' => 'Sulawesi Tenggara',
+        'Maluku Utara' => 'Maluku Utara',
+        'North Maluku' => 'Maluku Utara',
+        'Maluku' => 'Maluku',
+        'Papua Barat' => 'Papua Barat',
+        'West Papua' => 'Papua Barat',
+        'Papua Barat Daya' => 'Papua Barat',
+        'Southwest Papua' => 'Papua Barat',
+        'Papua Tengah' => 'Papua',
+        'Central Papua' => 'Papua',
+        'Papua Selatan' => 'Papua',
+        'South Papua' => 'Papua',
+        'Papua Pegunungan' => 'Papua',
+        'Highland Papua' => 'Papua',
+        'Papua' => 'Papua',
+    ];
+
+    /**
      * Halaman /fire — korsel "Berita terkini" dan popup berita pada peta
      * diambil dari CMS Event/Kejadian. Bila belum ada event, $berita kosong
      * dan Blade menampilkan "rak kosong" menggantikan korsel.
@@ -156,7 +250,66 @@ class FireController extends Controller
             ];
         }
 
-        return view('pasopati.index', compact('berita', 'tanggalPantauan', 'bisaTambahKejadian', 'urlDasar', 'eventSlugDiminta', 'metaEvent'));
+        // Angka di tengah tiap provinsi pada peta sebaran. Dihitung dari
+        // SELURUH event, bukan dari $events di atas — koleksi itu dibatasi 10
+        // terbaru untuk korsel, dan memakainya di sini membuat angka provinsi
+        // menyusut sendiri begitu laporan ke-11 masuk.
+        $jumlahLaporan = $this->hitungLaporanProvinsi();
+
+        return view('pasopati.index', compact('berita', 'tanggalPantauan', 'bisaTambahKejadian', 'urlDasar', 'eventSlugDiminta', 'metaEvent', 'jumlahLaporan'));
+    }
+
+    /**
+     * Jumlah laporan per provinsi untuk angka di peta sebaran.
+     *
+     * Ke-34 provinsi selalu ada di hasilnya, yang belum punya laporan bernilai
+     * 0 — peta menggambar angkanya apa adanya, jadi provinsi yang belum
+     * terliput tampil sebagai "0" dan bukan sebagai wilayah tanpa data. Angkanya
+     * naik sendiri begitu kejadian baru ditambahkan di CMS.
+     *
+     * Yang diambil hanya kolom location: sisa kolom event tidak dipakai di sini,
+     * dan tabelnya memuat gambar serta teks panjang.
+     */
+    protected function hitungLaporanProvinsi(): array
+    {
+        $jumlah = array_fill_keys(array_values(array_unique(self::PROVINSI_PETA)), 0);
+
+        foreach (Event::query()->pluck('location') as $lokasi) {
+            $provinsi = $this->inferProvinsi($lokasi);
+            if ($provinsi !== null) {
+                $jumlah[$provinsi]++;
+            }
+        }
+
+        return $jumlah;
+    }
+
+    /**
+     * Provinsi sebuah lokasi, dalam nama yang dipakai peta.
+     *
+     * Dicocokkan dari nama terpanjang lebih dulu: "North Sumatra" harus menang
+     * atas "Sumatra", dan "West Papua" atas "Papua". Lokasi yang diketik bebas
+     * (bukan hasil pencarian GeoServer) tetap terbaca selama menyebut nama
+     * provinsinya; kalau tidak ada yang cocok, laporannya tidak dihitung ke
+     * provinsi mana pun — lebih baik tidak terhitung daripada salah kolom.
+     */
+    protected function inferProvinsi(?string $lokasi): ?string
+    {
+        if ($lokasi === null || trim($lokasi) === '') {
+            return null;
+        }
+
+        $lokasi = mb_strtolower($lokasi);
+        $nama = array_keys(self::PROVINSI_PETA);
+        usort($nama, fn ($a, $b) => mb_strlen($b) <=> mb_strlen($a));
+
+        foreach ($nama as $kandidat) {
+            if (mb_strpos($lokasi, mb_strtolower($kandidat)) !== false) {
+                return self::PROVINSI_PETA[$kandidat];
+            }
+        }
+
+        return null;
     }
 
     /**

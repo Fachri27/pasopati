@@ -1,9 +1,9 @@
 <div class="flex flex-col justify-center items-center">
-    <div class="bg-white shadow rounded-lg p-6 w-full">
+    <div class="bg-admin-surface shadow rounded-lg p-6 w-full">
         <div class="flex items-center justify-between mb-4">
             <div>
-                <h2 class="text-lg font-semibold text-gray-800">Deforestory — Subscriber</h2>
-                <p class="text-sm text-gray-500 mt-1">
+                <h2 class="text-lg font-semibold text-admin-smoke">Deforestory — Subscriber</h2>
+                <p class="text-sm text-admin-muted mt-1">
                     {{ $activeCount }} aktif / {{ $total }} total
                 </p>
             </div>
@@ -12,8 +12,8 @@
         <div class="flex flex-wrap items-center justify-between mb-4 gap-3">
             <input type="text" wire:model.live.debounce.100ms="search" placeholder="Cari email..." class="border p-2 rounded">
             <div class="flex items-center gap-2">
-                <label for="statusFilter" class="text-sm font-medium text-gray-700">Filter Status:</label>
-                <select id="statusFilter" wire:model.live.debounce.100ms="status" class="border-gray-300 rounded-md text-sm">
+                <label for="statusFilter" class="text-sm font-medium text-admin-ash">Filter Status:</label>
+                <select id="statusFilter" wire:model.live.debounce.100ms="status" class="border-admin-line rounded-md text-sm">
                     <option value="all">Semua</option>
                     <option value="active">Aktif</option>
                     <option value="inactive">Nonaktif</option>
@@ -24,7 +24,7 @@
         <div class="overflow-x-auto">
             <table class="min-w-full border-collapse table-fixed">
                 <thead>
-                    <tr class="bg-gray-100 text-left text-sm font-medium text-gray-600">
+                    <tr class="bg-admin-raised text-left text-sm font-medium text-admin-ash">
                         <th class="p-3">Email</th>
                         <th class="p-3">Scope</th>
                         <th class="p-3">Bahasa</th>
@@ -33,16 +33,16 @@
                         <th class="p-3">Aksi</th>
                     </tr>
                 </thead>
-                <tbody class="text-sm text-gray-700">
+                <tbody class="text-sm text-admin-ash">
                     @forelse ($subscribers as $subscriber)
                         <tr>
                             <td class="p-3">{{ $subscriber->email }}</td>
                             <td class="p-3">
                                 @if ($subscriber->type === 'all')
-                                    <span class="inline-block px-2 py-0.5 text-xs font-semibold rounded bg-blue-100 text-blue-700">Semua</span>
+                                    <span class="inline-block px-2 py-0.5 text-xs font-semibold rounded bg-blue-500/10 text-blue-400">Semua</span>
                                 @else
                                     <span class="inline-block px-2 py-0.5 text-xs font-semibold rounded bg-amber-100 text-amber-700">Kasus</span>
-                                    <span class="block text-xs text-gray-500 mt-1 truncate max-w-[180px]">{{ $subscriber->case->translation('id')?->title ?? $subscriber->case->slug ?? '-' }}</span>
+                                    <span class="block text-xs text-admin-muted mt-1 truncate max-w-[180px]">{{ $subscriber->case->translation('id')?->title ?? $subscriber->case->slug ?? '-' }}</span>
                                 @endif
                             </td>
                             <td class="p-3 uppercase">{{ $subscriber->locale }}</td>
@@ -50,7 +50,7 @@
                                 @if ($subscriber->active)
                                     <span class="inline-block px-3 py-1 text-white text-xs font-semibold rounded-full bg-green-500">aktif</span>
                                 @else
-                                    <span class="inline-block px-3 py-1 text-white text-xs font-semibold rounded-full bg-gray-500">nonaktif</span>
+                                    <span class="inline-block px-3 py-1 text-white text-xs font-semibold rounded-full bg-admin-raised0">nonaktif</span>
                                 @endif
                             </td>
                             <td class="p-3">{{ $subscriber->subscribed_at?->format('d M Y H:i') ?? '-' }}</td>

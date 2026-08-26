@@ -11,11 +11,13 @@
  * choropleth WMS Simontini (PROVINSI_STADI_2025), lalu poligon provinsi
  * (data/peta-provinsi.js) yang tembus pandang sebagai penangkap klik.
  *
- * Data: window.PETA_PROVINSI, window.TITIK_PANAS, window.WILAYAH_RAWAN,
- * window.BERITA — semuanya bisa diganti argumen dari Blade bila perlu.
+ * Data: window.PETA_PROVINSI (geometri 34 provinsi) dan window.BERITA.
+ * Jumlah laporan per provinsi datang dari Blade sebagai argumen kedua — bukan
+ * dari berkas data statis, karena angkanya ikut berubah tiap kejadian baru
+ * ditambahkan di CMS.
  */
 document.addEventListener("alpine:init", function () {
-  Alpine.data("peta", function (beritaAwal) {
+  Alpine.data("peta", function (beritaAwal, jumlahAwal) {
     /* Objek Leaflet TIDAK disimpan sebagai keadaan Alpine: x-data dibungkus
        Proxy reaktif, dan membungkus instance Leaflet di dalamnya membuat
        internalnya tak terduga. Semuanya tinggal di closure ini. */
@@ -431,6 +433,11 @@ document.addEventListener("alpine:init", function () {
       /* Berita dari Blade (CMS Event/Kejadian); mockup window.BERITA hanya
          dipakai bila halaman tidak mengirim data. */
       berita: beritaAwal || window.BERITA || [],
+      /* Provinsi -> jumlah laporan. Ke-34 provinsi selalu ada, yang belum
+         terliput bernilai 0 — dan 0 itu memang digambar di peta, supaya
+         wilayah yang belum punya laporan terbaca sebagai "belum ada", bukan
+         sebagai wilayah yang datanya hilang. */
+      jumlahLaporan: jumlahAwal || {},
       dari: "",
       sampai: "",
       kalender: null,
@@ -462,13 +469,20 @@ document.addEventListener("alpine:init", function () {
         kurangiGerak = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
         TINTA = token("--color-tinta");
         TANPA_DATA = token("--peta-tanpa-data");
+        /* Tangga ini menggambarkan SEBERAPA SERING sebuah wilayah dilaporkan,
+           bukan status darurat karhutla-nya. Dulu ambangnya 350/250/150 dengan
+           label "Siaga darurat"/"Waspada", cocok untuk jumlah titik panas
+           satelit pada data contoh. Angkanya sekarang jumlah laporan redaksi
+           yang berangkat dari nol, jadi ambang segitu tidak akan pernah
+           tersentuh — dan menyebut satu wilayah "Siaga darurat" berdasarkan
+           berapa kali ia diliput memang bukan klaim yang ditopang datanya. */
         TANGGA = [
-          { batas: 350, warna: token("--peta-5"), status: "Siaga darurat" },
-          { batas: 250, warna: token("--peta-4"), status: "Siaga" },
-          { batas: 150, warna: token("--peta-3"), status: "Siaga" },
-          { batas: 50, warna: token("--peta-2"), status: "Waspada" },
-          { batas: 1, warna: token("--peta-1"), status: "Normal" },
-          { batas: 0, warna: token("--peta-0"), status: "Aman" },
+          { batas: 20, warna: token("--peta-5"), status: "Paling sering dilaporkan" },
+          { batas: 10, warna: token("--peta-4"), status: "Sering dilaporkan" },
+          { batas: 5, warna: token("--peta-3"), status: "Cukup sering dilaporkan" },
+          { batas: 2, warna: token("--peta-2"), status: "Beberapa laporan" },
+          { batas: 1, warna: token("--peta-1"), status: "Satu laporan" },
+          { batas: 0, warna: token("--peta-0"), status: "Belum ada laporan" },
         ];
 
         this.bangunPeta();
@@ -593,7 +607,7 @@ document.addEventListener("alpine:init", function () {
 
       /* Satu angka per provinsi, diletakkan di dalam daratan terbesarnya.
          Sumbernya sama dengan yang dipakai panel dan tabel setara
-         (window.TITIK_PANAS), jadi ketiganya tidak mungkin berbeda. */
+         (jumlahLaporan dari Blade), jadi ketiganya tidak mungkin berbeda. */
       bangunAngka: function () {
         lapisAngka = L.layerGroup([], { pane: "angkaPane" }).addTo(peta);
         daftarAngka = [];
@@ -751,11 +765,10 @@ document.addEventListener("alpine:init", function () {
 
       /* --------------------------- data & angka -------------------------- */
       angka: function (nama) {
-        /* Layer menulis "Daerah Istimewa Yogyakarta", data contoh menyingkatnya.
-           Hanya alias yang benar-benar nama sama yang dipakai di sini — provinsi
-           pemecahan Papua sengaja TIDAK dipetakan ke induknya, karena angka
-           induk bukan angka pecahannya. */
-        var n = (window.TITIK_PANAS || {})[ALIAS_LOKAL[nama] || nama];
+        /* Layer choropleth menulis "Daerah Istimewa Yogyakarta", sedangkan
+           hitungan dari server memakai nama peta ("DI Yogyakarta"). Hanya alias
+           yang benar-benar nama yang sama yang dipakai di sini. */
+        var n = this.jumlahLaporan[ALIAS_LOKAL[nama] || nama];
         return typeof n === "number" ? n : null;
       },
 
@@ -768,15 +781,14 @@ document.addEventListener("alpine:init", function () {
       },
 
       status: function (nama) {
-        var khusus = (window.WILAYAH_RAWAN || {})[nama];
-        if (khusus && khusus.status) return khusus.status; /* data eksplisit menang */
         var tingkat = this.tingkatUntuk(this.angka(nama));
         return tingkat ? tingkat.status : "Belum ada data";
       },
 
       keteranganAngka: function (nama) {
         var n = this.angka(nama);
-        return n === null ? "belum ada data" : n.toLocaleString("id-ID") + " titik";
+        if (n === null) return "belum ada data";
+        return n === 0 ? "belum ada laporan" : n.toLocaleString("id-ID") + " laporan";
       },
 
       /* ------------------------- asal pop-up ----------------------------- */
