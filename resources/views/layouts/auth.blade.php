@@ -28,7 +28,11 @@
         </div>
 
         <main class="relative z-10 w-full max-w-md mx-4">
-            @yield('content')
+            @if($__env->yieldContent('content'))
+                @yield('content')
+            @else
+                {{ $slot }}
+            @endif
         </main>
     </div>
 

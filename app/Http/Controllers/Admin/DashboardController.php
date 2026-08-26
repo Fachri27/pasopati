@@ -73,7 +73,7 @@ class DashboardController extends Controller
 
         $topPetitions = Petition::with('translations')
             ->withCount('verifiedSignatures')
-            ->having('verified_signatures_count', '>', 0)
+            ->whereHas('verifiedSignatures')
             ->orderBy('verified_signatures_count', 'desc')
             ->take(5)
             ->get()
