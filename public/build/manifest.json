@@ -24,7 +24,7 @@
     "src": "node_modules/leaflet/dist/images/marker-shadow.png"
   },
   "resources/css/app.css": {
-    "file": "assets/app-D8CK-k2b.css",
+    "file": "assets/app-D9yEGJd9.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "names": [
@@ -44,7 +44,7 @@
     ]
   },
   "resources/js/event.js": {
-    "file": "assets/event-BeyBLBiS.js",
+    "file": "assets/event-WEejeK57.js",
     "name": "event",
     "src": "resources/js/event.js",
     "isEntry": true,

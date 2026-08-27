@@ -172,7 +172,12 @@
                                placeholder="Ketik nama lokasi, mis. bandung..."
                                value="{{ old('location', $event?->location) }}"
                                class="mt-1 w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-300">
-                        <div id="location-results" class="mt-1 w-full rounded-lg border border-admin-line shadow-sm hidden"></div>
+                        {{-- bg sendiri, kalau tidak isinya menumpang latar halaman.
+                             max-h + overflow: hasil GeoServer untuk kata seumum
+                             "depok" bisa puluhan baris dan mendorong sisa form
+                             keluar layar. --}}
+                        <div id="location-results"
+                             class="mt-1 w-full max-h-72 overflow-y-auto rounded-lg border border-admin-line bg-admin-raised shadow-sm hidden"></div>
                         <input type="hidden" name="location" id="location" value="{{ old('location', $event?->location) }}">
                         <input type="hidden" name="location_geojson" id="location_geojson"
                                value="{{ old('location_geojson', $event?->location_geojson ? json_encode($event->location_geojson) : '') }}">
