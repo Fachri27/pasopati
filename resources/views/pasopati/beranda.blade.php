@@ -284,13 +284,13 @@ BLADE);
                   <!-- ===== Varian bawaan: kartu kaca putih, teks hitam di atas,
                        foto lanskap 3:2 bawah dengan sudut membulat. ===== -->
                   <template x-if="!k.isi.vertikal">
-                    <div class="contents text-center">
+                    <div class="contents w-full text-center flex-1 flex flex-col justify-center">
                       <p
                         x-on:click.stop="bukaRincian(k.asli)"
-                        class="mx-auto cursor-pointer text-[clamp(14px,3.4vw,20px)] leading-[1.2] font-bold text-black"
+                        class="w-full cursor-pointer text-[clamp(16px,4.2vw,24px)] leading-[1.2] font-bold text-black text-center"
                         x-text="k.isi.judul"
                       ></p>
-                      <p class="mt-2 text-[length:var(--ukuran-tanggal)] leading-[1.2] font-normal text-center" x-text="`• ${k.isi.tanggal} •`"></p>
+                      <p class="w-full mt-4 text-[length:var(--ukuran-tanggal)] leading-[1.2] font-normal text-center" x-text="`• ${k.isi.tanggal} •`"></p>
                       <div aria-hidden="true" class="flex-1 aliran:hidden"></div>
 
                       <div class="kartu-bingkai relative {{ $kotakLanskap }}">
