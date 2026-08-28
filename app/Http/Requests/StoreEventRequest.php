@@ -17,9 +17,11 @@ class StoreEventRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'image_id' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:102400', 'required_without:video'],
-            'image_en' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:102400', 'required_without:video'],
+            'image_id' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:102400'],
+            'image_en' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:102400'],
             'video' => ['nullable', 'file', 'mimes:mp4,mov,mkv,webm', 'max:102400'],
+            'media_files' => ['nullable', 'array'],
+            'media_files.*' => ['file', 'mimes:jpg,jpeg,png,webp,mp4,mov,mkv,webm', 'max:102400'],
             'title_id' => ['required', 'string', 'max:255'],
             'title_en' => ['required', 'string', 'max:255'],
             'desc_id' => ['nullable', 'string'],
@@ -31,6 +33,41 @@ class StoreEventRequest extends FormRequest
             'location_geojson' => ['nullable', 'json'],
             'orientation' => ['required', 'in:landscape,horizontal'],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        if ($this->hasFile('media_files') && ! $this->has('media_files')) {
+            $this->merge(['media_files' => []]);
+        }
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            if ($this->hasAnyMedia()) {
+                return;
+            }
+
+            $validator->errors()->add('image_id', 'Gambar Bahasa Indonesia, video, atau media galeri wajib diunggah.');
+            $validator->errors()->add('image_en', 'Gambar Bahasa Inggris, video, atau media galeri wajib diunggah.');
+            $validator->errors()->add('media_files', 'Gambar, video, atau media galeri wajib diunggah.');
+        });
+    }
+
+    protected function hasAnyMedia(): bool
+    {
+        if ($this->hasFile('video') || $this->hasFile('image_id') || $this->hasFile('image_en')) {
+            return true;
+        }
+
+        foreach ($this->file('media_files', []) as $file) {
+            if ($file && $file->isValid()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

@@ -555,6 +555,56 @@
   pointer-events: none;
 }
 
+/* --- Slider controls inside media panel -------------------------------- */
+.rincian__slider-tombol {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  transform: translateY(-50%);
+  cursor: pointer;
+  place-items: center;
+  border-radius: 999px;
+  border: 0;
+  background: rgb(0 0 0 / 0.45);
+  color: #fff;
+  backdrop-filter: blur(4px);
+  transition: background-color 0.2s ease;
+}
+
+.rincian__slider-tombol:hover {
+  background: rgb(0 0 0 / 0.65);
+}
+
+.rincian__slider-tombol svg {
+  width: 18px;
+  height: 18px;
+}
+
+.rincian__slider-tombol--kiri {
+  left: 12px;
+}
+
+.rincian__slider-tombol--kanan {
+  right: 12px;
+}
+
+.rincian__dots {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  z-index: 2;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.35);
+}
+
 /* --- Layar sempit: panel ditumpuk ---------------------------------------- */
 @media (max-width: 860px) {
   .rincian {

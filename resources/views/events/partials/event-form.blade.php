@@ -109,6 +109,83 @@
                         @enderror
                     </div>
 
+                    {{-- Media Gallery (multiple images/videos) --}}
+                    <div x-data="mediaGallery()">
+                        <label class="block font-medium text-admin-ash">Media Galeri <span class="text-xs text-admin-muted font-normal">(boleh beberapa foto/video)</span></label>
+                        <p class="text-xs text-admin-muted mt-0.5 mb-2">JPG, JPEG, PNG, WEBP, MP4, MOV, MKV, WEBM — maks 100 MB per file.</p>
+
+                        @if ($isEdit && !empty($event->media))
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
+                                @foreach ($event->media as $index => $item)
+                                    <label class="relative group cursor-pointer border border-admin-line rounded-lg overflow-hidden bg-admin-raised">
+                                        <input type="checkbox" name="keep_media[]" value="{{ $index }}" checked class="peer sr-only">
+                                        <div class="absolute inset-0 bg-black/0 peer-checked:bg-black/0 peer-unchecked:bg-black/40 transition-colors"></div>
+                                        <div class="absolute top-1 right-1 w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs opacity-100 peer-unchecked:opacity-0 transition-opacity">
+                                            ✓
+                                        </div>
+                                        <div class="p-2">
+                                            @if (($item['type'] ?? '') === 'video')
+                                                <video src="{{ Storage::disk('public')->url($item['path']) }}" preload="metadata" class="w-full h-20 object-cover rounded"></video>
+                                                <p class="text-[10px] text-center text-admin-muted mt-1">VIDEO</p>
+                                            @else
+                                                <img src="{{ Storage::disk('public')->url($item['path']) }}" alt="Media {{ $index + 1 }}" class="w-full h-20 object-cover rounded">
+                                            @endif
+                                        </div>
+                                        <p class="text-[10px] text-center text-admin-muted px-2 pb-2 truncate">Media {{ $index + 1 }}</p>
+                                        <p class="text-[10px] text-center text-red-400 pb-2 peer-checked:hidden">akan dihapus</p>
+                                    </label>
+                                @endforeach
+                            </div>
+                        @endif
+
+                        <div class="border-2 border-dashed border-admin-line rounded-lg p-4 bg-admin-raised text-center">
+                            <label class="inline-block cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm">
+                                + Tambah Media
+                                <input type="file" name="media_files[]" multiple accept="image/jpeg,image/jpg,image/png,image/webp,video/mp4,video/quicktime,video/x-matroska,video/webm" class="hidden" x-on:change="updatePreviews($event)">
+                            </label>
+                            <p class="text-xs text-admin-muted mt-2">Bisa pilih banyak file sekaligus.</p>
+                        </div>
+
+                        <div x-show="previews.length" x-cloak class="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3">
+                            <template x-for="(preview, idx) in previews" :key="idx">
+                                <div class="border border-admin-line rounded-lg overflow-hidden bg-admin-raised p-2">
+                                    <template x-if="preview.type === 'video'">
+                                        <video :src="preview.url" preload="metadata" class="w-full h-20 object-cover rounded"></video>
+                                    </template>
+                                    <template x-if="preview.type !== 'video'">
+                                        <img :src="preview.url" alt="" class="w-full h-20 object-cover rounded">
+                                    </template>
+                                    <p x-text="preview.name" class="text-[10px] text-center text-admin-muted mt-1 truncate"></p>
+                                </div>
+                            </template>
+                        </div>
+
+                        @error('media_files')
+                            <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                        @enderror
+                        @error('media_files.*')
+                            <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <script>
+                        function mediaGallery() {
+                            return {
+                                previews: [],
+                                updatePreviews(event) {
+                                    this.previews = [];
+                                    Array.from(event.target.files).forEach(file => {
+                                        this.previews.push({
+                                            url: URL.createObjectURL(file),
+                                            name: file.name,
+                                            type: file.type.startsWith('video/') ? 'video' : 'image'
+                                        });
+                                    });
+                                }
+                            };
+                        }
+                    </script>
+
                     {{-- Orientation --}}
                     <div>
                         <label class="block font-medium text-admin-ash mb-2">Image Orientation <span class="text-red-400">*</span></label>
