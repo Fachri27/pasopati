@@ -62,6 +62,8 @@ class EventController extends Controller
             }
         }
 
+        $data['media'] = $this->storeMediaFiles($request);
+
         $event = Event::create($data);
 
         return redirect()
@@ -115,6 +117,8 @@ class EventController extends Controller
             }
         }
 
+        $data['media'] = $this->updateMediaFiles($request, $event);
+
         $event->update($data);
 
         return redirect()
@@ -127,6 +131,11 @@ class EventController extends Controller
         $this->deleteFile($event->image_id);
         $this->deleteFile($event->image_en);
         $this->deleteFile($event->video);
+
+        foreach ($event->media ?? [] as $item) {
+            $this->deleteFile($item['path'] ?? null);
+        }
+
         $event->delete();
 
         return redirect()
@@ -170,6 +179,61 @@ class EventController extends Controller
         $filename = 'event-'.now()->format('YmdHis').'-'.Str::lower(Str::random(8)).'.'.$extension;
 
         return $file->storeAs('events/videos', $filename, 'public');
+    }
+
+    protected function storeMediaFiles(Request $request): array
+    {
+        $media = [];
+
+        foreach ($request->file('media_files', []) as $file) {
+            if (! $file instanceof UploadedFile || ! $file->isValid()) {
+                continue;
+            }
+
+            $media[] = $this->storeMediaFile($file);
+        }
+
+        return $media;
+    }
+
+    protected function updateMediaFiles(Request $request, Event $event): array
+    {
+        $media = $event->media ?? [];
+        $keep = array_map('intval', (array) $request->input('keep_media', []));
+
+        foreach ($media as $index => $item) {
+            if (in_array($index, $keep, true)) {
+                continue;
+            }
+
+            $this->deleteFile($item['path'] ?? null);
+            unset($media[$index]);
+        }
+
+        $media = array_values($media);
+
+        foreach ($request->file('media_files', []) as $file) {
+            if (! $file instanceof UploadedFile || ! $file->isValid()) {
+                continue;
+            }
+
+            $media[] = $this->storeMediaFile($file);
+        }
+
+        return $media;
+    }
+
+    protected function storeMediaFile(UploadedFile $file): array
+    {
+        if (str_starts_with($file->getMimeType() ?: '', 'video/')) {
+            $path = $this->storeVideo($file);
+
+            return ['type' => 'video', 'path' => $path];
+        }
+
+        $path = $this->storeImage($file);
+
+        return ['type' => 'image', 'path' => $path];
     }
 
     protected function deleteFile(?string $path): void

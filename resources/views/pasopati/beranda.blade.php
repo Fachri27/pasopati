@@ -209,112 +209,145 @@ BLADE);
                          transition-[transform,opacity,background-color]
                          duration-[550ms] ease-[cubic-bezier(0.4,0,0.2,1)] will-change-transform"
                 >
-                  <!-- ===== Varian vertikal: bingkai putih, foto memenuhi bingkai,
-                       teks putih menumpang di atasnya. ===== -->
+                  <!-- ===== Varian vertikal: foto memenuhi bingkai, teks putih
+                       menumpang di atasnya. Title di atas, tanggal di bawahnya. ===== -->
                   <template x-if="k.isi.vertikal">
                     <div class="kartu-bingkai absolute inset-[var(--kartu-pias)] overflow-hidden rounded-[8px]">
                       <div aria-hidden="true" class="absolute inset-0 bg-white"></div>
-                      <template x-if="!k.isi.video">
-                        <img
-                          :src="k.isi.gambar"
-                          :alt="k.isi.alt || ''"
-                          loading="eager"
-                          decoding="async"
-                          x-on:click="if (i === aktif) { $event.stopPropagation(); bukaRincian(k.asli); }"
-                          :class="i === aktif ? 'grayscale-0' : 'grayscale-[0.65]'"
-                          class="{{ $mediaVertikal }}"
-                        />
+
+                      <template x-for="(m, mi) in mediaKartu(k)" :key="mi">
+                        <div x-show="mediaAktif(k.kunci, mediaKartu(k)) === mi" class="absolute inset-0">
+                          <template x-if="m.type === 'image'">
+                            <img
+                              :src="m.url"
+                              :alt="k.isi.alt || ''"
+                              loading="eager"
+                              decoding="async"
+                              x-on:click="if (i === aktif) { $event.stopPropagation(); bukaRincian(k.asli); }"
+                              :class="i === aktif ? 'grayscale-0' : 'grayscale-[0.65]'"
+                              class="{{ $mediaVertikal }}"
+                            />
+                          </template>
+
+                          <template x-if="m.type === 'video'">
+                            <video
+                              :src="m.url"
+                              :poster="k.isi.poster"
+                              :aria-label="k.isi.alt || ''"
+                              :controls="kurangiGerak"
+                              x-effect="setelVideo($el, i, k.kunci)"
+                              x-on:loadedmetadata="catatDurasi($el, k.kunci)"
+                              x-on:timeupdate="catatDurasi($el, k.kunci)"
+                              x-on:ended="usaiVideo($el, k.kunci)"
+                              muted
+                              playsinline
+                              :preload="k.isi.poster ? 'none' : 'metadata'"
+                              x-on:click="if (i === aktif) { $event.stopPropagation(); bukaRincian(k.asli); }"
+                              :class="i === aktif ? 'grayscale-0' : 'grayscale-[0.65]'"
+                              class="{{ $mediaVertikal }}"
+                            ></video>
+                          </template>
+                        </div>
                       </template>
 
-                      <template x-if="k.isi.video">
-                        <video
-                          :src="k.isi.video"
-                          :poster="k.isi.poster"
-                          :aria-label="k.isi.alt || ''"
-                          :controls="kurangiGerak"
-                          x-effect="setelVideo($el, i, k.kunci)"
-                          x-on:loadedmetadata="catatDurasi($el, k.kunci)"
-                          x-on:timeupdate="catatDurasi($el, k.kunci)"
-                          x-on:ended="usaiVideo($el, k.kunci)"
-                          muted
-                          playsinline
-                          :preload="k.isi.poster ? 'none' : 'metadata'"
-                          x-on:click="if (i === aktif) { $event.stopPropagation(); bukaRincian(k.asli); }"
-                          :class="i === aktif ? 'grayscale-0' : 'grayscale-[0.65]'"
-                          class="{{ $mediaVertikal }}"
-                        ></video>
-                      </template>
+{!! $alatVideo('k.kunci') !!}
+
                       <!-- pointer-events-none: gradasi & blok teks menumpang di ATAS foto
                            (absolute inset-0), jadi keduanya menyerap klik sebelum
                            sampai ke gambar. Dibuat tembus klik supaya klik di
                            mana pun pada foto tetap mengenai gambarnya. -->
                       <div aria-hidden="true" class="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,rgb(0_0_0/0.32)_0%,transparent_34%,transparent_50%,rgb(0_0_0/0.62)_100%)]"></div>
-                      <div class="pointer-events-none absolute inset-0 flex flex-col justify-between p-[var(--kartu-pias)] text-left text-white">
-                        <h3 class="text-[length:var(--ukuran-pulau)] leading-[1.2] font-bold" x-text="k.isi.pulau"></h3>
-                        <div>
-                          <p class="text-[length:var(--ukuran-tanggal)] leading-[1.2] font-normal" x-text="`• ${k.isi.tanggal} •`"></p>
-                          <p
-                            x-on:click.stop="bukaRincian(k.asli)"
-                            class="pointer-events-auto mt-[var(--kartu-judul-jarak)] cursor-pointer text-[length:var(--ukuran-judul)] leading-[1.2] font-bold"
-                            x-text="k.isi.judul"
-                          ></p>
-                        </div>
+                      <div class="pointer-events-none absolute inset-0 flex flex-col justify-end p-[var(--kartu-pias)] text-left text-white">
+                        <p
+                          x-on:click.stop="bukaRincian(k.asli)"
+                          class="pointer-events-auto cursor-pointer text-[clamp(14px,3.4vw,20px)] leading-[1.2] font-bold"
+                          x-text="k.isi.judul"
+                        ></p>
+                        <p class="mt-2 text-[length:var(--ukuran-tanggal)] leading-[1.2] font-normal opacity-90" x-text="`• ${k.isi.tanggal} •`"></p>
                       </div>
 
-{!! $alatVideo('k.kunci') !!}
+                      <!-- Dot indicators -->
+                      <div x-show="mediaKartu(k).length > 1" class="absolute bottom-2.5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5">
+                        <template x-for="(m, mi) in mediaKartu(k)" :key="mi">
+                          <button
+                            type="button"
+                            x-on:click.stop="keMedia(k.kunci, mi)"
+                            :aria-label="`Media ${mi + 1}`"
+                            :class="mediaAktif(k.kunci, mediaKartu(k)) === mi ? 'bg-white scale-110' : 'bg-white/50 hover:bg-white/75'"
+                            class="w-2 h-2 rounded-full transition-all"
+                          ></button>
+                        </template>
+                      </div>
                     </div>
                   </template>
 
-                  <!-- ===== Varian bawaan: kartu kaca putih, teks gelap di atas,
+                  <!-- ===== Varian bawaan: kartu kaca putih, teks hitam di atas,
                        foto lanskap 3:2 bawah dengan sudut membulat. ===== -->
                   <template x-if="!k.isi.vertikal">
-                    <div class="contents">
-                      <h3 class="text-left text-[length:var(--ukuran-pulau)] leading-[1.2] font-bold" x-text="k.isi.pulau"></h3>
-                      <p class="mt-[12px] text-[length:var(--ukuran-tanggal)] leading-[1.2] font-normal" x-text="`• ${k.isi.tanggal} •`"></p>
+                    <div class="contents text-center">
                       <p
                         x-on:click.stop="bukaRincian(k.asli)"
-                        class="mx-auto mt-[var(--kartu-judul-jarak)] max-w-[var(--kartu-judul-lebar)] cursor-pointer text-[length:var(--ukuran-judul)] leading-[1.2] font-bold"
+                        class="mx-auto cursor-pointer text-[clamp(14px,3.4vw,20px)] leading-[1.2] font-bold text-black"
                         x-text="k.isi.judul"
                       ></p>
+                      <p class="mt-2 text-[length:var(--ukuran-tanggal)] leading-[1.2] font-normal text-center" x-text="`• ${k.isi.tanggal} •`"></p>
                       <div aria-hidden="true" class="flex-1 aliran:hidden"></div>
-                      <template x-if="!k.isi.video">
-                        <img
-                          :src="k.isi.gambar"
-                          :alt="k.isi.alt || ''"
-                          loading="eager"
-                          decoding="async"
-                          width="462"
-                          height="308"
-                          x-on:click="if (i === aktif) { $event.stopPropagation(); bukaRincian(k.asli); }"
-                          :class="i === aktif ? 'grayscale-0' : 'grayscale-[0.65]'"
-                          class="{{ $mediaLanskap }}"
-                        />
-                      </template>
 
-                      <template x-if="k.isi.video">
-                        <div class="kartu-bingkai relative {{ $kotakLanskap }}">
-                          <video
-                            :src="k.isi.video"
-                            :poster="k.isi.poster"
-                            :aria-label="k.isi.alt || ''"
-                            :controls="kurangiGerak"
-                            x-effect="setelVideo($el, i, k.kunci)"
-                            x-on:loadedmetadata="catatDurasi($el, k.kunci)"
-                            x-on:timeupdate="catatDurasi($el, k.kunci)"
-                            x-on:ended="usaiVideo($el, k.kunci)"
-                            muted
-                            playsinline
-                            :preload="k.isi.poster ? 'none' : 'metadata'"
-                            width="462"
-                            height="308"
-                            x-on:click="if (i === aktif) { $event.stopPropagation(); bukaRincian(k.asli); }"
-                            :class="i === aktif ? 'grayscale-0' : 'grayscale-[0.65]'"
-                            class="{{ $videoLanskap }}"
-                          ></video>
+                      <div class="kartu-bingkai relative {{ $kotakLanskap }}">
+                        <template x-for="(m, mi) in mediaKartu(k)" :key="mi">
+                          <div x-show="mediaAktif(k.kunci, mediaKartu(k)) === mi" class="absolute inset-0">
+                            <template x-if="m.type === 'image'">
+                              <img
+                                :src="m.url"
+                                :alt="k.isi.alt || ''"
+                                loading="eager"
+                                decoding="async"
+                                width="462"
+                                height="308"
+                                x-on:click="if (i === aktif) { $event.stopPropagation(); bukaRincian(k.asli); }"
+                                :class="i === aktif ? 'grayscale-0' : 'grayscale-[0.65]'"
+                                class="{{ $videoLanskap }}"
+                              />
+                            </template>
+
+                            <template x-if="m.type === 'video'">
+                              <video
+                                :src="m.url"
+                                :poster="k.isi.poster"
+                                :aria-label="k.isi.alt || ''"
+                                :controls="kurangiGerak"
+                                x-effect="setelVideo($el, i, k.kunci)"
+                                x-on:loadedmetadata="catatDurasi($el, k.kunci)"
+                                x-on:timeupdate="catatDurasi($el, k.kunci)"
+                                x-on:ended="usaiVideo($el, k.kunci)"
+                                muted
+                                playsinline
+                                :preload="k.isi.poster ? 'none' : 'metadata'"
+                                width="462"
+                                height="308"
+                                x-on:click="if (i === aktif) { $event.stopPropagation(); bukaRincian(k.asli); }"
+                                :class="i === aktif ? 'grayscale-0' : 'grayscale-[0.65]'"
+                                class="{{ $videoLanskap }}"
+                              ></video>
+                            </template>
+                          </div>
+                        </template>
 
 {!! $alatVideo('k.kunci') !!}
+
+                        <!-- Dot indicators -->
+                        <div x-show="mediaKartu(k).length > 1" class="absolute bottom-2 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5">
+                          <template x-for="(m, mi) in mediaKartu(k)" :key="mi">
+                            <button
+                              type="button"
+                              x-on:click.stop="keMedia(k.kunci, mi)"
+                              :aria-label="`Media ${mi + 1}`"
+                              :class="mediaAktif(k.kunci, mediaKartu(k)) === mi ? 'bg-white scale-110' : 'bg-white/50 hover:bg-white/75'"
+                              class="w-2 h-2 rounded-full transition-all"
+                            ></button>
+                          </template>
                         </div>
-                      </template>
+                      </div>
                     </div>
                   </template>
                 </article>
@@ -470,25 +503,64 @@ BLADE);
                    menemukan <video>-nya lewat closest(). Sama seperti di kartu
                    korsel; kelasnya sendiri tidak membawa gaya apa pun. -->
               <div class="rincian__media kartu-bingkai">
-                <template x-if="!berita[sorot].video">
-                  <img :src="berita[sorot].gambar" :alt="berita[sorot].alt || ''" />
-                </template>
+                <template x-for="(m, mi) in mediaRincian()" :key="mi">
+                  <div x-show="mediaRincianAktif() === mi" class="absolute inset-0 flex items-center justify-center">
+                    <template x-if="m.type === 'image'">
+                      <img :src="m.url" :alt="berita[sorot].alt || ''" />
+                    </template>
 
-                <template x-if="berita[sorot].video">
-                  <video
-                    :src="berita[sorot].video"
-                    :poster="berita[sorot].poster"
-                    :aria-label="berita[sorot].alt || ''"
-                    :autoplay="!kurangiGerak"
-                    x-on:loadedmetadata="catatDurasi($el, 'rincian')"
-                    x-on:timeupdate="catatDurasi($el, 'rincian')"
-                    x-on:ended="usaiVideo($el, 'rincian')"
-                    controls
-                    playsinline
-                  ></video>
+                    <template x-if="m.type === 'video'">
+                      <video
+                        :src="m.url"
+                        :poster="berita[sorot].poster"
+                        :aria-label="berita[sorot].alt || ''"
+                        :autoplay="!kurangiGerak && mediaRincianAktif() === mi"
+                        x-on:loadedmetadata="catatDurasi($el, 'rincian')"
+                        x-on:timeupdate="catatDurasi($el, 'rincian')"
+                        x-on:ended="usaiVideo($el, 'rincian')"
+                        controls
+                        playsinline
+                      ></video>
+                    </template>
+                  </div>
                 </template>
 
 {!! $alatVideo("'rincian'") !!}
+
+                <!-- Slider arrows -->
+                <template x-if="mediaRincian().length > 1">
+                  <div>
+                    <button
+                      type="button"
+                      aria-label="Media sebelumnya"
+                      x-on:click.stop="geserMediaRincian(-1)"
+                      class="rincian__slider-tombol rincian__slider-tombol--kiri"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Media berikutnya"
+                      x-on:click.stop="geserMediaRincian(1)"
+                      class="rincian__slider-tombol rincian__slider-tombol--kanan"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </button>
+                  </div>
+                </template>
+
+                <!-- Dot indicators -->
+                <div x-show="mediaRincian().length > 1" class="rincian__dots">
+                  <template x-for="(m, mi) in mediaRincian()" :key="mi">
+                    <button
+                      type="button"
+                      x-on:click.stop="keMediaRincian(mi)"
+                      :aria-label="`Media ${mi + 1}`"
+                      :class="mediaRincianAktif() === mi ? 'bg-white scale-125' : 'bg-white/50 hover:bg-white/75'"
+                      class="w-2 h-2 rounded-full transition-all"
+                    ></button>
+                  </template>
+                </div>
               </div>
 
               <!-- Satu instans komentarLaporan() untuk seluruh rel: daftar
@@ -517,7 +589,6 @@ BLADE);
                           x-text="(berita[sorot].pulau || 'I').charAt(0)"></span>
                   </template>
                   <div class="rincian__kapsi-isi">
-                    <p class="rincian__pulau" x-text="berita[sorot].pulau || 'Indonesia'"></p>
                     <p class="rincian__tanggal" x-text="berita[sorot].tanggal"></p>
                   </div>
                 </div>

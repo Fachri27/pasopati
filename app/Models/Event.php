@@ -13,6 +13,7 @@ class Event extends Model
         'image_id',
         'image_en',
         'video',
+        'media',
         'title_id',
         'slug',
         'title_en',
@@ -34,7 +35,54 @@ class Event extends Model
             'location_lng' => 'float',
             'location_geojson' => 'array',
             'orientation' => EventOrientation::class,
+            'media' => 'array',
         ];
+    }
+
+    /**
+     * Normalized gallery items for the fire card slider and admin table.
+     * Falls back to the legacy single image/video columns so existing events
+     * keep working without a data migration.
+     */
+    public function getMediaItemsAttribute(): array
+    {
+        $items = [];
+        $paths = [];
+
+        foreach ($this->media ?? [] as $item) {
+            if (is_array($item) && ! empty($item['path']) && ! empty($item['type'])) {
+                $items[] = [
+                    'type' => $item['type'],
+                    'url' => Storage::disk('public')->url($item['path']),
+                    'path' => $item['path'],
+                ];
+                $paths[] = $item['path'];
+            }
+        }
+
+        // Jika hanya media legacy (image_id/video) yang tersedia, bangun satu
+        // item agar event lama tetap tampil di slider.
+        if ($items === []) {
+            if ($this->video) {
+                $items[] = ['type' => 'video', 'url' => $this->video_url, 'path' => $this->video];
+            }
+            if ($this->image_id) {
+                $items[] = ['type' => 'image', 'url' => $this->image_id_url, 'path' => $this->image_id];
+            }
+
+            return $items;
+        }
+
+        // Gabungkan media utama ke depan galeri kalau belum ada di dalamnya.
+        $primary = [];
+        if ($this->video && ! in_array($this->video, $paths, true)) {
+            $primary[] = ['type' => 'video', 'url' => $this->video_url, 'path' => $this->video];
+        }
+        if ($this->image_id && ! in_array($this->image_id, $paths, true)) {
+            $primary[] = ['type' => 'image', 'url' => $this->image_id_url, 'path' => $this->image_id];
+        }
+
+        return array_merge($primary, $items);
     }
 
     /*

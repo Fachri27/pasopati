@@ -50,6 +50,12 @@ document.addEventListener("alpine:init", function () {
       durasiVideo: {}, /* kunci -> "0:42"; sisa waktu saat berjalan */
       videoUsai: {}, /* kunci -> true saat video habis dan belum diulang */
 
+      /* Indeks media aktif untuk slider di tiap kartu dan pop-up rincian.
+         `kunci` unik lintas salinan, jadi kartu kembaran memiliki indeks
+         media yang sama saat aktif. */
+      indeksMedia: {},
+      indeksMediaRincian: 0,
+
       /* Tiga set kartu berturut-turut. `asli` menandai indeks berita aslinya
          supaya kembaran tidak dibacakan dua kali oleh pembaca layar. */
       get kartu() {
@@ -246,6 +252,7 @@ document.addEventListener("alpine:init", function () {
         /* Kartu digandakan tiga set, jadi indeks yang datang dari x-for perlu
            dikembalikan ke indeks berita aslinya. */
         this.sorot = ((indeks % jumlah) + jumlah) % jumlah;
+        this.indeksMediaRincian = 0;
         this.setelUlangVideoRincian();
         this.hentikanOtomatis();
         this.kunciGulir(true);
@@ -264,6 +271,7 @@ document.addEventListener("alpine:init", function () {
         if (this.sorot === null) return;
         var jumlah = this.berita.length;
         this.sorot = ((this.sorot + arah) % jumlah + jumlah) % jumlah;
+        this.indeksMediaRincian = 0;
         this.setelUlangVideoRincian();
         this.perbaruiUrlRincian();
       },
@@ -276,6 +284,11 @@ document.addEventListener("alpine:init", function () {
       setelUlangVideoRincian: function () {
         this.videoUsai.rincian = false;
         this.durasiVideo.rincian = "";
+      },
+
+      setelUlangVideoKartu: function (kunci) {
+        this.videoUsai[kunci] = false;
+        this.durasiVideo[kunci] = "";
       },
 
       /* PUSHSTATE: alamat bar mengikuti pop-up yang terbuka — pola Instagram.
@@ -504,6 +517,71 @@ document.addEventListener("alpine:init", function () {
         this.videoUsai[kunci] = false;
       },
 
+      /* --- media slider (kartu & pop-up) --- */
+
+      mediaKartu: function (k) {
+        var items = k && k.isi && k.isi.media ? k.isi.media : [];
+        if (items.length === 0 && k && k.isi) {
+          if (k.isi.video) {
+            items.push({ type: 'video', url: k.isi.video, path: '' });
+          } else if (k.isi.gambar) {
+            items.push({ type: 'image', url: k.isi.gambar, path: '' });
+          }
+        }
+        return items;
+      },
+
+      mediaAktif: function (kunci, items) {
+        var idx = this.indeksMedia[kunci] || 0;
+        if (idx >= items.length) idx = 0;
+        if (idx < 0) idx = items.length - 1;
+        return idx;
+      },
+
+      geserMedia: function (kunci, arah, items) {
+        var idx = this.mediaAktif(kunci, items) + arah;
+        if (idx < 0) idx = items.length - 1;
+        if (idx >= items.length) idx = 0;
+        this.indeksMedia[kunci] = idx;
+        this.setelUlangVideoKartu(kunci);
+        this.jedaOtomatis();
+      },
+
+      keMedia: function (kunci, idx) {
+        this.indeksMedia[kunci] = idx;
+        this.setelUlangVideoKartu(kunci);
+        this.jedaOtomatis();
+      },
+
+      mediaRincian: function () {
+        if (this.sorot === null) return [];
+        var b = this.berita[this.sorot];
+        return b && b.media && b.media.length ? b.media : [];
+      },
+
+      mediaRincianAktif: function () {
+        var items = this.mediaRincian();
+        if (items.length === 0) return 0;
+        var idx = this.indeksMediaRincian;
+        if (idx < 0) idx = items.length - 1;
+        if (idx >= items.length) idx = 0;
+        return idx;
+      },
+
+      geserMediaRincian: function (arah) {
+        var items = this.mediaRincian();
+        var idx = this.mediaRincianAktif() + arah;
+        if (idx < 0) idx = items.length - 1;
+        if (idx >= items.length) idx = 0;
+        this.indeksMediaRincian = idx;
+        this.setelUlangVideoRincian();
+      },
+
+      keMediaRincian: function (idx) {
+        this.indeksMediaRincian = idx;
+        this.setelUlangVideoRincian();
+      },
+
       /* --- lencana durasi & putar ulang ---
          Video kartu tidak diulang sendiri (tanpa atribut loop): ia berhenti di
          bingkai terakhir, lalu tombol putar ulang yang meneruskan. */
@@ -612,14 +690,20 @@ document.addEventListener("alpine:init", function () {
         this.pewaktu = window.setInterval(
           function () {
             /* Kalau kartu aktif punya video yang belum selesai, tahan dulu —
-               jangan geser sebelum video habis. */
+               jangan geser sebelum video habis. Periksa media aktif saat ini,
+               bukan sekadar flag video legacy. */
             var kartuAktif = this.kartu[this.aktif];
-            if (
-              kartuAktif &&
-              kartuAktif.isi.video &&
-              this.videoUsai[kartuAktif.kunci] !== true
-            ) {
-              return;
+            if (kartuAktif) {
+              var mediaItems = this.mediaKartu(kartuAktif);
+              var mediaIdx = this.mediaAktif(kartuAktif.kunci, mediaItems);
+              var aktifMedia = mediaItems[mediaIdx];
+              if (
+                aktifMedia &&
+                aktifMedia.type === 'video' &&
+                this.videoUsai[kartuAktif.kunci] !== true
+              ) {
+                return;
+              }
             }
             this.pindah(1);
           }.bind(this),

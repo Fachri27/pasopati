@@ -69,16 +69,30 @@
                     @forelse ($events as $event)
                         <tr class="hover:bg-admin-raised">
                             <td class="px-4 py-3">
-                                @if ($event->image_id_url)
-                                    <img src="{{ $event->image_id_url }}" alt="{{ $event->title_id }}"
-                                         class="w-24 h-16 object-cover rounded border border-admin-line">
+                                @php $media = $event->media_items; @endphp
+                                @if (count($media))
+                                    <div class="flex items-center gap-2 overflow-x-auto max-w-[200px] pb-1">
+                                        @foreach (array_slice($media, 0, 3) as $item)
+                                            @if ($item['type'] === 'video')
+                                                <div class="relative shrink-0 w-16 h-10 rounded border border-admin-line bg-black overflow-hidden">
+                                                    <video src="{{ $item['url'] }}" preload="metadata" class="w-full h-full object-cover"></video>
+                                                    <span class="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-white bg-black/40">▶</span>
+                                                </div>
+                                            @else
+                                                <img src="{{ $item['url'] }}" alt="{{ $event->title_id }}" class="shrink-0 w-16 h-10 object-cover rounded border border-admin-line">
+                                            @endif
+                                        @endforeach
+                                        @if (count($media) > 3)
+                                            <span class="shrink-0 text-[10px] text-admin-muted bg-admin-raised px-1.5 py-0.5 rounded">+{{ count($media) - 3 }}</span>
+                                        @endif
+                                    </div>
                                 @else
                                     <div class="w-24 h-16 rounded border border-dashed border-admin-line bg-admin-raised flex items-center justify-center text-admin-muted text-xs">Tanpa gambar</div>
                                 @endif
                             </td>
                             <td class="px-4 py-3 font-medium text-admin-smoke">
                                 {{ $event->title_id }}
-                                @if ($event->has_video)
+                                @if ($event->has_video || collect($media)->contains('type', 'video'))
                                     <span class="ml-1 inline-block px-1.5 py-0.5 text-[10px] font-bold rounded bg-red-500/10 text-red-400"
                                           title="Ada video">VIDEO</span>
                                 @endif

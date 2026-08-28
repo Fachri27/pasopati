@@ -345,6 +345,10 @@ class FireController extends Controller
             // memakai frame pertama video itu sendiri — selalu milik event yang
             // bersangkutan.
             'poster' => $event->image_id_url,
+            // Galeri media untuk slider kartu dan pop-up rincian. Bila kosong,
+            // klien membangun satu item dari `gambar`/`video` agar event lama
+            // tetap tampil.
+            'media' => $event->media_items,
             // Dipakai pop-up rincian saat judul/gambar kartu diklik.
             'lokasi' => $this->rapikanLokasi($event->location),
             // Orientasi di CMS memilih varian kartu di beranda.blade.php:
