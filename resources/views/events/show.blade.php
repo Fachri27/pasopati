@@ -57,6 +57,25 @@
             </div>
         @endif
 
+        {{-- Media Gallery --}}
+        @php $gallery = $event->media_items; @endphp
+        @if (count($gallery) > 1 || (count($gallery) === 1 && $event->has_video))
+            <div class="mb-8">
+                <span class="text-xs font-semibold text-admin-muted uppercase tracking-wide">Media Galeri ({{ count($gallery) }})</span>
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-2">
+                    @foreach ($gallery as $item)
+                        @if ($item['type'] === 'video')
+                            <video controls preload="metadata" class="w-full rounded-lg border border-admin-line bg-black" style="aspect-ratio: {{ $event->orientation->aspectRatio() }}">
+                                <source src="{{ $item['url'] }}">
+                            </video>
+                        @else
+                            <img src="{{ $item['url'] }}" alt="{{ $event->title_id }}" class="w-full rounded-lg border border-admin-line object-cover" style="aspect-ratio: {{ $event->orientation->aspectRatio() }}">
+                        @endif
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
         {{-- Detail --}}
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="space-y-4">
