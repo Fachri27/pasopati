@@ -59,13 +59,20 @@ class Event extends Model
             }
         }
 
+        // `image_id` bukan item galeri tersendiri saat event punya video: ia
+        // adalah poster video itu — kalau admin tidak mengunggah gambar,
+        // EventController mengisinya dengan frame hasil ffmpeg dari video yang
+        // sama. Dihitung sebagai item, event bervideo tunggal tampil seolah
+        // punya dua media dan slider memunculkan titik navigasinya.
+        $pakaiImageId = $this->image_id && ! $this->has_video;
+
         // Jika hanya media legacy (image_id/video) yang tersedia, bangun satu
         // item agar event lama tetap tampil di slider.
         if ($items === []) {
             if ($this->video) {
                 $items[] = ['type' => 'video', 'url' => $this->video_url, 'path' => $this->video];
             }
-            if ($this->image_id) {
+            if ($pakaiImageId) {
                 $items[] = ['type' => 'image', 'url' => $this->image_id_url, 'path' => $this->image_id];
             }
 
@@ -77,7 +84,7 @@ class Event extends Model
         if ($this->video && ! in_array($this->video, $paths, true)) {
             $primary[] = ['type' => 'video', 'url' => $this->video_url, 'path' => $this->video];
         }
-        if ($this->image_id && ! in_array($this->image_id, $paths, true)) {
+        if ($pakaiImageId && ! in_array($this->image_id, $paths, true)) {
             $primary[] = ['type' => 'image', 'url' => $this->image_id_url, 'path' => $this->image_id];
         }
 

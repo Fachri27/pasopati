@@ -491,16 +491,22 @@ document.addEventListener("alpine:init", function () {
          dan `terlihat` di sini: Alpine yang menjalankan ulang saat salah
          satunya berubah. `preload="none"` di markup membuat berkasnya baru
          diunduh ketika kartunya benar-benar tampil. */
-      setelVideo: function (el, indeks, kunci) {
+      setelVideo: function (el, indeks, kunci, tampil) {
         if (!el) return;
 
         /* Sebagian browser hanya mengizinkan putar-otomatis bila properti
            (bukan sekadar atribut) muted bernilai true. */
         el.muted = true;
 
+        /* `tampil` = media ini yang sedang ditunjuk slider kartu. Satu kartu
+           bisa memuat beberapa video; tanpa syarat ini semuanya diputar
+           bersamaan — yang tersembunyi ikut mengunduh berkasnya dan ikut
+           memicu `ended`, jadi lencana durasi & tombol putar ulang menempel
+           di video yang salah. */
+
         /* Saat pop-up terbuka, video di kartu berhenti: yang ditonton adalah
            salinan di dalam pop-up, bukan yang di belakangnya. */
-        if (indeks === this.aktif && this.terlihat && !this.kurangiGerak && this.sorot === null) {
+        if (tampil && indeks === this.aktif && this.terlihat && !this.kurangiGerak && this.sorot === null) {
           /* Kartu ini kembali diputar dari awal, jadi tanda "putar ulang"
              dilepas — kalau tidak, ia menempel di video yang sedang berjalan. */
           this.videoUsai[kunci] = false;
@@ -515,6 +521,28 @@ document.addEventListener("alpine:init", function () {
         el.pause();
         if (el.currentTime) el.currentTime = 0;
         this.videoUsai[kunci] = false;
+      },
+
+      /* Video pop-up — hanya media yang sedang ditunjuk slider yang berjalan.
+         Berbeda dengan kartu, video di sini bersuara: `x-show` cuma
+         menyembunyikan elemennya, jadi tanpa jeda eksplisit video sebelumnya
+         terus terdengar setelah tombol next ditekan. */
+      setelVideoRincian: function (el, mi) {
+        if (!el) return;
+
+        if (this.sorot !== null && this.mediaRincianAktif() === mi) {
+          if (!this.kurangiGerak) {
+            var janji = el.play();
+            /* Putar-otomatis bersuara kerap ditolak peramban — kontrolnya
+               tetap tampil, jadi tidak ada yang perlu dilakukan. */
+            if (janji && janji.catch) janji.catch(function () {});
+          }
+
+          return;
+        }
+
+        el.pause();
+        if (el.currentTime) el.currentTime = 0;
       },
 
       /* --- media slider (kartu & pop-up) --- */
