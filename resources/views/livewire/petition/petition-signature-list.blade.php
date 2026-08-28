@@ -5,11 +5,11 @@
 
         {{-- Breadcrumb --}}
         <nav class="text-sm text-admin-ash mb-6 flex items-center gap-2">
-            <a href="{{ route('petition.admin.index') }}" class="text-admin-smoke hover:text-blue-400 font-medium">
+            <a href="{{ route('petition.admin.index') }}" class="text-admin-smoke hover:text-admin-amber font-medium">
                 Petisi
             </a>
             <span class="text-admin-muted">›</span>
-            <span class="text-blue-400 font-semibold">
+            <span class="text-admin-amber font-semibold">
                 {{ $petition->translation($locale)?->title ?? $petition->slug }}
             </span>
         </nav>
@@ -23,7 +23,7 @@
                 </p>
             </div>
             <button wire:click="exportCsv"
-                class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+                class="bg-admin-amber text-white px-4 py-2 rounded-lg hover:bg-admin-amber/85">
                 Export CSV
             </button>
         </div>
@@ -33,10 +33,10 @@
             <div class="flex flex-col sm:flex-row gap-4">
                 <div class="flex-1">
                     <input type="text" wire:model.live.debounce.300ms="search" placeholder="Cari penandatangan..."
-                        class="w-full border rounded-lg px-3 py-2">
+                        class="admin-input">
                 </div>
                 <div>
-                    <select wire:model.live="filterVerified" class="border rounded-lg px-3 py-2">
+                    <select wire:model.live="filterVerified" class="admin-input">
                         <option value="">Semua</option>
                         <option value="verified">Terverifikasi</option>
                         <option value="unverified">Belum Verifikasi</option>
@@ -47,7 +47,7 @@
 
         {{-- Table --}}
         <div class="bg-admin-surface rounded-xl shadow overflow-hidden">
-            <table class="min-w-full border-collapse">
+            <table class="admin-table min-w-full border-collapse">
                 <thead>
                     <tr class="bg-admin-raised text-left text-sm font-medium text-admin-muted">
                         <th class="px-6 py-3">Nama</th>
@@ -68,7 +68,7 @@
                                 @if ($signature->is_verified)
                                     <span class="text-emerald-400 text-xs font-semibold">✓ Verified</span>
                                 @else
-                                    <span class="text-amber-400 text-xs font-semibold">Pending</span>
+                                    <span class="text-admin-amber text-xs font-semibold">Pending</span>
                                 @endif
                             </td>
                             <td class="px-6 py-4 text-sm text-admin-ash">{{ $signature->created_at->format('d M Y H:i') }}</td>
@@ -97,7 +97,7 @@
         </div>
 
         <div class="mt-4">
-            {{ $signatures->links('vendor.pagination.custom') }}
+            {{ $signatures->links('vendor.pagination.admin') }}
         </div>
     </div>
 </div>

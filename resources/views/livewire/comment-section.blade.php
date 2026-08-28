@@ -447,7 +447,7 @@
                 <div class="mt-4 border border-[#e2d8cc] bg-[#f8f6f2] p-5 text-center">
                     <p class="text-sm text-[#6f665c]">{{ $t['google_login'] }}</p>
                     <a href="{{ route('comment.google.login') }}?intended={{ urlencode(url()->current()) }}"
-                       class="mt-4 inline-flex items-center gap-3 bg-white px-5 py-3 text-xs font-bold shadow-sm ring-1 ring-[#d8cec2] transition hover:bg-gray-50">
+                       class="mt-4 inline-flex items-center gap-3 bg-white px-5 py-3 text-xs font-bold shadow-sm ring-1 ring-[#d8cec2] transition hover:bg-admin-raised">
                         <svg class="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M21.6 12.2c0-.7-.1-1.5-.2-2.2H12v4.3h5.4a4.6 4.6 0 0 1-2 3v2.8h3.5c2-1.9 3.2-4.6 3.2-7.9z"></path><path fill="#34A853" d="M12 22c2.9 0 5.3-.9 7-2.6l-3.5-2.8a6.4 6.4 0 0 1-9.6-3.4H2.3V16A10 10 0 0 0 12 22z"></path><path fill="#FBBC05" d="M5.9 13.2A6 6 0 0 1 5.6 12c0-.4.1-.8.2-1.2V8H2.3A10 10 0 0 0 2 12c0 1.4.3 2.8.8 4z"></path><path fill="#EA4335" d="M12 5.6c1.6 0 3 .5 4.1 1.6l3.1-3A10 10 0 0 0 2.3 8l3.6 2.8A6 6 0 0 1 12 5.6z"></path></svg>
                         {{ $t['google_btn'] }}
                     </a>

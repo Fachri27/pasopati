@@ -55,10 +55,7 @@
                             class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                             @change="fileName = $event.target.files.length ? $event.target.files[0].name : 'No File Selected'">
 
-                        <div class="flex items-center justify-between w-full border border-admin-line rounded-xl bg-admin-surface p-3 
-                        transition-all duration-200 ease-in-out
-                        focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-400/50
-                        group-hover:shadow-md">
+                        <div class="flex items-center justify-between w-full border border-admin-line rounded-xl bg-admin-surface p-3 transition-all duration-200 ease-in-out focus-within:border-admin-amber focus-within:ring-2 focus-within:ring-indigo-400/50 group-hover:shadow-md">
                             <div class="flex items-center gap-2">
                                 <div class="bg-admin-raised p-2 rounded-lg text-admin-muted">
                                     📁
@@ -93,7 +90,7 @@
 
                 <div class="mb-3">
                     <select wire:model="role"
-                        class="w-full border px-3 py-2 rounded-lg focus:ring focus:border-blue-400" required>
+                        class="w-full border px-3 py-2 rounded-lg focus:ring focus:border-admin-amber" required>
                         <option value="">Pilih Role</option>
                         @foreach(['admin','editor'] as $r)
                         <option value="{{ $r }}">{{ ucfirst($r) }}</option>
@@ -102,7 +99,7 @@
                     @error('role') <p class="text-red-400 text-sm">{{ $message }}</p> @enderror
                 </div>
 
-                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded w-full">
+                <button type="submit" class="bg-admin-amber text-white px-4 py-2 rounded w-full">
                     {{ $userId ? 'Update User' : 'Add User' }}
                 </button>
             </form>

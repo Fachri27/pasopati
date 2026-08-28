@@ -4,7 +4,7 @@
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-lg font-semibold text-admin-smoke mb-4">Daftar Halaman</h2>
                 <a href="{{ route('kategori.create') }}">
-                    <button class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium">
+                    <button class="admin-btn admin-btn--primary">
                         🚀 Create
                     </button>
                 </a>
@@ -12,7 +12,7 @@
             <div class="flex items-center justify-between mb-4">
                 <input type="text" wire:model.live.debounce.300ms="search" placeholder="Search..." class="border p-2">
             </div>
-            <table id="kategoriTable" class="w-full border-collapse">
+            <table id="kategoriTable" class="admin-table w-full border-collapse">
                 <thead>
                     <tr class="bg-admin-raised text-left text-sm font-medium text-admin-ash">
                         <th class="p-3">No</th>
@@ -34,9 +34,9 @@
                         <td class="p-3">{{ $enKategori }}</td>
                         <td class="p-3">
                             <a href="{{ route('kategori.edit', $index->id) }}"
-                                class="bg-yellow-600 px-3 py-1 rounded text-white">Edit</a>
+                                class="bg-admin-ember px-3 py-1 rounded text-white">Edit</a>
                             <button wire:click='delete({{ $index->id }})'
-                                class="bg-red-600 px-3 py-1 rounded text-white">Delete</button>
+                                class="admin-btn admin-btn--danger admin-btn--sm">Delete</button>
                         </td>
                     </tr>
                 </tbody>
@@ -45,14 +45,13 @@
             </table>
         </div>
     </div>
-    {{ $kategori->links('vendor.pagination.custom') }}
+    {{ $kategori->links('vendor.pagination.admin') }}
     @if (session('success'))
     <div x-data="{ show: true }" x-show="show" x-transition:enter="transition ease-out duration-500"
         x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0"
         x-transition:leave="transition ease-in duration-500" x-transition:leave-start="opacity-100 translate-y-0"
         x-transition:leave-end="opacity-0 translate-y-2" x-init="setTimeout(() => show = false, 3000)"
-        class="fixed bottom-6 right-6 bg-green-400 text-white p-3  shadow-lg 
-               hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2">
+        class="fixed bottom-6 right-6 bg-admin-amber text-white p-3 shadow-lg hover:bg-admin-red/85 focus:outline-none focus:ring-2 focus:ring-admin-amber focus:ring-offset-2">
         {{ session('success') }}
     </div>
     @endif

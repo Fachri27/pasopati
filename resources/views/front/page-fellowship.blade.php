@@ -82,15 +82,7 @@
                 style="display:none"
             >
 
-                <div class="prose
-                    max-w-2xl mx-auto
-                    px-5
-                    poppins-regular
-                    md:text-md sm:text-base text-sm
-                    prose-p:leading-relaxed
-                    prose-p:tracking-[0.020em]
-                    prose-h2:text-[24px]
-                    prose-h3:text-[21px]">
+                <div class="prose max-w-2xl mx-auto px-5 poppins-regular md:text-md sm:text-base text-sm prose-p:leading-relaxed prose-p:tracking-[0.020em] prose-h2:text-[24px] prose-h3:text-[21px]">
 
                     {!! $content !!}
 

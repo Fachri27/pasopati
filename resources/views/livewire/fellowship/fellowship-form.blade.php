@@ -3,13 +3,13 @@
 
         {{-- ================= BREADCRUMB ================= --}}
         <nav class="text-sm text-admin-ash mb-6 flex items-center gap-2">
-            <a href="{{ route('fellowship.index') }}" class="text-admin-smoke hover:text-blue-400 font-medium">
+            <a href="{{ route('fellowship.index') }}" class="text-admin-smoke hover:text-admin-amber font-medium">
                 Page Fellowship
             </a>
 
             <span class="text-admin-muted">›</span>
 
-            <span class="text-blue-400 font-semibold">
+            <span class="text-admin-amber font-semibold">
                 {{ isset($fellowship) ? '✏️ Edit Fellowship' : '➕ Add Fellowship' }}
             </span>
         </nav>
@@ -31,13 +31,13 @@
                 ===================================================== --}}
                 <div class="col-span-12 lg:col-span-4">
 
-                    <div class="bg-admin-raised border rounded-xl p-5 space-y-5 sticky top-6">
+                    <div class="admin-card p-5 space-y-5 sticky top-6">
 
                         {{-- ================= LANGUAGE ================= --}}
                         <div>
                             <label class="font-medium">🌐 Bahasa</label>
 
-                            <select x-model="lang" class="w-full border rounded-lg px-3 py-2 mt-1">
+                            <select x-model="lang" class="admin-input admin-select mt-1">
                                 <option value="id">Indonesia</option>
                                 <option value="en">English</option>
                             </select>
@@ -57,11 +57,11 @@
 
                             <label class="font-medium">Title (ID)</label>
                             <input type="text" wire:model="title_id" x-model="title" @input="slug = makeSlug(title)"
-                                class="w-full border rounded-lg px-3 py-2 mt-1">
+                                class="admin-input mt-1">
 
                             <label class="text-sm mt-2 block">Slug</label>
                             <input type="text" x-model="slug" readonly
-                                class="w-full bg-admin-raised border rounded-lg px-3 py-2">
+                                class="admin-input">
                         </div>
 
 
@@ -69,19 +69,19 @@
                         <div x-show="lang === 'en'">
                             <label class="font-medium">Title (EN)</label>
 
-                            <input type="text" wire:model="title_en" class="w-full border rounded-lg px-3 py-2 mt-1">
+                            <input type="text" wire:model="title_en" class="admin-input mt-1">
                         </div>
 
 
                         {{-- ================= SUB JUDUL ================= --}}
                         <div x-show="lang === 'id'">
                             <label class="font-medium">Sub Judul (ID)</label>
-                            <input type="text" wire:model="sub_judul_id" class="w-full border rounded-lg px-3 py-2">
+                            <input type="text" wire:model="sub_judul_id" class="admin-input">
                         </div>
 
                         <div x-show="lang === 'en'">
                             <label class="font-medium">Sub Judul (EN)</label>
-                            <input type="text" wire:model="sub_judul_en" class="w-full border rounded-lg px-3 py-2">
+                            <input type="text" wire:model="sub_judul_en" class="admin-input">
                         </div>
 
 
@@ -105,7 +105,7 @@
                         <div>
                             <label class="font-medium">Status</label>
 
-                            <select wire:model="status" class="w-full border rounded-lg px-3 py-2">
+                            <select wire:model="status" class="admin-input admin-select">
                                 <option value="draft">Draft</option>
                                 <option value="active">Active</option>
                                 <option value="inactive">Inactive</option>
@@ -130,7 +130,7 @@
                                     <label class="font-medium">Image (Indonesia)</label>
 
                                     <input type="file" wire:model="image_id"
-                                        class="w-full border rounded-lg px-3 py-2 mt-1">
+                                        class="admin-input mt-1">
 
                                     <div class="mt-3">
                                         @if ($image_id)
@@ -150,7 +150,7 @@
                                     <label class="font-medium">Image Cover (Indonesia)</label>
 
                                     <input type="file" wire:model="image_cover_id"
-                                        class="w-full border rounded-lg px-3 py-2 mt-1">
+                                        class="admin-input mt-1">
 
                                     <div class="mt-3">
                                         @if ($image_cover_id)
@@ -176,7 +176,7 @@
                                     <label class="font-medium">Image (English)</label>
 
                                     <input type="file" wire:model="image_en"
-                                        class="w-full border rounded-lg px-3 py-2 mt-1">
+                                        class="admin-input mt-1">
 
                                     <div class="mt-3">
                                         @if ($image_en)
@@ -196,7 +196,7 @@
                                     <label class="font-medium">Image Cover (English)</label>
 
                                     <input type="file" wire:model="image_cover_en"
-                                        class="w-full border rounded-lg px-3 py-2 mt-1">
+                                        class="admin-input mt-1">
 
                                     <div class="mt-3">
                                         @if ($image_cover_en)
@@ -252,8 +252,7 @@
                 {{-- ================= SAVE BUTTON ================= --}}
                 <div class="col-span-12 sticky bottom-0 bg-admin-surface border-t p-4 flex justify-end">
 
-                    <button type="submit" wire:loading.attr="disabled" class="bg-blue-600 hover:bg-blue-700 disabled:opacity-60
-                                   text-white px-6 py-2 rounded-lg font-medium">
+                    <button type="submit" wire:loading.attr="disabled" class="bg-admin-amber hover:bg-admin-amber/85 disabled:opacity-60 text-white px-6 py-2 rounded-lg font-medium">
 
                         {{ isset($fellowship) ? '💾 Update' : '🚀 Create' }}
                     </button>

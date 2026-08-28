@@ -7,7 +7,7 @@
     <div class="space-y-4">
         @foreach ($data['sessions'] ?? [] as $session)
             <div class="border-l-4 border-blue-600 pl-4 py-2">
-                <div class="text-sm font-mono text-blue-700 font-semibold">{{ $session['time'] ?? '' }}</div>
+                <div class="text-sm font-mono text-admin-amber font-semibold">{{ $session['time'] ?? '' }}</div>
                 <h4 class="text-base font-bold text-gray-900">{{ $session['title'] ?? '' }}</h4>
                 @if (!empty($session['description']))
                     <p class="text-sm text-gray-600 mt-1">{{ $session['description'] }}</p>

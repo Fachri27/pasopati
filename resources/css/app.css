@@ -45,20 +45,44 @@
 
     --radius-card: 2px;
 
-    /* ── Admin: Thermal Command palette ── */
+    /* ── Admin: palet Pasopati ──────────────────────────────────────────
+       CMS memakai palet yang sama dengan frontend, dan karena itu ikut TERANG.
+
+       Sebelumnya CMS bertema gelap dan warnanya diambil dari
+       public/dist/style.css — itu keliru: berkas itu token khusus halaman
+       /fire, bukan palet merek. Palet mereknya ada di blok publik di atas
+       (--color-paper/ink/forest/pasopati), dan seluruhnya dirancang untuk alas
+       putih: dipakai apa adanya sebagai aksen di alas gelap, forest hanya
+       mencapai kontras 2,02 dan merah 3,63 — dua-duanya tidak terbaca.
+
+       NAMA tokennya tetap dipertahankan (terpakai di 250+ tempat), jadi
+       beberapa nama kini berlawanan arti dengan isinya: "smoke" berisi tinta
+       gelap, "base" berisi abu paling muda. Perannya yang dijaga konsisten,
+       bukan namanya. */
     --font-admin: 'DM Sans', 'Inter', ui-sans-serif, system-ui, sans-serif;
     --font-admin-display: 'Space Grotesk', 'Poppins', system-ui, sans-serif;
 
-    --color-admin-base: #0f1117;
-    --color-admin-surface: #171b24;
-    --color-admin-raised: #1e2330;
-    --color-admin-line: #2a3040;
-    --color-admin-amber: #f59e0b;
-    --color-admin-ember: #ea580c;
-    --color-admin-red: #dc2626;
-    --color-admin-ash: #94a3b8;
-    --color-admin-smoke: #e2e8f0;
-    --color-admin-muted: #64748b;
+    /* Kerangka terang, urutannya dibalik dari tema gelap: base kini alas
+       halaman yang paling abu, surface & raised permukaan yang naik ke putih. */
+    --color-admin-base: #F3F4F6;    /* = --color-soft    (alas halaman) */
+    --color-admin-surface: #FFFFFF; /* = --color-paper   (sidebar, field, thead) */
+    --color-admin-raised: #FFFFFF;  /* = --color-paper   (kartu) */
+    --color-admin-line: #E5E7EB;    /* = --color-line */
+
+    /* Aksen langsung dari palet merek. */
+    --color-admin-amber: #2B5343;   /* = --color-forest    (aksen utama) */
+    --color-admin-ember: #B91C1C;   /* = --color-pasopati-d */
+    --color-admin-red: #DC2626;     /* = --color-pasopati  (tindakan merusak) */
+
+    /* Teks di atas aksen. Forest dan merah sama-sama gelap, jadi keduanya
+       memakai putih — 8,67 dan 4,83. */
+    --color-admin-on-accent: #FFFFFF;
+
+    /* Teks. ink-3 sengaja tidak dipakai untuk teks apa pun: di atas putih
+       kontrasnya cuma 2,54. */
+    --color-admin-ash: #4B5563;     /* = --color-ink-2  7,56 */
+    --color-admin-smoke: #111827;   /* = --color-ink   17,74 */
+    --color-admin-muted: #6B7280;   /* lebih gelap dari ink-3 agar terbaca */
 }
 
 /* Cahaya radial halus di hero arsip Deforestory. */
@@ -348,17 +372,23 @@ figure.media-caption figcaption {
     }
 
 /* ================================================================
-   Admin: Thermal Command
+   Admin — palet Pasopati
+
+   Semua nilai di bawah memakai var(--color-admin-*), bukan hex tertulis
+   langsung seperti sebelumnya. Dulu warnanya disalin dua kali: sekali di
+   @theme sebagai token, sekali lagi di sini sebagai angka — jadi mengganti
+   temanya lewat token tidak pernah menyentuh nav, input, maupun tabel.
    ================================================================ */
 
-/* Thermobar — the signature gradient. */
+/* Thermobar — gradien penanda: hijau hutan → merah Pasopati, lalu lenyap ke
+   alas halaman. Dua warna merek itu berdampingan persis seperti di situsnya. */
 .admin-thermobar {
     height: 3px;
     background: linear-gradient(90deg,
-        #f59e0b 0%,
-        #ea580c 35%,
-        #dc2626 65%,
-        #0f1117 100%
+        var(--color-admin-amber) 0%,
+        var(--color-admin-ember) 35%,
+        var(--color-admin-red) 65%,
+        var(--color-admin-base) 100%
     );
 }
 
@@ -371,51 +401,205 @@ figure.media-caption figcaption {
     border-radius: 0.5rem;
     font-size: 0.875rem;
     font-weight: 500;
-    color: #94a3b8;
+    color: var(--color-admin-ash);
     transition: color 0.15s, background-color 0.15s;
     text-decoration: none;
 }
 
 .admin-nav-link:hover {
-    color: #e2e8f0;
-    background-color: #1e2330;
+    color: var(--color-admin-smoke);
+    /* base, bukan raised: di tema terang raised sudah putih — sewarna dengan
+       sidebar — jadi hover-nya tidak akan terlihat sama sekali. */
+    background-color: var(--color-admin-base);
 }
 
 .admin-nav-link.active {
-    color: #f59e0b;
-    background-color: rgba(245, 158, 11, 0.08);
+    color: var(--color-admin-amber);
+    /* color-mix, bukan rgba() bernilai tetap: alasnya ikut berubah kalau
+       token aksennya diganti lagi. */
+    background-color: color-mix(in srgb, var(--color-admin-amber) 10%, transparent);
 }
 
-/* Dark form inputs. */
+/* ── Field: input, textarea, select ────────────────────────────────────
+   Satu kelas untuk ketiganya. Sebelumnya mayoritas field di CMS memakai
+   utility lepas "w-full border rounded-lg px-3 py-2" — tanpa warna latar,
+   border, maupun teks. Di Tailwind v4 `border` tanpa warna jatuh ke
+   currentColor, jadi field-field itu memang tidak pernah tersambung ke tema:
+   alasnya tembus, garisnya mengikuti warna teks, dan tidak ada satu pun
+   keadaan fokus yang terlihat. */
 .admin-input {
     width: 100%;
     border-radius: 0.5rem;
-    border: 1px solid #2a3040;
-    background-color: #171b24;
+    border: 1px solid var(--color-admin-line);
+    background-color: var(--color-admin-surface);
     padding: 0.5rem 0.75rem;
     font-size: 0.875rem;
-    color: #e2e8f0;
+    line-height: 1.5;
+    color: var(--color-admin-smoke);
     transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .admin-input::placeholder {
-    color: #64748b;
+    color: var(--color-admin-muted);
 }
 
+/* Fokus dinyatakan dua kali — warna garis DAN cincin — supaya tetap terbaca
+   bagi yang tidak bisa membedakan perubahan rona saja. */
 .admin-input:focus {
     outline: none;
-    border-color: #f59e0b;
-    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.15);
+    border-color: var(--color-admin-amber);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-admin-amber) 18%, transparent);
 }
 
-/* Dark select. */
+.admin-input:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+textarea.admin-input {
+    min-height: 6rem;
+    resize: vertical;
+}
+
+/* Berkas: tombol bawaannya diwarnai supaya tidak muncul sebagai kotak putih
+   terang di tengah form gelap. */
+.admin-input[type="file"] {
+    padding: 0.375rem 0.5rem;
+    color: var(--color-admin-ash);
+}
+
+.admin-input[type="file"]::file-selector-button {
+    margin-right: 0.75rem;
+    border: 0;
+    border-radius: 0.375rem;
+    background-color: var(--color-admin-base);
+    padding: 0.375rem 0.75rem;
+    font-family: inherit;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--color-admin-smoke);
+    cursor: pointer;
+}
+
+.admin-input[type="file"]::file-selector-button:hover {
+    background-color: var(--color-admin-line);
+}
+
+/* Ikon kalender bawaan peramban sudah gelap dan terbaca di atas alas putih —
+   tidak ada yang perlu dibalik lagi seperti waktu temanya masih gelap. */
+
+/* ── Label & bantuan ─────────────────────────────────────────────────── */
+.admin-label {
+    display: block;
+    margin-bottom: 0.375rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--color-admin-ash);
+}
+
+.admin-hint {
+    margin-top: 0.375rem;
+    font-size: 0.75rem;
+    color: var(--color-admin-muted);
+}
+
+.admin-error {
+    margin-top: 0.375rem;
+    font-size: 0.75rem;
+    color: var(--color-admin-red);
+}
+
+/* Select: panah bawaan peramban diganti karena versi gelapnya tidak bisa
+   diandalkan antar peramban. Warnanya hex tertulis — data URI tidak bisa
+   membaca custom property; %236B7280 = --color-admin-muted. */
 .admin-select {
     appearance: none;
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
     background-position: right 0.5rem center;
     background-repeat: no-repeat;
     background-size: 1.5em 1.5em;
     padding-right: 2.5rem;
+}
+
+/* Daftar pilihannya digambar peramban, bukan CSS kita — tanpa ini teksnya
+   ikut gelap di atas alas gelap dan tidak terbaca sama sekali. */
+.admin-select option {
+    background-color: var(--color-admin-surface);
+    color: var(--color-admin-smoke);
+}
+
+/* ── Kartu / panel ───────────────────────────────────────────────────── */
+.admin-card {
+    border-radius: 0.75rem;
+    border: 1px solid var(--color-admin-line);
+    background-color: var(--color-admin-raised);
+}
+
+/* ── Tombol ──────────────────────────────────────────────────────────────
+   Satu bentuk, tiga peran. Sebelumnya tombol CMS memakai bg-blue-500,
+   bg-blue-600, bg-indigo-600, bg-red-600 dan bg-green-600 bergantian — lima
+   biru berbeda untuk tindakan yang sama persis. */
+.admin-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border: 1px solid transparent;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.875rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.25rem;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.admin-btn:focus-visible {
+    outline: 2px solid var(--color-admin-amber);
+    outline-offset: 2px;
+}
+
+.admin-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Tindakan utama: putih di atas hijau hutan — 8,67:1. */
+.admin-btn--primary {
+    background-color: var(--color-admin-amber);
+    color: var(--color-admin-on-accent);
+    font-weight: 600;
+}
+
+/* Hover MENGGELAP. Di tema gelap arahnya terbalik (dicampur putih); di alas
+   terang mencerahkan tombol justru membuatnya tampak nonaktif. */
+.admin-btn--primary:hover {
+    background-color: color-mix(in srgb, var(--color-admin-amber) 85%, #000);
+}
+
+.admin-btn--danger {
+    background-color: var(--color-admin-red);
+    color: var(--color-admin-on-accent);
+}
+
+.admin-btn--danger:hover {
+    background-color: color-mix(in srgb, var(--color-admin-red) 85%, #000);
+}
+
+.admin-btn--ghost {
+    border-color: var(--color-admin-line);
+    background-color: transparent;
+    color: var(--color-admin-smoke);
+}
+
+.admin-btn--ghost:hover {
+    background-color: var(--color-admin-base);
+}
+
+.admin-btn--sm {
+    padding: 0.3125rem 0.625rem;
+    font-size: 0.8125rem;
 }
 
 /* Dark table. */
@@ -426,7 +610,7 @@ figure.media-caption figcaption {
 }
 
 .admin-table thead {
-    background-color: #171b24;
+    background-color: var(--color-admin-base);
 }
 
 .admin-table th {
@@ -436,26 +620,29 @@ figure.media-caption figcaption {
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: #64748b;
-    border-bottom: 1px solid #2a3040;
+    color: var(--color-admin-muted);
+    border-bottom: 1px solid var(--color-admin-line);
 }
 
 .admin-table td {
     padding: 0.75rem 1rem;
-    color: #e2e8f0;
-    border-bottom: 1px solid #2a3040;
+    color: var(--color-admin-smoke);
+    border-bottom: 1px solid var(--color-admin-line);
 }
 
 .admin-table tbody tr:hover {
-    background-color: #1e2330;
+    background-color: var(--color-admin-base);
 }
 
-/* Status badges — dark theme. */
-.badge-active { background-color: rgba(34, 197, 94, 0.12); color: #4ade80; }
-.badge-draft { background-color: rgba(234, 179, 8, 0.12); color: #facc15; }
-.badge-closed { background-color: rgba(239, 68, 68, 0.12); color: #f87171; }
-.badge-pending { background-color: rgba(251, 146, 60, 0.12); color: #fb923c; }
-.badge-info { background-color: rgba(96, 165, 250, 0.12); color: #60a5fa; }
+/* Status badges — dipilih lewat kontras di atas alas putih, bukan kedekatan
+   rona. --color-ink-3 (#9CA3AF) sengaja tidak dipakai: 2,54, tidak terbaca.
+   Statusnya juga selalu tertulis sebagai teks di dalam badge, jadi warna di
+   sini menguatkan dan bukan satu-satunya pembeda. */
+.badge-active  { background-color: color-mix(in srgb, var(--color-forest) 12%, transparent);     color: var(--color-forest); }      /* 8,67 */
+.badge-draft   { background-color: color-mix(in srgb, var(--color-ink-2) 12%, transparent);      color: var(--color-ink-2); }       /* 7,56 */
+.badge-closed  { background-color: color-mix(in srgb, var(--color-pasopati) 12%, transparent);   color: var(--color-pasopati); }    /* 4,83 */
+.badge-pending { background-color: color-mix(in srgb, var(--color-auriga-red) 14%, transparent); color: var(--color-auriga-red); }  /* 5,02 */
+.badge-info    { background-color: color-mix(in srgb, var(--color-auriga-muted) 14%, transparent); color: var(--color-auriga-muted); } /* 4,97 */
 
 /* Stat card glow on hover. */
 .admin-stat-card {
@@ -463,5 +650,5 @@ figure.media-caption figcaption {
 }
 
 .admin-stat-card:hover {
-    box-shadow: 0 0 20px rgba(245, 158, 11, 0.06);
+    box-shadow: 0 2px 12px color-mix(in srgb, var(--color-admin-smoke) 10%, transparent);
 }

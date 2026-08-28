@@ -3,9 +3,9 @@
 
         {{-- Breadcrumb --}}
         <nav class="text-sm text-admin-ash mb-3 flex items-center gap-2">
-            <a href="{{ route('deforestory.index') }}" class="text-admin-smoke hover:text-blue-400 font-medium">Deforestory</a>
+            <a href="{{ route('deforestory.index') }}" class="text-admin-smoke hover:text-admin-amber font-medium">Deforestory</a>
             <span class="text-admin-muted">›</span>
-            <span class="text-blue-400 font-semibold">Laporan /{{ $case->slug }}</span>
+            <span class="text-admin-amber font-semibold">Laporan /{{ $case->slug }}</span>
         </nav>
 
         <div class="flex items-center justify-between mb-2">
@@ -18,14 +18,14 @@
                 </p>
             </div>
             <a href="{{ route('deforestory.laporan.create', ['caseSlug' => $case->slug]) }}">
-                <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                <button class="admin-btn admin-btn--primary text-sm font-medium">
                     ➕ Tambah laporan
                 </button>
             </a>
         </div>
 
         @if (session('success'))
-            <div class="mb-4 p-3 bg-green-50 border border-green-200 text-green-800 rounded">{{ session('success') }}</div>
+            <div class="mb-4 p-3 bg-admin-raised border border-admin-line text-admin-amber rounded">{{ session('success') }}</div>
         @endif
 
         <div class="flex flex-wrap items-center justify-between mb-4 gap-3">
@@ -38,7 +38,7 @@
         </div>
 
         <div class="overflow-x-auto">
-            <table class="min-w-full border-collapse table-fixed">
+            <table class="admin-table min-w-full border-collapse table-fixed">
                 <thead>
                     <tr class="bg-admin-raised text-left text-sm font-medium text-admin-ash">
                         <th class="p-3 w-20">Gambar</th>
@@ -84,21 +84,21 @@
                                 @if ($laporan->status === 'active')
                                     <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-emerald-500/10 text-emerald-400">Aktif</span>
                                 @elseif ($laporan->status === 'draft')
-                                    <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-amber-500/10 text-amber-400">Draft</span>
+                                    <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-admin-amber/10 text-admin-amber">Draft</span>
                                 @else
                                     <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-admin-raised text-admin-ash">Inactive</span>
                                 @endif
                             </td>
                             <td class="p-3">
                                 <a href="{{ $publicUrl }}" target="_blank">
-                                    <button class="bg-admin-raised px-3 py-1 rounded text-white text-xs">Lihat</button>
+                                    <button class="admin-btn admin-btn--ghost admin-btn--sm">Lihat</button>
                                 </a>
                                 <a href="{{ route('deforestory.laporan.edit', $laporan->id) }}">
-                                    <button class="bg-yellow-600 px-3 py-1 rounded text-white text-xs">Edit</button>
+                                    <button class="bg-admin-ember px-3 py-1 rounded text-white text-xs">Edit</button>
                                 </a>
                                 <button wire:click='delete({{ $laporan->id }})'
                                     onclick="return confirm('Hapus laporan ini?')"
-                                    class="bg-red-600 px-3 py-1 rounded text-white text-xs">Hapus</button>
+                                    class="admin-btn admin-btn--danger admin-btn--sm">Hapus</button>
                             </td>
                         </tr>
                     @empty
@@ -113,7 +113,7 @@
         </div>
 
         <div class="mt-4">
-            {{ $laporans->links('vendor.pagination.custom') }}
+            {{ $laporans->links('vendor.pagination.admin') }}
         </div>
     </div>
 </div>

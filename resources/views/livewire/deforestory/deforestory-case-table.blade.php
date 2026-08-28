@@ -18,7 +18,7 @@
         </div>
 
         @if (session('success'))
-            <div class="mb-4 p-3 bg-green-50 border border-green-200 text-green-800 rounded">{{ session('success') }}</div>
+            <div class="mb-4 p-3 bg-admin-raised border border-admin-line text-admin-amber rounded">{{ session('success') }}</div>
         @endif
 
         @if (session('error'))
@@ -31,7 +31,7 @@
         </div>
 
         <div class="overflow-x-auto">
-            <table class="min-w-full border-collapse table-fixed">
+            <table class="admin-table min-w-full border-collapse table-fixed">
                 <thead>
                     <tr class="bg-admin-raised text-left text-sm font-medium text-admin-ash">
                         <th class="p-3 w-24">Gambar</th>
@@ -70,7 +70,7 @@
                                 @if (! empty($row['uuid']))
                                     <div x-data="{ copied:false, copy(){ navigator.clipboard?.writeText('{{ e($row['uuid']) }}'); this.copied=true; setTimeout(()=>this.copied=false,1200) } }">
                                         <code class="block text-[10px] font-mono text-admin-ash break-all leading-tight">{{ $row['uuid'] }}</code>
-                                        <button type="button" @click="copy" class="mt-1 text-[11px] text-blue-400 hover:underline whitespace-nowrap" x-text="copied ? 'Tersalin ✓' : 'Salin'">Salin</button>
+                                        <button type="button" @click="copy" class="mt-1 text-[11px] text-admin-amber hover:underline whitespace-nowrap" x-text="copied ? 'Tersalin ✓' : 'Salin'">Salin</button>
                                     </div>
                                 @else
                                     <span class="text-xs text-admin-muted">—</span>
@@ -87,16 +87,16 @@
                             </td>
                             <td class="p-3">
                                 <a href="{{ $publicUrl }}" target="_blank">
-                                    <button class="bg-admin-raised px-3 py-1 rounded text-white text-xs">Lihat</button>
+                                    <button class="admin-btn admin-btn--ghost admin-btn--sm">Lihat</button>
                                 </a>
                                 <a href="{{ $laporanUrl }}">
-                                    <button class="bg-blue-600 px-3 py-1 rounded text-white text-xs">Kelola laporan</button>
+                                    <button class="bg-admin-amber px-3 py-1 rounded text-white text-xs">Kelola laporan</button>
                                 </a>
                                 <button wire:click="deleteCard('{{ $row['slug'] }}')"
                                     wire:confirm="{{ $row['laporan_total'] > 0
                                         ? 'Kartu ini punya ' . $row['laporan_total'] . ' laporan. Hapus kartu beserta semua konten detailnya?'
                                         : 'Hapus kartu ini?' }}"
-                                    class="bg-red-600 px-3 py-1 rounded text-white text-xs">Hapus</button>
+                                    class="admin-btn admin-btn--danger admin-btn--sm">Hapus</button>
                             </td>
                         </tr>
                     @empty
@@ -111,7 +111,7 @@
         </div>
 
         <div class="mt-4">
-            {{ $cases->links('vendor.pagination.custom') }}
+            {{ $cases->links('vendor.pagination.admin') }}
         </div>
     </div>
 </div>

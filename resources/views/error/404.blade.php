@@ -1,12 +1,12 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-6">
+<div class="min-h-screen flex flex-col items-center justify-center bg-admin-raised px-6">
 
     <div class="text-center">
         <h1 class="text-9xl font-extrabold text-gray-300 tracking-widest">404</h1>
 
-        <div class="bg-blue-600 px-3 py-1 text-sm text-white rounded rotate-12 inline-block mt-4">
+        <div class="bg-admin-amber px-3 py-1 text-sm text-white rounded rotate-12 inline-block mt-4">
             Halaman Tidak Ditemukan
         </div>
 
@@ -16,7 +16,7 @@
 
         <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
             <a href="/"
-                class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow">
+                class="px-6 py-3 bg-admin-amber hover:bg-admin-amber/85 text-white rounded-lg transition shadow">
                 Kembali ke Beranda
             </a>
 

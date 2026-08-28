@@ -26,7 +26,7 @@
                 <td class="py-1">
                     <ul class="list-disc list-inside space-y-1">
                         @foreach ($data['registration_links'] as $link)
-                            <li><a href="{{ $link['url'] ?? '#' }}" target="_blank" class="text-blue-600 underline">{{ $link['day'] ?? 'Registrasi' }}</a></li>
+                            <li><a href="{{ $link['url'] ?? '#' }}" target="_blank" class="text-admin-amber underline">{{ $link['day'] ?? 'Registrasi' }}</a></li>
                         @endforeach
                     </ul>
                 </td>

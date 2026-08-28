@@ -85,7 +85,7 @@
             <p class="text-xs font-semibold text-admin-muted uppercase tracking-wider mb-2">Tanda Tangan Petisi</p>
             <p class="font-admin-display font-bold text-3xl text-admin-smoke">{{ number_format($totalSignatures) }}</p>
             <p class="text-xs text-admin-muted mt-2">
-                <span class="text-amber-400 font-semibold">{{ number_format($pendingSignatures) }}</span> menunggu verifikasi
+                <span class="text-admin-amber font-semibold">{{ number_format($pendingSignatures) }}</span> menunggu verifikasi
             </p>
         </div>
 

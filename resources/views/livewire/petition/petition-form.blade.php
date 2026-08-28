@@ -4,11 +4,11 @@
 
             {{-- Breadcrumb --}}
             <nav class="text-sm text-admin-ash mb-6 flex items-center gap-2">
-                <a href="{{ route('petition.admin.index') }}" class="text-admin-smoke hover:text-blue-400 font-medium">
+                <a href="{{ route('petition.admin.index') }}" class="text-admin-smoke hover:text-admin-amber font-medium">
                     Petisi
                 </a>
                 <span class="text-admin-muted">›</span>
-                <span class="text-blue-400 font-semibold">
+                <span class="text-admin-amber font-semibold">
                     {{ $petition ? 'Edit Petisi' : 'Tambah Petisi' }}
                 </span>
             </nav>
@@ -22,12 +22,12 @@
 
                     {{-- LEFT COLUMN --}}
                     <div class="col-span-12 lg:col-span-4">
-                        <div class="bg-admin-raised border rounded-xl p-5 space-y-4 sticky top-6">
+                        <div class="admin-card p-5 space-y-4 sticky top-6">
 
                             {{-- Language --}}
                             <div>
                                 <label class="font-medium">🌐 Bahasa</label>
-                                <select x-model="lang" class="w-full border rounded-lg px-3 py-2 mt-1">
+                                <select x-model="lang" class="admin-input admin-select mt-1">
                                     <option value="id">Indonesia</option>
                                     <option value="en">English</option>
                                 </select>
@@ -37,28 +37,28 @@
                             <div x-show="lang === 'id'">
                                 <label class="font-medium">Judul (ID)</label>
                                 <input type="text" wire:model="title_id" wire:input="updateTitleId($event.target.value)"
-                                    class="w-full border rounded-lg px-3 py-2 mt-1">
+                                    class="admin-input mt-1">
                             </div>
 
                             {{-- Title EN --}}
                             <div x-show="lang === 'en'">
                                 <label class="font-medium">Judul (EN)</label>
                                 <input type="text" wire:model="title_en"
-                                    class="w-full border rounded-lg px-3 py-2 mt-1">
+                                    class="admin-input mt-1">
                             </div>
 
                             {{-- Target Name --}}
                             <div>
                                 <label class="font-medium">Ditujukan Kepada</label>
                                 <input type="text" wire:model="target_name" placeholder="Contoh: Presiden RI"
-                                    class="w-full border rounded-lg px-3 py-2 mt-1">
+                                    class="admin-input mt-1">
                             </div>
 
                             {{-- Goal Count --}}
                             <div>
                                 <label class="font-medium">Target Tanda Tangan</label>
                                 <input type="number" wire:model="goal_count" min="1"
-                                    class="w-full border rounded-lg px-3 py-2 mt-1">
+                                    class="admin-input mt-1">
                             </div>
 
                             {{-- Publish Date --}}
@@ -71,7 +71,7 @@
                             {{-- Status --}}
                             <div>
                                 <label class="font-medium">Status</label>
-                                <select wire:model="status" class="w-full border rounded-lg px-3 py-2 mt-1">
+                                <select wire:model="status" class="admin-input admin-select mt-1">
                                     <option value="draft">Draft</option>
                                     <option value="active">Active</option>
                                     <option value="closed">Closed</option>
@@ -107,11 +107,11 @@
 
                             <div x-show="lang === 'id'">
                                 <textarea wire:model="description_id" rows="10"
-                                    class="w-full border rounded-lg px-3 py-2">{{ $description_id }}</textarea>
+                                    class="admin-input">{{ $description_id }}</textarea>
                             </div>
                             <div x-show="lang === 'en'">
                                 <textarea wire:model="description_en" rows="10"
-                                    class="w-full border rounded-lg px-3 py-2">{{ $description_en }}</textarea>
+                                    class="admin-input">{{ $description_en }}</textarea>
                             </div>
                         </div>
 
@@ -122,9 +122,9 @@
                             <div class="flex gap-2 mb-3">
                                 <input type="text" wire:model="demandInput" wire:keydown.enter="addDemand"
                                     placeholder="Tambah poin tuntutan..."
-                                    class="w-full border rounded-lg px-3 py-2">
+                                    class="admin-input">
                                 <button type="button" wire:click="addDemand"
-                                    class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                                    class="admin-btn admin-btn--primary">
                                     +
                                 </button>
                             </div>
@@ -132,7 +132,7 @@
                             <ul class="space-y-2">
                                 @foreach ($demands as $index => $demand)
                                     <li class="flex items-start gap-2 bg-admin-raised p-2 rounded">
-                                        <span class="text-blue-400 mt-1">•</span>
+                                        <span class="text-admin-amber mt-1">•</span>
                                         <span class="flex-1 text-sm">{{ $demand }}</span>
                                         <button type="button" wire:click="removeDemand({{ $index }})"
                                             class="text-red-400 hover:text-red-400 text-sm">✕</button>
@@ -146,7 +146,7 @@
                     {{-- SAVE --}}
                     <div class="col-span-12 sticky bottom-0 bg-admin-surface border-t p-4 flex justify-end">
                         <button type="submit" wire:loading.attr="disabled"
-                            class="relative bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-medium flex items-center gap-2">
+                            class="relative bg-admin-amber hover:bg-admin-amber/85 disabled:opacity-60 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-medium flex items-center gap-2">
 
                             <svg wire:loading wire:target="save" class="animate-spin h-5 w-5 text-white"
                                 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

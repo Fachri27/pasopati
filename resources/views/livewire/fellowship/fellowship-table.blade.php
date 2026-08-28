@@ -1,9 +1,9 @@
 <div class="flex flex-col justify-center items-center">
     <div class="bg-admin-surface shadow rounded-lg p-6">
-        <div class="flex items-center justify-between ">
+        <div class="flex items-center justify-between">
             <h2 class="text-lg font-semibold text-admin-smoke mb-4">Daftar Halaman</h2>
             <a href="{{ route('fellowship.create') }}">
-                <button class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium">
+                <button class="admin-btn admin-btn--primary">
                     🚀 Create
                 </button>
             </a>
@@ -14,7 +14,7 @@
 
         <div class="flex items-center justify-between mb-6">
             <div class="flex items-center gap-2">
-                <label for="statusFilter" class="text-sm font-medium text-admin-ash">Filter Status:</label>
+                <label for="statusFilter" class="admin-label">Filter Status:</label>
                 <select id="statusFilter" wire:model.live.debounce.100ms="status"
                     class="border-admin-line rounded-md text-sm">
                     <option value="">Semua</option>
@@ -24,7 +24,7 @@
                 </select>
             </div>
             <div class="flex items-center gap-2">
-                <label for="userFilter" class="text-sm font-medium text-admin-ash">Filter Author:</label>
+                <label for="userFilter" class="admin-label">Filter Author:</label>
                 <select id="userFilter" class="border-admin-line rounded-md text-sm">
                     <option value="">Semua Penulis</option>
                     <option value="me">Saya</option>
@@ -64,7 +64,7 @@
             <div id="tableSearch" class="flex items-center gap-2"></div>
         </div>
         <div class="overflow-x-auto">
-            <table id="fellowshipTable" class="min-w-full border-collapse table-fixed">
+            <table id="fellowshipTable" class="admin-table min-w-full border-collapse table-fixed">
                 <thead>
                     <tr class="bg-admin-raised text-left text-sm font-medium text-admin-ash">
                         <th class="p-3">Title</th>
@@ -91,12 +91,12 @@
                         <td class="p-3">
                             @if ($data->status === 'active')
                             <span
-                                class="inline-block px-3 py-1 text-white text-xs font-semibold rounded-full bg-green-500">
+                                class="inline-block px-3 py-1 text-white text-xs font-semibold rounded-full bg-admin-amber">
                                 active
                             </span>
                             @elseif ($data->status === 'draft')
                             <span
-                                class="inline-block px-3 py-1 text-white text-xs font-semibold rounded-full bg-yellow-500">
+                                class="inline-block px-3 py-1 text-white text-xs font-semibold rounded-full bg-admin-ember">
                                 draft
                             </span>
                             @else
@@ -112,13 +112,13 @@
                         <td class="p-3">
                             <a href="{{ route('fellowship.preview', ['locale' => 'id', 'slug' => $data->slug]) }}"
                                 target="_blank">
-                                <button class="bg-admin-raised px-3 py-1 rounded text-white">Preview</button>
+                                <button class="admin-btn admin-btn--ghost admin-btn--sm">Preview</button>
                             </a>
                             <a href="{{ route('fellowship.edit', $data->id) }}">
-                                <button class="bg-yellow-600 px-3 py-1 rounded text-white">Edit</button>
+                                <button class="bg-admin-ember px-3 py-1 rounded text-white">Edit</button>
                             </a>
                             <button wire:click='delete({{ $data->id }})'
-                                class="bg-red-600 px-3 py-1 rounded text-white">delete</button>
+                                class="admin-btn admin-btn--danger admin-btn--sm">delete</button>
                         </td>
                     </tr>
                     @empty
@@ -134,15 +134,14 @@
         </div>
         <!-- Pagination -->
         <div class="mt-4">
-            {{ $fellowship->links('vendor.pagination.custom') }}
+            {{ $fellowship->links('vendor.pagination.admin') }}
         </div>
     </div>
     @if (session('success'))
     <div x-data="{ show: true }" x-show="show" x-transition:enter="transition ease-out duration-500"
         x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0"
         x-transition:leave="transition ease-in duration-500" x-transition:leave-start="opacity-100 translate-y-0"
-        x-transition:leave-end="opacity-0 translate-y-2" x-init="setTimeout(() => show = false, 3000)" class="fixed bottom-6 right-6 bg-green-400 text-white p-10 shadow-lg 
-               hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2">
+        x-transition:leave-end="opacity-0 translate-y-2" x-init="setTimeout(() => show = false, 3000)" class="fixed bottom-6 right-6 bg-admin-amber text-white p-10 shadow-lg hover:bg-admin-red/85 focus:outline-none focus:ring-2 focus:ring-admin-amber focus:ring-offset-2">
         {{ session('success') }}
     </div>
     @endif

@@ -3,12 +3,12 @@
     <!-- NAV -->
     <div class="flex justify-end gap-3 mb-4">
         <button @click="prev()" :disabled="current === 0"
-            class="bg-[#d71920] disabled:opacity-40 hover:bg-red-700 text-white px-4 py-2 rounded font-semibold">
+            class="bg-[#d71920] disabled:opacity-40 hover:bg-admin-red/85 text-white px-4 py-2 rounded font-semibold">
             PREV
         </button>
 
         <button @click="next()" :disabled="current === slides.length - 1"
-            class="bg-[#d71920] disabled:opacity-40 hover:bg-red-700 text-white px-4 py-2 rounded font-semibold">
+            class="bg-[#d71920] disabled:opacity-40 hover:bg-admin-red/85 text-white px-4 py-2 rounded font-semibold">
             NEXT
         </button>
     </div>
@@ -25,7 +25,7 @@
             </div>
 
             <!-- MEDIA -->
-            <div class="w-full h-[550px] bg-gray-50 flex items-center justify-center">
+            <div class="w-full h-[550px] bg-admin-raised flex items-center justify-center">
 
                 <!-- IFRAME -->
                 <template x-if="slides[current].media.type === 'iframe'">

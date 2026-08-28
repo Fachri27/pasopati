@@ -64,17 +64,17 @@ class Event extends Model
 
     public function getImageIdUrlAttribute(): ?string
     {
-        return $this->image_id ? Storage::disk('public')->url($this->image_id) : null;
+        return $this->image_id ? url('storage/' . $this->image_id) : null;
     }
 
     public function getImageEnUrlAttribute(): ?string
     {
-        return $this->image_en ? Storage::disk('public')->url($this->image_en) : null;
+        return $this->image_en ? url('storage/' . $this->image_en) : null;
     }
 
     public function getVideoUrlAttribute(): ?string
     {
-        return $this->video ? Storage::disk('public')->url($this->video) : null;
+        return $this->video ? url('storage/' . $this->video) : null;
     }
 
     public function getHasVideoAttribute(): bool

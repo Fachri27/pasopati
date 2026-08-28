@@ -46,7 +46,7 @@
                 </div>
             </a>
         @empty
-            <div class="col-span-full text-center py-20 text-gray-400">
+            <div class="col-span-full text-center py-20 text-admin-muted">
                 <p class="text-lg">{{ $locale === 'id' ? 'Belum ada petisi aktif.' : 'No active petitions yet.' }}</p>
             </div>
         @endforelse

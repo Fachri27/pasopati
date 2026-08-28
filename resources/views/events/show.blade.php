@@ -4,23 +4,23 @@
 <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
     <div class="bg-admin-surface shadow rounded-lg p-6">
         <nav class="text-sm text-admin-ash mb-6 flex items-center gap-2">
-            <a href="{{ route('events.index') }}" class="hover:text-blue-400 font-medium">Event / Kejadian</a>
+            <a href="{{ route('events.index') }}" class="hover:text-admin-amber font-medium">Event / Kejadian</a>
             <span class="text-admin-muted">›</span>
-            <span class="text-blue-400 font-semibold">{{ $event->title_id }}</span>
+            <span class="text-admin-amber font-semibold">{{ $event->title_id }}</span>
         </nav>
 
         <div class="flex items-center justify-between mb-6">
             <h1 class="text-2xl font-bold text-admin-smoke">{{ $event->title_id }}</h1>
             <div class="space-x-2">
                 <a href="{{ route('events.edit', $event) }}"
-                   class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg text-sm">Edit</a>
+                   class="bg-admin-ember hover:bg-admin-ember/85 text-white px-4 py-2 rounded-lg text-sm">Edit</a>
                 <a href="{{ route('events.index') }}"
                    class="bg-admin-raised hover:bg-admin-line text-admin-smoke px-4 py-2 rounded-lg text-sm">Kembali</a>
             </div>
         </div>
 
         @if (session('success'))
-            <div class="mb-4 px-4 py-3 rounded-lg bg-emerald-500/10 text-green-800 border border-green-200">
+            <div class="mb-4 px-4 py-3 rounded-lg bg-emerald-500/10 text-admin-amber border border-admin-line">
                 {{ session('success') }}
             </div>
         @endif
@@ -83,7 +83,7 @@
                 <div>
                     <span class="text-xs font-semibold text-admin-muted uppercase tracking-wide">Orientation</span>
                     <p class="mt-1">
-                        <span class="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-blue-500/10 text-blue-800">
+                        <span class="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-admin-amber/10 text-admin-amber">
                             {{ $event->orientation->label() }}
                         </span>
                     </p>

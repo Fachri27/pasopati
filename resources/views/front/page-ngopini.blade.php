@@ -22,42 +22,10 @@ $translation = $page->translations->where('locale', $locale)->first();
             </div>
 
             <!-- ARTIKEL -->
-            {{-- <div class="
-               prose prose-base
-                max-w-3xl mx-auto
-                px-5 font-open
-                md:text-left text-justify
-
-                prose-p:text-slate-800
-                prose-p:leading-[2]
-                prose-p:my-6
-
-                prose-h2:mt-6 prose-h2:mb-3 prose-h2:font-semibold
-                prose-h3:mt-5 prose-h3:mb-3 prose-h3:font-semibold
-                prose-h4:mt-6 prose-h4:mb-3 prose-h4:font-medium
-
-            ">
+            {{-- <div class="prose prose-base max-w-3xl mx-auto px-5 font-open md:text-left text-justify prose-p:text-slate-800 prose-p:leading-[2] prose-p:my-6 prose-h2:mt-6 prose-h2:mb-3 prose-h2:font-semibold prose-h3:mt-5 prose-h3:mb-3 prose-h3:font-semibold prose-h4:mt-6 prose-h4:mb-3 prose-h4:font-medium">
                 {!! $translation->content !!}
             </div> --}}
-            <div class="
-                prose
-                max-w-2xl mx-auto
-                px-5 poppins-regular
-
-                md:text-md sm:text-base text-sm
-                text-left
-
-                prose-p:text-[#1a1a1a]
-                prose-p:leading-[1.6] md:prose-p:leading-[1.6]
-                prose-p:tracking-[0.020em]
-                prose-p:my-[1em]
-
-                prose-h2:text-[24px]
-                prose-h2:mt-8 prose-h2:mb-4 prose-h2:font-bold
-
-                prose-h3:text-[21px]
-                prose-h3:mt-6 prose-h3:mb-3 prose-h3:font-semibold
-                ">
+            <div class="prose max-w-2xl mx-auto px-5 poppins-regular md:text-md sm:text-base text-sm text-left prose-p:text-[#1a1a1a] prose-p:leading-[1.6] md:prose-p:leading-[1.6] prose-p:tracking-[0.020em] prose-p:my-[1em] prose-h2:text-[24px] prose-h2:mt-8 prose-h2:mb-4 prose-h2:font-bold prose-h3:text-[21px] prose-h3:mt-6 prose-h3:mb-3 prose-h3:font-semibold">
                 {{-- SARAN: Sama seperti page-expose, ganti dengan block renderer:
                      @if ($translation->content_blocks)
                          @foreach ($translation->content_blocks as $block)

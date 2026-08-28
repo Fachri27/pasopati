@@ -3,7 +3,7 @@
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-lg font-semibold text-admin-smoke mb-4">Daftar Halaman</h2>
             <a href="{{ route('pages.create') }}">
-                <button class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium">
+                <button class="admin-btn admin-btn--primary">
                     🚀 Create
                 </button>
             </a>
@@ -13,7 +13,7 @@
         </div>
         <div class="md:flex items-center justify-between mb-4">
             <div class="flex items-center gap-2">
-                <label for="statusFilter" class="text-sm font-medium text-admin-ash">Filter Status:</label>
+                <label for="statusFilter" class="admin-label">Filter Status:</label>
                 <select id="statusFilter" wire:model.live.debounce.100ms="status"
                     class="border-admin-line rounded-md text-sm">
                     <option value="">Semua</option>
@@ -23,7 +23,7 @@
                 </select>
             </div>
             <div class="md:flex items-center gap-2">
-                <label for="userFilter" class="text-sm font-medium text-admin-ash">Filter Author:</label>
+                <label for="userFilter" class="admin-label">Filter Author:</label>
                 <select id="userFilter" wire:model.live.debounce.100ms="author"
                     class="border-admin-line rounded-md text-sm">
                     <option value="">Semua Penulis</option>
@@ -83,7 +83,7 @@
                         }}</span></td>
                 <td class="p-3">
                     @if ($data->type === 'default')
-                    <span class="inline-block px-3 py-1 text-white text-xs font-semibold rounded-full bg-green-500">
+                    <span class="inline-block px-3 py-1 text-white text-xs font-semibold rounded-full bg-admin-amber">
                         default
                     </span>
                     @else
@@ -94,7 +94,7 @@
                 </td>
                 <td class="p-3">
                     @if ($data->page_type === 'expose')
-                    <span class="inline-block px-3 py-1 text-white text-xs font-semibold rounded-full bg-green-500">
+                    <span class="inline-block px-3 py-1 text-white text-xs font-semibold rounded-full bg-admin-amber">
                         expose
                     </span>
                     @else
@@ -106,11 +106,11 @@
                 <td class="p-3">{{ $data->published_at }}</td>
                 <td class="p-3">
                     @if ($data->status === 'active')
-                    <span class="inline-block px-3 py-1 text-white text-xs font-semibold rounded-full bg-green-500">
+                    <span class="inline-block px-3 py-1 text-white text-xs font-semibold rounded-full bg-admin-amber">
                         active
                     </span>
                     @elseif ($data->status === 'draft')
-                    <span class="inline-block px-3 py-1 text-white text-xs font-semibold rounded-full bg-yellow-500">
+                    <span class="inline-block px-3 py-1 text-white text-xs font-semibold rounded-full bg-admin-ember">
                         draft
                     </span>
                     @else
@@ -123,28 +123,27 @@
                 <td class="p-3">
                     <a href="{{ route('page.preview', ['locale' => app()->getLocale(), 'page_type' => $data->page_type, 'slug' => $data->slug]) }}"
                         target="_blank">
-                        <button class="bg-admin-raised px-3 py-1 rounded text-white">Preview</button>
+                        <button class="admin-btn admin-btn--ghost admin-btn--sm">Preview</button>
                     </a>
                     <a href="{{ route('pages.edit', $data->id) }}">
-                        <button class="bg-yellow-600 px-3 py-1 rounded text-white">Edit</button>
+                        <button class="bg-admin-ember px-3 py-1 rounded text-white">Edit</button>
                     </a>
                     <button wire:click='delete({{ $data->id }})'
-                        class="bg-red-600 px-3 py-1 rounded text-white">delete</button>
+                        class="admin-btn admin-btn--danger admin-btn--sm">delete</button>
                 </td>
             </tbody>
             @endforeach
         </table>
         <!-- Pagination -->
         <div class="mt-4">
-            {{ $pages->links('vendor.pagination.custom') }}
+            {{ $pages->links('vendor.pagination.admin') }}
         </div>
     </div>
     @if (session('success'))
     <div x-data="{ show: true }" x-show="show" x-transition:enter="transition ease-out duration-500"
         x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0"
         x-transition:leave="transition ease-in duration-500" x-transition:leave-start="opacity-100 translate-y-0"
-        x-transition:leave-end="opacity-0 translate-y-2" x-init="setTimeout(() => show = false, 3000)" class="fixed bottom-6 right-6 bg-green-400 text-white p-10 shadow-lg 
-               hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2">
+        x-transition:leave-end="opacity-0 translate-y-2" x-init="setTimeout(() => show = false, 3000)" class="fixed bottom-6 right-6 bg-admin-amber text-white p-10 shadow-lg hover:bg-admin-red/85 focus:outline-none focus:ring-2 focus:ring-admin-amber focus:ring-offset-2">
         {{ session('success') }}
     </div>
     @endif

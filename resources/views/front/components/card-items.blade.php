@@ -34,13 +34,7 @@
                     </h3>
                 </a>
 
-                <div class="
-                        prose prose-sm text-white max-w-none opacity-90
-                        prose-p:leading-snug
-                        prose-p:my-1
-                        font-open
-                        flex-grow
-                    ">
+                <div class="prose prose-sm text-white max-w-none opacity-90 prose-p:leading-snug prose-p:my-1 font-open flex-grow">
                     {!! $page->translations->first()->excerpt ?? '' !!}
                 </div>
 

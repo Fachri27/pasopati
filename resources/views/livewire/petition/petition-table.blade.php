@@ -5,7 +5,7 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div class="bg-admin-surface rounded-xl shadow p-6">
                 <p class="text-sm text-admin-muted">Petisi Aktif</p>
-                <p class="text-3xl font-bold text-blue-400">{{ $totalActive }}</p>
+                <p class="text-3xl font-bold text-admin-amber">{{ $totalActive }}</p>
             </div>
             <div class="bg-admin-surface rounded-xl shadow p-6">
                 <p class="text-sm text-admin-muted">Total Tanda Tangan</p>
@@ -13,7 +13,7 @@
             </div>
             <div class="bg-admin-surface rounded-xl shadow p-6">
                 <p class="text-sm text-admin-muted">Tanda Tangan Bulan Ini</p>
-                <p class="text-3xl font-bold text-amber-600">{{ number_format($totalSignaturesThisMonth) }}</p>
+                <p class="text-3xl font-bold text-admin-amber">{{ number_format($totalSignaturesThisMonth) }}</p>
             </div>
         </div>
 
@@ -21,7 +21,7 @@
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <h1 class="text-2xl font-bold text-admin-smoke">Petisi</h1>
             <a href="{{ route('petition.admin.create') }}"
-                class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                class="admin-btn admin-btn--primary">
                 + Tambah Petisi
             </a>
         </div>
@@ -31,10 +31,10 @@
             <div class="flex flex-col sm:flex-row gap-4">
                 <div class="flex-1">
                     <input type="text" wire:model.live.debounce.300ms="search" placeholder="Cari petisi..."
-                        class="w-full border rounded-lg px-3 py-2">
+                        class="admin-input">
                 </div>
                 <div>
-                    <select wire:model.live="filterStatus" class="border rounded-lg px-3 py-2">
+                    <select wire:model.live="filterStatus" class="admin-input">
                         <option value="">Semua Status</option>
                         <option value="draft">Draft</option>
                         <option value="active">Active</option>
@@ -47,7 +47,7 @@
 
         {{-- Table --}}
         <div class="bg-admin-surface rounded-xl shadow overflow-hidden">
-            <table class="min-w-full border-collapse">
+            <table class="admin-table min-w-full border-collapse">
                 <thead>
                     <tr class="bg-admin-raised text-left text-sm font-medium text-admin-muted">
                         <th class="px-6 py-3">Judul</th>
@@ -73,7 +73,7 @@
                                         @case('draft') bg-admin-raised text-admin-ash @break
                                         @case('active') bg-emerald-500/10 text-emerald-400 @break
                                         @case('closed') bg-red-500/10 text-red-400 @break
-                                        @case('succeeded') bg-blue-500/10 text-blue-400 @break
+                                        @case('succeeded') bg-admin-amber/10 text-admin-amber @break
                                     @endswitch">
                                     {{ ucfirst($petition->status) }}
                                 </span>
@@ -81,7 +81,7 @@
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-2">
                                     <div class="w-24 bg-admin-raised rounded-full h-2">
-                                        <div class="bg-blue-600 h-2 rounded-full" style="width: {{ $petition->progressPercent() }}%"></div>
+                                        <div class="bg-admin-amber h-2 rounded-full" style="width: {{ $petition->progressPercent() }}%"></div>
                                     </div>
                                     <span class="text-xs text-admin-muted">{{ $petition->progressPercent() }}%</span>
                                 </div>
@@ -89,11 +89,11 @@
                             <td class="px-6 py-4 text-sm text-admin-ash">{{ number_format($petition->signatureCount()) }}</td>
                             <td class="px-6 py-4 text-sm space-x-2">
                                 <a href="{{ route('petition.admin.edit', $petition->id) }}"
-                                    class="text-amber-400 hover:text-yellow-800">Edit</a>
+                                    class="text-admin-amber hover:text-admin-amber">Edit</a>
                                 <a href="{{ route('petition.admin.signatures', $petition->id) }}"
-                                    class="text-blue-400 hover:text-blue-800">Ttd</a>
+                                    class="text-admin-amber hover:text-admin-amber">Ttd</a>
                                 <a href="{{ route('petition.admin.export-pdf', $petition->id) }}"
-                                    class="text-emerald-400 hover:text-green-800">PDF</a>
+                                    class="text-emerald-400 hover:text-admin-amber">PDF</a>
                                 <button wire:click="delete({{ $petition->id }})"
                                     wire:confirm="Hapus petisi ini?"
                                     class="text-red-400 hover:text-red-800">Hapus</button>
@@ -111,7 +111,7 @@
         </div>
 
         <div class="mt-4">
-            {{ $petitions->links('vendor.pagination.custom') }}
+            {{ $petitions->links('vendor.pagination.admin') }}
         </div>
     </div>
 </div>

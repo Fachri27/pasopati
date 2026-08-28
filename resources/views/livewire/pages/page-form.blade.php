@@ -5,11 +5,11 @@
 
             {{-- Breadcrumb --}}
             <nav class="text-sm text-admin-ash mb-6 flex items-center gap-2">
-                <a href="{{ route('pages.index') }}" class="text-admin-smoke hover:text-blue-400 font-medium">
+                <a href="{{ route('pages.index') }}" class="text-admin-smoke hover:text-admin-amber font-medium">
                     Page Artikel
                 </a>
                 <span class="text-admin-muted">›</span>
-                <span class="text-blue-400 font-semibold">
+                <span class="text-admin-amber font-semibold">
                     {{ $page ? '✏️ Edit Page' : 'Tambah Artikel' }}
                 </span>
             </nav>
@@ -32,12 +32,12 @@
 
                     {{-- ================= LEFT COLUMN ================= --}}
                     <div class="col-span-12 lg:col-span-4">
-                        <div class="bg-admin-raised border rounded-xl p-5 space-y-4 sticky top-6">
+                        <div class="admin-card p-5 space-y-4 sticky top-6">
 
                             {{-- Language --}}
                             <div>
                                 <label class="font-medium">🌐 Bahasa</label>
-                                <select x-model="lang" class="w-full border rounded-lg px-3 py-2 mt-1">
+                                <select x-model="lang" class="admin-input admin-select mt-1">
                                     <option value="id">Indonesia</option>
                                     <option value="en">English</option>
                                 </select>
@@ -56,12 +56,12 @@
 
                                 <label class="font-medium">Title (ID)</label>
                                 <input type="text" wire:model="title_id" x-model="title" @input="slug = makeSlug(title)"
-                                    class="w-full border rounded-lg px-3 py-2 mt-1">
+                                    class="admin-input mt-1">
                                 @error('title_id') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
 
                                 <label class="text-sm mt-2 block">Slug</label>
                                 <input type="text" x-model="slug" readonly
-                                    class="w-full bg-admin-raised border rounded-lg px-3 py-2">
+                                    class="admin-input">
                             </div>
 
                             {{-- Title EN --}}
@@ -76,12 +76,12 @@
                              }" x-init="if(title && !slug){ slug = makeSlug(title) }">
                                 <label class="font-medium">Title (EN)</label>
                                 <input type="text" wire:model="title_en" x-model="title" @input="slug = makeSlug(title)"
-                                    class="w-full border rounded-lg px-3 py-2 mt-1">
+                                    class="admin-input mt-1">
                                 @error('title_en') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
 
                                 <label class="text-sm mt-2 block">Slug</label>
                                 <input type="text" x-model="slug" readonly
-                                    class="w-full bg-admin-raised border rounded-lg px-3 py-2">
+                                    class="admin-input">
                             </div>
 
                             {{-- Publish + Page Type --}}
@@ -104,7 +104,7 @@
                             {{-- Source --}}
                             <div>
                                 <label class="font-medium">Source Type</label>
-                                <select wire:model="source_type" class="w-full border rounded-lg px-3 py-2">
+                                <select wire:model="source_type" class="admin-input admin-select">
                                     <option value="manual">Manual</option>
                                     <option value="docx">DOCX / DOC</option>
                                     <option value="pdf">PDF (ekstrak teks)</option>
@@ -146,7 +146,7 @@
                             {{-- Status --}}
                             <div>
                                 <label class="font-medium">Status</label>
-                                <select wire:model="status" class="w-full border rounded-lg px-3 py-2">
+                                <select wire:model="status" class="admin-input admin-select">
                                     <option value="draft">Draft</option>
                                     <option value="active">Active</option>
                                     <option value="inactive">Inactive</option>
@@ -156,7 +156,7 @@
                             <div>
                                 <label for="" class="font-medium">Type</label>
                                 <select wire:model="type"
-                                    class="w-full border px-3 py-2 rounded-lg focus:ring focus:border-blue-400">
+                                    class="w-full border px-3 py-2 rounded-lg focus:ring focus:border-admin-amber">
                                     <option value="parallax">Parallax</option>
                                     <option value="default">Default</option>
                                 </select>
@@ -169,9 +169,7 @@
 
                                 <div class="flex flex-wrap gap-2">
                                     <template x-for="item in ['deforestasi','kebakaran','pulp','mining']">
-                                        <label class="px-3 py-1 border rounded-full cursor-pointer text-sm" :class="$wire.expose_type.includes(item)
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-admin-surface text-admin-ash'">
+                                        <label class="px-3 py-1 border rounded-full cursor-pointer text-sm" :class="$wire.expose_type.includes(item) ? 'bg-admin-amber text-white' : 'bg-admin-surface text-admin-ash'">
 
                                             <input type="checkbox" class="hidden" wire:model="expose_type"
                                                 :value="item">
@@ -229,11 +227,11 @@
                                     <div class="border rounded-lg p-4 bg-admin-raised" wire:key="block_id_{{ $index }}_{{ $blocksVersion }}">
                                         <div class="flex items-center justify-between mb-3">
                                             <span class="inline-block px-3 py-1 text-xs font-semibold rounded-full
-                                                {{ $block['type'] === 'paragraph' ? 'bg-blue-500/10 text-blue-400' : '' }}
+                                                {{ $block['type'] === 'paragraph' ? 'bg-admin-amber/10 text-admin-amber' : '' }}
                                                 {{ $block['type'] === 'image' ? 'bg-violet-500/10 text-violet-400' : '' }}
                                                 {{ $block['type'] === 'event_info_box' ? 'bg-red-500/10 text-red-400' : '' }}
                                                 {{ $block['type'] === 'agenda_day' ? 'bg-emerald-500/10 text-emerald-400' : '' }}
-                                                {{ $block['type'] === 'speaker_bio' ? 'bg-amber-500/10 text-amber-400' : '' }}
+                                                {{ $block['type'] === 'speaker_bio' ? 'bg-admin-amber/10 text-admin-amber' : '' }}
                                                 {{ $block['type'] === 'quote' ? 'bg-admin-raised text-admin-ash' : '' }}">
                                                 {{ $block['type'] }}
                                             </span>
@@ -277,7 +275,7 @@
                                                         });
                                                     }
                                                 }" x-init="initEditor" wire:ignore>
-                                                    <textarea id="paragraph_editor_id_{{ $editorIdx }}" rows="5" class="w-full border rounded-lg px-3 py-2 font-mono text-sm"></textarea>
+                                                    <textarea id="paragraph_editor_id_{{ $editorIdx }}" rows="5" class="admin-input font-mono text-sm"></textarea>
                                                 </div>
                                                 @break
                                             @case('image')
@@ -315,7 +313,7 @@
                                                     <div class="grid grid-cols-2 gap-3">
                                                         <div>
                                                             <label class="text-xs font-medium">Alignment</label>
-                                                            <select wire:model="content_blocks_id.{{ $index }}.data.alignment" class="w-full border rounded-lg px-3 py-2 text-sm">
+                                                            <select wire:model="content_blocks_id.{{ $index }}.data.alignment" class="admin-input admin-select">
                                                                 <option value="center">Center</option>
                                                                 <option value="left">Left (float)</option>
                                                                 <option value="right">Right (float)</option>
@@ -324,7 +322,7 @@
                                                         </div>
                                                         <div class="col-span-2">
                                                             <label class="text-xs font-medium">Caption</label>
-                                                            <input type="text" wire:model="content_blocks_id.{{ $index }}.data.caption" class="w-full border rounded-lg px-3 py-2 text-sm">
+                                                            <input type="text" wire:model="content_blocks_id.{{ $index }}.data.caption" class="admin-input">
                                                         </div>
                                                     </div>
                                                 </div>
@@ -333,19 +331,19 @@
                                                 <div class="grid grid-cols-2 gap-3">
                                                     <div>
                                                         <label class="text-xs font-medium">Format</label>
-                                                        <input type="text" wire:model="content_blocks_id.{{ $index }}.data.format" placeholder="Online / Offline / Hybrid" class="w-full border rounded-lg px-3 py-2 text-sm">
+                                                        <input type="text" wire:model="content_blocks_id.{{ $index }}.data.format" placeholder="Online / Offline / Hybrid" class="admin-input">
                                                     </div>
                                                     <div>
                                                         <label class="text-xs font-medium">Tanggal</label>
-                                                        <input type="date" wire:model="content_blocks_id.{{ $index }}.data.date" class="w-full border rounded-lg px-3 py-2 text-sm">
+                                                        <input type="date" wire:model="content_blocks_id.{{ $index }}.data.date" class="admin-input">
                                                     </div>
                                                     <div>
                                                         <label class="text-xs font-medium">Waktu</label>
-                                                        <input type="text" wire:model="content_blocks_id.{{ $index }}.data.time" placeholder="13:00 - 16:00 WIB" class="w-full border rounded-lg px-3 py-2 text-sm">
+                                                        <input type="text" wire:model="content_blocks_id.{{ $index }}.data.time" placeholder="13:00 - 16:00 WIB" class="admin-input">
                                                     </div>
                                                     <div>
                                                         <label class="text-xs font-medium">Tempat</label>
-                                                        <input type="text" wire:model="content_blocks_id.{{ $index }}.data.venue" class="w-full border rounded-lg px-3 py-2 text-sm">
+                                                        <input type="text" wire:model="content_blocks_id.{{ $index }}.data.venue" class="admin-input">
                                                     </div>
                                                     <div class="col-span-2">
                                                         <label class="text-xs font-medium">Link Registrasi</label>
@@ -356,22 +354,22 @@
                                                                 <button type="button" wire:click="removeRegLink('id', {{ $index }}, {{ $linkIndex }})" class="text-red-400 text-sm px-2">×</button>
                                                             </div>
                                                         @endforeach
-                                                        <button type="button" wire:click="addRegLink('id', {{ $index }})" class="text-sm text-blue-400 hover:underline">+ Tambah Link</button>
+                                                        <button type="button" wire:click="addRegLink('id', {{ $index }})" class="text-sm text-admin-amber hover:underline">+ Tambah Link</button>
                                                     </div>
                                                     <div class="col-span-2">
                                                         <label class="text-xs font-medium">Catatan</label>
-                                                        <textarea wire:model="content_blocks_id.{{ $index }}.data.notes" rows="2" class="w-full border rounded-lg px-3 py-2 text-sm"></textarea>
+                                                        <textarea wire:model="content_blocks_id.{{ $index }}.data.notes" rows="2" class="admin-input"></textarea>
                                                     </div>
                                                 </div>
                                                 @break
                                             @case('agenda_day')
                                                 <div>
                                                     <label class="text-xs font-medium">Hari/Tanggal</label>
-                                                    <input type="date" wire:model="content_blocks_id.{{ $index }}.data.day" class="w-full border rounded-lg px-3 py-2 text-sm mb-3">
+                                                    <input type="date" wire:model="content_blocks_id.{{ $index }}.data.day" class="admin-input mb-3">
                                                 </div>
                                                 <label class="text-xs font-medium mb-1 block">Sesi</label>
                                                 @foreach (($block['data']['sessions'] ?? []) as $sessionIndex => $session)
-                                                    <div class="border-l-2 border-blue-400 pl-3 mb-3" wire:key="session_id_{{ $index }}_{{ $sessionIndex }}">
+                                                    <div class="border-l-2 border-admin-amber pl-3 mb-3" wire:key="session_id_{{ $index }}_{{ $sessionIndex }}">
                                                         <div class="grid grid-cols-4 gap-2 mb-1">
                                                             <input type="text" wire:model="content_blocks_id.{{ $index }}.data.sessions.{{ $sessionIndex }}.time" placeholder="Waktu" class="border rounded px-2 py-1 text-sm">
                                                             <input type="text" wire:model="content_blocks_id.{{ $index }}.data.sessions.{{ $sessionIndex }}.title" placeholder="Judul Sesi" class="col-span-3 border rounded px-2 py-1 text-sm">
@@ -385,7 +383,7 @@
                                                         <button type="button" wire:click="removeSession('id', {{ $index }}, {{ $sessionIndex }})" class="text-xs text-red-400 hover:underline mt-1">Hapus sesi</button>
                                                     </div>
                                                 @endforeach
-                                                <button type="button" wire:click="addSession('id', {{ $index }})" class="text-sm text-blue-400 hover:underline">+ Tambah Sesi</button>
+                                                <button type="button" wire:click="addSession('id', {{ $index }})" class="text-sm text-admin-amber hover:underline">+ Tambah Sesi</button>
                                                 @break
                                             @case('speaker_bio')
                                                 <div class="grid grid-cols-2 gap-3" x-data="{
@@ -397,11 +395,11 @@
                                                 }">
                                                     <div>
                                                         <label class="text-xs font-medium">Nama</label>
-                                                        <input type="text" wire:model="content_blocks_id.{{ $index }}.data.name" class="w-full border rounded-lg px-3 py-2 text-sm">
+                                                        <input type="text" wire:model="content_blocks_id.{{ $index }}.data.name" class="admin-input">
                                                     </div>
                                                     <div>
                                                         <label class="text-xs font-medium">Jabatan</label>
-                                                        <input type="text" wire:model="content_blocks_id.{{ $index }}.data.title" class="w-full border rounded-lg px-3 py-2 text-sm">
+                                                        <input type="text" wire:model="content_blocks_id.{{ $index }}.data.title" class="admin-input">
                                                     </div>
                                                     <div>
                                                         <label class="text-xs font-medium">Upload Foto</label>
@@ -419,18 +417,18 @@
                                                     </div>
                                                     <div class="col-span-2">
                                                         <label class="text-xs font-medium">Bio</label>
-                                                        <textarea wire:model="content_blocks_id.{{ $index }}.data.bio" rows="3" class="w-full border rounded-lg px-3 py-2 text-sm"></textarea>
+                                                        <textarea wire:model="content_blocks_id.{{ $index }}.data.bio" rows="3" class="admin-input"></textarea>
                                                     </div>
                                                 </div>
                                                 @break
                                             @case('quote')
                                                 <div>
                                                     <label class="text-xs font-medium">Teks Kutipan</label>
-                                                    <textarea wire:model="content_blocks_id.{{ $index }}.data.text" rows="3" class="w-full border rounded-lg px-3 py-2 text-sm"></textarea>
+                                                    <textarea wire:model="content_blocks_id.{{ $index }}.data.text" rows="3" class="admin-input"></textarea>
                                                 </div>
                                                 <div class="mt-2">
                                                     <label class="text-xs font-medium">Sumber</label>
-                                                    <input type="text" wire:model="content_blocks_id.{{ $index }}.data.source" class="w-full border rounded-lg px-3 py-2 text-sm">
+                                                    <input type="text" wire:model="content_blocks_id.{{ $index }}.data.source" class="admin-input">
                                                 </div>
                                                 @break
                                         @endswitch
@@ -448,11 +446,11 @@
                                 @endforeach
 
                                 <div class="flex flex-wrap gap-2 pt-2">
-                                    <button type="button" wire:click="addBlock('id', 'paragraph')" class="px-3 py-1.5 text-sm border border-blue-300 text-blue-400 rounded-lg hover:bg-blue-50">+ Paragraph</button>
+                                    <button type="button" wire:click="addBlock('id', 'paragraph')" class="px-3 py-1.5 text-sm border border-admin-line text-admin-amber rounded-lg hover:bg-admin-raised">+ Paragraph</button>
                                     <button type="button" wire:click="addBlock('id', 'image')" class="px-3 py-1.5 text-sm border border-purple-300 text-violet-400 rounded-lg hover:bg-purple-50">+ Image</button>
                                     <button type="button" wire:click="addBlock('id', 'event_info_box')" class="px-3 py-1.5 text-sm border border-red-300 text-red-400 rounded-lg hover:bg-red-50">+ Info Acara</button>
-                                    <button type="button" wire:click="addBlock('id', 'agenda_day')" class="px-3 py-1.5 text-sm border border-green-300 text-emerald-400 rounded-lg hover:bg-green-50">+ Agenda</button>
-                                    <button type="button" wire:click="addBlock('id', 'speaker_bio')" class="px-3 py-1.5 text-sm border border-yellow-300 text-amber-400 rounded-lg hover:bg-yellow-50">+ Pembicara</button>
+                                    <button type="button" wire:click="addBlock('id', 'agenda_day')" class="px-3 py-1.5 text-sm border border-admin-line text-emerald-400 rounded-lg hover:bg-admin-raised">+ Agenda</button>
+                                    <button type="button" wire:click="addBlock('id', 'speaker_bio')" class="px-3 py-1.5 text-sm border border-admin-line text-admin-amber rounded-lg hover:bg-admin-raised">+ Pembicara</button>
                                     <button type="button" wire:click="addBlock('id', 'quote')" class="px-3 py-1.5 text-sm border border-admin-line text-admin-ash rounded-lg hover:bg-admin-raised">+ Quote</button>
                                 </div>
                             </div>
@@ -463,11 +461,11 @@
                                     <div class="border rounded-lg p-4 bg-admin-raised" wire:key="block_en_{{ $index }}_{{ $blocksVersion }}">
                                         <div class="flex items-center justify-between mb-3">
                                             <span class="inline-block px-3 py-1 text-xs font-semibold rounded-full
-                                                {{ $block['type'] === 'paragraph' ? 'bg-blue-500/10 text-blue-400' : '' }}
+                                                {{ $block['type'] === 'paragraph' ? 'bg-admin-amber/10 text-admin-amber' : '' }}
                                                 {{ $block['type'] === 'image' ? 'bg-violet-500/10 text-violet-400' : '' }}
                                                 {{ $block['type'] === 'event_info_box' ? 'bg-red-500/10 text-red-400' : '' }}
                                                 {{ $block['type'] === 'agenda_day' ? 'bg-emerald-500/10 text-emerald-400' : '' }}
-                                                {{ $block['type'] === 'speaker_bio' ? 'bg-amber-500/10 text-amber-400' : '' }}
+                                                {{ $block['type'] === 'speaker_bio' ? 'bg-admin-amber/10 text-admin-amber' : '' }}
                                                 {{ $block['type'] === 'quote' ? 'bg-admin-raised text-admin-ash' : '' }}">
                                                 {{ $block['type'] }}
                                             </span>
@@ -511,7 +509,7 @@
                                                         });
                                                     }
                                                 }" x-init="initEditor" wire:ignore>
-                                                    <textarea id="paragraph_editor_en_{{ $editorIdx }}" rows="5" class="w-full border rounded-lg px-3 py-2 font-mono text-sm"></textarea>
+                                                    <textarea id="paragraph_editor_en_{{ $editorIdx }}" rows="5" class="admin-input font-mono text-sm"></textarea>
                                                 </div>
                                                 @break
                                             @case('image')
@@ -549,7 +547,7 @@
                                                     <div class="grid grid-cols-2 gap-3">
                                                         <div>
                                                             <label class="text-xs font-medium">Alignment</label>
-                                                            <select wire:model="content_blocks_en.{{ $index }}.data.alignment" class="w-full border rounded-lg px-3 py-2 text-sm">
+                                                            <select wire:model="content_blocks_en.{{ $index }}.data.alignment" class="admin-input admin-select">
                                                                 <option value="center">Center</option>
                                                                 <option value="left">Left (float)</option>
                                                                 <option value="right">Right (float)</option>
@@ -558,7 +556,7 @@
                                                         </div>
                                                         <div class="col-span-2">
                                                             <label class="text-xs font-medium">Caption</label>
-                                                            <input type="text" wire:model="content_blocks_en.{{ $index }}.data.caption" class="w-full border rounded-lg px-3 py-2 text-sm">
+                                                            <input type="text" wire:model="content_blocks_en.{{ $index }}.data.caption" class="admin-input">
                                                         </div>
                                                     </div>
                                                 </div>
@@ -567,19 +565,19 @@
                                                 <div class="grid grid-cols-2 gap-3">
                                                     <div>
                                                         <label class="text-xs font-medium">Format</label>
-                                                        <input type="text" wire:model="content_blocks_en.{{ $index }}.data.format" placeholder="Online / Offline / Hybrid" class="w-full border rounded-lg px-3 py-2 text-sm">
+                                                        <input type="text" wire:model="content_blocks_en.{{ $index }}.data.format" placeholder="Online / Offline / Hybrid" class="admin-input">
                                                     </div>
                                                     <div>
                                                         <label class="text-xs font-medium">Date</label>
-                                                        <input type="date" wire:model="content_blocks_en.{{ $index }}.data.date" class="w-full border rounded-lg px-3 py-2 text-sm">
+                                                        <input type="date" wire:model="content_blocks_en.{{ $index }}.data.date" class="admin-input">
                                                     </div>
                                                     <div>
                                                         <label class="text-xs font-medium">Time</label>
-                                                        <input type="text" wire:model="content_blocks_en.{{ $index }}.data.time" placeholder="13:00 - 16:00 WIB" class="w-full border rounded-lg px-3 py-2 text-sm">
+                                                        <input type="text" wire:model="content_blocks_en.{{ $index }}.data.time" placeholder="13:00 - 16:00 WIB" class="admin-input">
                                                     </div>
                                                     <div>
                                                         <label class="text-xs font-medium">Venue</label>
-                                                        <input type="text" wire:model="content_blocks_en.{{ $index }}.data.venue" class="w-full border rounded-lg px-3 py-2 text-sm">
+                                                        <input type="text" wire:model="content_blocks_en.{{ $index }}.data.venue" class="admin-input">
                                                     </div>
                                                     <div class="col-span-2">
                                                         <label class="text-xs font-medium">Registration Links</label>
@@ -590,22 +588,22 @@
                                                                 <button type="button" wire:click="removeRegLink('en', {{ $index }}, {{ $linkIndex }})" class="text-red-400 text-sm px-2">×</button>
                                                             </div>
                                                         @endforeach
-                                                        <button type="button" wire:click="addRegLink('en', {{ $index }})" class="text-sm text-blue-400 hover:underline">+ Add Link</button>
+                                                        <button type="button" wire:click="addRegLink('en', {{ $index }})" class="text-sm text-admin-amber hover:underline">+ Add Link</button>
                                                     </div>
                                                     <div class="col-span-2">
                                                         <label class="text-xs font-medium">Notes</label>
-                                                        <textarea wire:model="content_blocks_en.{{ $index }}.data.notes" rows="2" class="w-full border rounded-lg px-3 py-2 text-sm"></textarea>
+                                                        <textarea wire:model="content_blocks_en.{{ $index }}.data.notes" rows="2" class="admin-input"></textarea>
                                                     </div>
                                                 </div>
                                                 @break
                                             @case('agenda_day')
                                                 <div>
                                                     <label class="text-xs font-medium">Day/Date</label>
-                                                    <input type="date" wire:model="content_blocks_en.{{ $index }}.data.day" class="w-full border rounded-lg px-3 py-2 text-sm mb-3">
+                                                    <input type="date" wire:model="content_blocks_en.{{ $index }}.data.day" class="admin-input mb-3">
                                                 </div>
                                                 <label class="text-xs font-medium mb-1 block">Sessions</label>
                                                 @foreach (($block['data']['sessions'] ?? []) as $sessionIndex => $session)
-                                                    <div class="border-l-2 border-blue-400 pl-3 mb-3" wire:key="session_en_{{ $index }}_{{ $sessionIndex }}">
+                                                    <div class="border-l-2 border-admin-amber pl-3 mb-3" wire:key="session_en_{{ $index }}_{{ $sessionIndex }}">
                                                         <div class="grid grid-cols-4 gap-2 mb-1">
                                                             <input type="text" wire:model="content_blocks_en.{{ $index }}.data.sessions.{{ $sessionIndex }}.time" placeholder="Time" class="border rounded px-2 py-1 text-sm">
                                                             <input type="text" wire:model="content_blocks_en.{{ $index }}.data.sessions.{{ $sessionIndex }}.title" placeholder="Session Title" class="col-span-3 border rounded px-2 py-1 text-sm">
@@ -619,7 +617,7 @@
                                                         <button type="button" wire:click="removeSession('en', {{ $index }}, {{ $sessionIndex }})" class="text-xs text-red-400 hover:underline mt-1">Remove session</button>
                                                     </div>
                                                 @endforeach
-                                                <button type="button" wire:click="addSession('en', {{ $index }})" class="text-sm text-blue-400 hover:underline">+ Add Session</button>
+                                                <button type="button" wire:click="addSession('en', {{ $index }})" class="text-sm text-admin-amber hover:underline">+ Add Session</button>
                                                 @break
                                             @case('speaker_bio')
                                                 <div class="grid grid-cols-2 gap-3" x-data="{
@@ -631,11 +629,11 @@
                                                 }">
                                                     <div>
                                                         <label class="text-xs font-medium">Name</label>
-                                                        <input type="text" wire:model="content_blocks_en.{{ $index }}.data.name" class="w-full border rounded-lg px-3 py-2 text-sm">
+                                                        <input type="text" wire:model="content_blocks_en.{{ $index }}.data.name" class="admin-input">
                                                     </div>
                                                     <div>
                                                         <label class="text-xs font-medium">Title</label>
-                                                        <input type="text" wire:model="content_blocks_en.{{ $index }}.data.title" class="w-full border rounded-lg px-3 py-2 text-sm">
+                                                        <input type="text" wire:model="content_blocks_en.{{ $index }}.data.title" class="admin-input">
                                                     </div>
                                                     <div>
                                                         <label class="text-xs font-medium">Upload Photo</label>
@@ -653,18 +651,18 @@
                                                     </div>
                                                     <div class="col-span-2">
                                                         <label class="text-xs font-medium">Bio</label>
-                                                        <textarea wire:model="content_blocks_en.{{ $index }}.data.bio" rows="3" class="w-full border rounded-lg px-3 py-2 text-sm"></textarea>
+                                                        <textarea wire:model="content_blocks_en.{{ $index }}.data.bio" rows="3" class="admin-input"></textarea>
                                                     </div>
                                                 </div>
                                                 @break
                                             @case('quote')
                                                 <div>
                                                     <label class="text-xs font-medium">Quote Text</label>
-                                                    <textarea wire:model="content_blocks_en.{{ $index }}.data.text" rows="3" class="w-full border rounded-lg px-3 py-2 text-sm"></textarea>
+                                                    <textarea wire:model="content_blocks_en.{{ $index }}.data.text" rows="3" class="admin-input"></textarea>
                                                 </div>
                                                 <div class="mt-2">
                                                     <label class="text-xs font-medium">Source</label>
-                                                    <input type="text" wire:model="content_blocks_en.{{ $index }}.data.source" class="w-full border rounded-lg px-3 py-2 text-sm">
+                                                    <input type="text" wire:model="content_blocks_en.{{ $index }}.data.source" class="admin-input">
                                                 </div>
                                                 @break
                                         @endswitch
@@ -682,11 +680,11 @@
                                 @endforeach
 
                                 <div class="flex flex-wrap gap-2 pt-2">
-                                    <button type="button" wire:click="addBlock('en', 'paragraph')" class="px-3 py-1.5 text-sm border border-blue-300 text-blue-400 rounded-lg hover:bg-blue-50">+ Paragraph</button>
+                                    <button type="button" wire:click="addBlock('en', 'paragraph')" class="px-3 py-1.5 text-sm border border-admin-line text-admin-amber rounded-lg hover:bg-admin-raised">+ Paragraph</button>
                                     <button type="button" wire:click="addBlock('en', 'image')" class="px-3 py-1.5 text-sm border border-purple-300 text-violet-400 rounded-lg hover:bg-purple-50">+ Image</button>
                                     <button type="button" wire:click="addBlock('en', 'event_info_box')" class="px-3 py-1.5 text-sm border border-red-300 text-red-400 rounded-lg hover:bg-red-50">+ Event Info</button>
-                                    <button type="button" wire:click="addBlock('en', 'agenda_day')" class="px-3 py-1.5 text-sm border border-green-300 text-emerald-400 rounded-lg hover:bg-green-50">+ Agenda</button>
-                                    <button type="button" wire:click="addBlock('en', 'speaker_bio')" class="px-3 py-1.5 text-sm border border-yellow-300 text-amber-400 rounded-lg hover:bg-yellow-50">+ Speaker</button>
+                                    <button type="button" wire:click="addBlock('en', 'agenda_day')" class="px-3 py-1.5 text-sm border border-admin-line text-emerald-400 rounded-lg hover:bg-admin-raised">+ Agenda</button>
+                                    <button type="button" wire:click="addBlock('en', 'speaker_bio')" class="px-3 py-1.5 text-sm border border-admin-line text-admin-amber rounded-lg hover:bg-admin-raised">+ Speaker</button>
                                     <button type="button" wire:click="addBlock('en', 'quote')" class="px-3 py-1.5 text-sm border border-admin-line text-admin-ash rounded-lg hover:bg-admin-raised">+ Quote</button>
                                 </div>
                             </div>
@@ -695,8 +693,7 @@
 
                     {{-- SAVE --}}
                     <div class="col-span-12 sticky bottom-0 bg-admin-surface border-t p-4 flex justify-end">
-                        <button type="submit" wire:loading.attr="disabled" class="relative bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed
-               text-white px-6 py-2 rounded-lg font-medium flex items-center gap-2">
+                        <button type="submit" wire:loading.attr="disabled" class="relative bg-admin-amber hover:bg-admin-amber/85 disabled:opacity-60 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-medium flex items-center gap-2">
 
                             {{-- Spinner --}}
                             <svg wire:loading wire:target="save" class="animate-spin h-5 w-5 text-white"

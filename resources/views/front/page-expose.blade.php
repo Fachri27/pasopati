@@ -55,25 +55,7 @@ $translation = $page->translations->where('locale', $locale)->first();
 {{-- ============================= --}}
 {{-- KONTEN UTAMA --}}
 {{-- ============================= --}}
-{{-- <div class="
-      prose prose-base
-      max-w-2xl mx-auto
-      px-5 font-open
-      text-justify md:text-left
-
-      prose-p:text-slate-800
-      prose-p:leading-[2]
-      prose-p:my-6
-
-      prose-h2:text-[18px] md:prose-h2:text-[22px]
-      prose-h2:mt-6 prose-h2:mb-3 prose-h2:font-semibold
-
-      prose-h3:text-[16px] md:prose-h3:text-[20px]
-      prose-h3:mt-5 prose-h3:mb-3 prose-h3:font-semibold
-
-      prose-h4:text-[15px] md:prose-h4:text-[18px]
-      prose-h4:mt-6 prose-h4:mb-3 prose-h4:font-medium
-    ">
+{{-- <div class="prose prose-base max-w-2xl mx-auto px-5 font-open text-justify md:text-left prose-p:text-slate-800 prose-p:leading-[2] prose-p:my-6 prose-h2:text-[18px] md:prose-h2:text-[22px] prose-h2:mt-6 prose-h2:mb-3 prose-h2:font-semibold prose-h3:text-[16px] md:prose-h3:text-[20px] prose-h3:mt-5 prose-h3:mb-3 prose-h3:font-semibold prose-h4:text-[15px] md:prose-h4:text-[18px] prose-h4:mt-6 prose-h4:mb-3 prose-h4:font-medium">
 
     {!! $translation->content !!}
 </div> --}}
@@ -82,24 +64,7 @@ $translation = $page->translations->where('locale', $locale)->first();
         @include('front.blocks.' . ($block['type'] ?? 'paragraph'), ['data' => $block['data'] ?? []])
     @endforeach
 @else
-<div class="
-      prose
-      max-w-2xl mx-auto
-      px-5
-      poppins-regular
-
-      md:text-md sm:text-base text-[16px]
-      text-left
-
-      prose-p:tracking-[0.020em]
-      prose-p:my-[1em]
-
-      prose-h2:text-[24px]
-      prose-h2:mt-8 prose-h2:mb-4 prose-h2:font-bold
-
-      prose-h3:text-[21px]
-      prose-h3:mt-6 prose-h3:mb-3 prose-h3:font-semibold
-    ">
+<div class="prose max-w-2xl mx-auto px-5 poppins-regular md:text-md sm:text-base text-[16px] text-left prose-p:tracking-[0.020em] prose-p:my-[1em] prose-h2:text-[24px] prose-h2:mt-8 prose-h2:mb-4 prose-h2:font-bold prose-h3:text-[21px] prose-h3:mt-6 prose-h3:mb-3 prose-h3:font-semibold">
     {!! $translation->content ?? '' !!}
 </div>
 @endif
