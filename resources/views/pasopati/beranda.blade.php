@@ -525,27 +525,15 @@ BLADE);
                 {{-- Badan selalu meregang mengisi rel, jadi kolom kirim tetap
                      dipatok di dasarnya walau komentarnya baru satu-dua. --}}
                 <div data-lenis-prevent class="rincian__badan">
-                  <!-- Kapsi: keping + nama pulau tebal disambung judul, sama
-                       seperti baris keterangan pada rujukan. -->
+                  <!-- Kapsi: judul, deskripsi, dan lokasi. Pulau dan tanggal
+                       sudah ditampilkan di kepala popup; tidak perlu duplikat. -->
                   <div class="rincian__kapsi">
-                    {{-- Hanya thumbnail asli event ini. `gambar` punya cadangan satu
-                       foto bawaan yang sama untuk semua event tanpa thumbnail,
-                       jadi memakainya di sini membuat keping ini menampilkan
-                       gambar yang sama sekali tidak ada hubungannya dengan
-                       video/foto yang sedang dibuka. Tanpa thumbnail, huruf
-                       depan nama pulau saja — sama seperti keping komentar. --}}
-                  <template x-if="berita[sorot].poster">
-                    <img class="rincian__keping" :src="berita[sorot].poster" alt="" aria-hidden="true" />
-                  </template>
-                  <template x-if="!berita[sorot].poster">
-                    <span class="rincian__inisial" aria-hidden="true"
-                          x-text="(berita[sorot].pulau || 'I').charAt(0)"></span>
-                  </template>
                     <div class="rincian__kapsi-isi">
-                      <p class="rincian__judul">
-                        <strong x-text="berita[sorot].pulau || 'Indonesia'"></strong>
-                        <span x-text="' ' + berita[sorot].judul"></span>
-                      </p>
+                      <p class="rincian__judul" x-text="berita[sorot].judul"></p>
+
+                      <template x-if="berita[sorot].desc">
+                        <p class="rincian__desc" x-text="berita[sorot].desc"></p>
+                      </template>
 
                       <div class="rincian__data">
                         <div>

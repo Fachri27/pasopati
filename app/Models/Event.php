@@ -16,6 +16,8 @@ class Event extends Model
         'title_id',
         'slug',
         'title_en',
+        'desc_id',
+        'desc_en',
         'event_date',
         'location',
         'location_lat',

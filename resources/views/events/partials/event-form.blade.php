@@ -153,6 +153,28 @@
                         @enderror
                     </div>
 
+                    {{-- Deskripsi ID --}}
+                    <div>
+                        <label for="desc_id" class="block font-medium text-admin-ash">Deskripsi (Indonesia)</label>
+                        <textarea id="desc_id" name="desc_id" rows="4"
+                                  placeholder="Deskripsi event dalam Bahasa Indonesia"
+                                  class="mt-1 w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-300">{{ old('desc_id', $event->desc_id ?? '') }}</textarea>
+                        @error('desc_id')
+                            <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    {{-- Deskripsi EN --}}
+                    <div>
+                        <label for="desc_en" class="block font-medium text-admin-ash">Deskripsi (English)</label>
+                        <textarea id="desc_en" name="desc_en" rows="4"
+                                  placeholder="Event description in English"
+                                  class="mt-1 w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-300">{{ old('desc_en', $event->desc_en ?? '') }}</textarea>
+                        @error('desc_en')
+                            <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                        @enderror
+                    </div>
+
                     {{-- Tanggal Kejadian --}}
                     <div>
                         <label for="event_date" class="block font-medium text-admin-ash">Tanggal Kejadian <span class="text-red-400">*</span></label>
