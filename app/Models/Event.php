@@ -4,7 +4,6 @@ namespace App\Models;
 
 use App\Enums\EventOrientation;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class Event extends Model
@@ -53,7 +52,7 @@ class Event extends Model
             if (is_array($item) && ! empty($item['path']) && ! empty($item['type'])) {
                 $items[] = [
                     'type' => $item['type'],
-                    'url' => Storage::disk('public')->url($item['path']),
+                    'url' => url('storage/' . $item['path']),
                     'path' => $item['path'],
                 ];
                 $paths[] = $item['path'];

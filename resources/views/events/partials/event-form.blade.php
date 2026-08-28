@@ -125,10 +125,10 @@
                                         </div>
                                         <div class="p-2">
                                             @if (($item['type'] ?? '') === 'video')
-                                                <video src="{{ Storage::disk('public')->url($item['path']) }}" preload="metadata" class="w-full h-20 object-cover rounded"></video>
+                                                <video src="{{ url('storage/' . $item['path']) }}" preload="metadata" class="w-full h-20 object-cover rounded"></video>
                                                 <p class="text-[10px] text-center text-admin-muted mt-1">VIDEO</p>
                                             @else
-                                                <img src="{{ Storage::disk('public')->url($item['path']) }}" alt="Media {{ $index + 1 }}" class="w-full h-20 object-cover rounded">
+                                                <img src="{{ url('storage/' . $item['path']) }}" alt="Media {{ $index + 1 }}" class="w-full h-20 object-cover rounded">
                                             @endif
                                         </div>
                                         <p class="text-[10px] text-center text-admin-muted px-2 pb-2 truncate">Media {{ $index + 1 }}</p>
