@@ -326,6 +326,8 @@ class FireController extends Controller
             'pulau' => $this->inferPulau($event->location),
             'tanggal' => $event->event_date?->locale('id')->translatedFormat('j F Y') ?? '',
             'judul' => $event->title_id,
+            // Dipakai pop-up rincian sebagai deskripsi kejadian di bawah judul.
+            'desc' => $event->desc_id,
             'gambar' => $event->image_id_url ?? asset('assets/img/berita-jawa.jpg'),
             'alt' => $event->title_id,
             // Bila event menyertakan video, kartu memutarnya alih-alih
