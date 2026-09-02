@@ -41,7 +41,14 @@ return [
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
-            'url' => env('APP_URL').'/storage',
+            // Host-relatif, bukan APP_URL. Berkas di disk ini selalu dilayani
+            // dari domain yang sedang diakses, jadi menempelkan APP_URL hanya
+            // membuat tautannya salah begitu aplikasi dibuka lewat host lain —
+            // mis. `php artisan serve` di 127.0.0.1:8000 sementara APP_URL
+            // masih menunjuk library.test. Itu yang membuat thumbnail Laravel
+            // File Manager tampil kosong. Isi FILESYSTEM_PUBLIC_URL kalau
+            // berkasnya memang dilayani dari host lain, mis. CDN.
+            'url' => env('FILESYSTEM_PUBLIC_URL', '/storage'),
             'visibility' => 'public',
             'throw' => false,
             'report' => false,
