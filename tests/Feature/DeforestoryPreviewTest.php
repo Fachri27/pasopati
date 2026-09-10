@@ -119,6 +119,22 @@ class DeforestoryPreviewTest extends TestCase
         ]))->assertRedirect(route('deforestory.case', ['locale' => 'id', 'slug' => 'mayawana']));
     }
 
+    public function test_daftar_laporan_di_cms_menautkan_pratinjau_bukan_halaman_publik(): void
+    {
+        // Pratinjau menampilkan laporan yang sama ditambah yang masih draft,
+        // jadi tautan publik di sebelahnya tidak menambah apa pun.
+        $response = $this->actingAs($this->admin())
+            ->get(route('deforestory.laporan.index', ['caseSlug' => 'mayawana']));
+
+        $response->assertOk();
+        $response->assertSee(e(route('deforestory.laporan.preview', [
+            'caseSlug' => 'mayawana', 'laporanSlug' => 'masih-draft', 'locale' => 'id',
+        ])), escape: false);
+        $response->assertDontSee(e(route('deforestory.case.laporan', [
+            'locale' => 'id', 'slug' => 'mayawana', 'laporanSlug' => 'masih-draft',
+        ])), escape: false);
+    }
+
     public function test_pratinjau_tertutup_untuk_publik_dan_bukan_editor(): void
     {
         $rute = [

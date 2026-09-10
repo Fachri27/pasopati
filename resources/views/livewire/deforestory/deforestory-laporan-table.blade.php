@@ -61,10 +61,10 @@
                                     ? $laporan->image
                                     : asset('storage/' . $laporan->image))
                                 : '';
-                            $publicUrl = route('deforestory.case.laporan', [
-                                'locale' => 'id',
-                                'slug' => $case->slug,
+                            $previewUrl = route('deforestory.laporan.preview', [
+                                'caseSlug' => $case->slug,
                                 'laporanSlug' => $laporan->slug,
+                                'locale' => 'id',
                             ]);
                         @endphp
                         <tr>
@@ -92,15 +92,18 @@
                                 @endif
                             </td>
                             <td class="p-3">
-                                <a href="{{ $publicUrl }}" target="_blank">
-                                    <button class="admin-btn admin-btn--ghost admin-btn--sm">Lihat</button>
-                                </a>
-                                <a href="{{ route('deforestory.laporan.edit', $laporan->id) }}">
-                                    <button class="bg-admin-ember px-3 py-1 rounded text-white text-xs">Edit</button>
-                                </a>
-                                <button wire:click='delete({{ $laporan->id }})'
-                                    onclick="return confirm('Hapus laporan ini?')"
-                                    class="admin-btn admin-btn--danger admin-btn--sm">Hapus</button>
+                                {{-- Anchor diberi kelas tombol, bukan membungkus <button>:
+                                     tombol di dalam tautan itu sarang interaktif yang tidak sah. --}}
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <a href="{{ route('deforestory.laporan.edit', $laporan->id) }}"
+                                       class="admin-btn admin-btn--primary admin-btn--sm">Edit</a>
+                                    <a href="{{ $previewUrl }}" target="_blank" rel="noopener"
+                                       class="admin-btn admin-btn--ghost admin-btn--sm"
+                                       title="Lihat laporan ini apa adanya, termasuk saat masih draft">Preview</a>
+                                    <button wire:click='delete({{ $laporan->id }})'
+                                            wire:confirm="Hapus laporan ini?"
+                                            class="admin-btn admin-btn--danger admin-btn--sm">Hapus</button>
+                                </div>
                             </td>
                         </tr>
                     @empty
