@@ -87,7 +87,6 @@
                                 $imgUrl = \Illuminate\Support\Str::startsWith($row['image'], ['http://','https://'])
                                     ? $row['image'] : asset('storage/' . $row['image']);
                             }
-                            $publicUrl = route('deforestory.case', ['locale' => 'id', 'slug' => $row['slug']]);
                             $laporanUrl = route('deforestory.laporan.index', ['caseSlug' => $row['slug']]);
                         @endphp
                         <tr wire:key="card-{{ $row['slug'] }}">
@@ -163,8 +162,6 @@
                                        target="_blank" rel="noopener"
                                        class="admin-btn admin-btn--ghost admin-btn--sm"
                                        title="Lihat arsip termasuk laporan yang masih draft">Preview</a>
-                                    <a href="{{ $publicUrl }}" target="_blank" rel="noopener"
-                                       class="admin-btn admin-btn--ghost admin-btn--sm">Lihat</a>
                                     <button wire:click="deleteCard('{{ $row['slug'] }}')"
                                             wire:confirm="{{ $row['laporan_total'] > 0
                                                 ? 'Kartu ini punya ' . $row['laporan_total'] . ' laporan. Hapus kartu beserta semua konten detailnya?'
