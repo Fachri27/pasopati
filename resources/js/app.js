@@ -2,6 +2,9 @@ import flatpickr from "flatpickr";
 import "flatpickr/dist/flatpickr.min.css";
 import './bootstrap';
 import './infinite-scroll';
+import './cms-tinymce';
+import './story-content';
+import './data-visualization';
 import gsap from 'gsap';
 
 if (document.getElementById('preloader')) {

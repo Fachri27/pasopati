@@ -154,11 +154,24 @@
                             <h3 class="font-semibold mb-3">Isi Laporan</h3>
                             <p class="text-xs text-admin-muted mb-2">Konten utama laporan. Tampil di halaman detail.</p>
 
-                            <div x-show="lang === 'id'">
-                                @includeWhen(true, 'front.partials.tinymce-deforestory-laporan-id')
+                            {{-- wire:key mengikat editor ke bahasanya. Tanpa itu Livewire
+                                 memakai ulang simpul yang sama saat pilihan bahasa
+                                 berganti, dan isi ID sempat terbawa ke editor EN. --}}
+                            <div x-show="lang === 'id'" wire:key="laporan-content-id">
+                                <x-tinymce-editor
+                                    wire:model="laporan_content_id"
+                                    :value="$laporan_content_id"
+                                    label="Isi Laporan (ID)"
+                                    hint="HTML lengkap dengan TinyMCE dan Source Code"
+                                />
                             </div>
-                            <div x-show="lang === 'en'">
-                                @includeWhen(true, 'front.partials.tinymce-deforestory-laporan-en')
+                            <div x-show="lang === 'en'" wire:key="laporan-content-en">
+                                <x-tinymce-editor
+                                    wire:model="laporan_content_en"
+                                    :value="$laporan_content_en"
+                                    label="Report Content (EN)"
+                                    hint="Full custom HTML with TinyMCE and Source Code"
+                                />
                             </div>
                         </div>
 

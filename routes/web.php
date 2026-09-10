@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\PetitionExportController;
 use App\Http\Controllers\Auth\GoogleCommentLoginController;
 use App\Http\Controllers\Fire\LaporanKomentarController;
+use App\Http\Controllers\DataVisualizationController;
 use App\Http\Controllers\DeforestoryController;
 use App\Http\Controllers\EditorController;
 use App\Http\Controllers\EventController;
@@ -11,12 +12,15 @@ use App\Http\Controllers\FellowshipController;
 use App\Http\Controllers\FireController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PetitionController;
+use App\Http\Controllers\ReferenceController;
 use App\Http\Controllers\SearchController;
 use App\Livewire\Auth\LoginForm;
 use App\Livewire\Deforestory\DeforestoryCaseTable;
 use App\Livewire\Deforestory\DeforestoryLaporanForm;
 use App\Livewire\Deforestory\DeforestoryLaporanTable;
 use App\Livewire\Deforestory\DeforestorySubscriberTable;
+use App\Livewire\DataVisualization\DataVisualizationForm;
+use App\Livewire\DataVisualization\DataVisualizationIndex;
 use App\Livewire\Fellowship\FellowshipForm;
 use App\Livewire\Fellowship\FellowshipTable;
 use App\Livewire\KategoriForm;
@@ -26,6 +30,7 @@ use App\Livewire\Pages\PageTable;
 use App\Livewire\Petition\PetitionForm;
 use App\Livewire\Petition\PetitionSignatureList;
 use App\Livewire\Petition\PetitionTable;
+use App\Livewire\Reference\ReferenceIndex;
 use App\Livewire\Users\UserForm;
 use App\Livewire\Users\UserTable;
 use Illuminate\Support\Facades\Route;
@@ -138,6 +143,26 @@ Route::middleware(['auth', 'role:admin,editor'])->group(function () {
     Route::get('/admin/petisi/{petitionId}/signatures', PetitionSignatureList::class)->name('petition.admin.signatures');
     Route::get('/admin/petisi/{petitionId}/export-pdf', [PetitionExportController::class, 'exportPdf'])->name('petition.admin.export-pdf');
 
+    // Reference — pustaka berkas sekaligus pemilih gambar editor TinyMCE.
+    // Halaman yang sama dibuka dengan ?picker=1&modal=1 dari dalam modal
+    // editor; parameternya dibaca ReferenceIndex::mount().
+    Route::get('/admin/reference', ReferenceIndex::class)->name('reference.index');
+    Route::get('/admin/reference/{id}/download', [ReferenceController::class, 'download'])
+        ->whereNumber('id')
+        ->name('reference.download');
+    Route::get('/admin/reference/{id}/preview', [ReferenceController::class, 'preview'])
+        ->whereNumber('id')
+        ->name('reference.preview');
+
+    // Data & Grafik — grafik yang disisipkan editor sebagai iframe embed.
+    Route::get('/admin/data-grafik', DataVisualizationIndex::class)->name('data-visualizations.index');
+    Route::get('/admin/data-grafik/create', DataVisualizationForm::class)->name('data-visualizations.create');
+    Route::get('/admin/data-grafik/options', [DataVisualizationController::class, 'options'])
+        ->name('data-visualizations.options');
+    Route::get('/admin/data-grafik/{visualizationId}/edit', DataVisualizationForm::class)
+        ->whereNumber('visualizationId')
+        ->name('data-visualizations.edit');
+
     // Event / Kejadian (CRUD + pencarian lokasi via GeoServer/PostGIS).
     Route::get('/admin/events', [EventController::class, 'index'])->name('events.index');
     Route::get('/admin/events/create', [EventController::class, 'create'])->name('events.create');
@@ -178,6 +203,17 @@ Route::get('/comment/login/google/callback', [GoogleCommentLoginController::clas
     ->name('comment.google.callback');
 Route::get('/comment/logout', [GoogleCommentLoginController::class, 'logout'])
     ->name('comment.logout');
+
+// Grafik publik. `embed` adalah yang ditanam editor ke dalam laporan lewat
+// <iframe>, jadi harus bisa diakses pembaca tanpa login; `show` versi halaman
+// penuh untuk dibagikan sebagai tautan. Keduanya hanya melayani grafik yang
+// is_active — menonaktifkan grafik ikut mematikan yang sudah tersisip.
+Route::get('/data-grafik/{id}', [DataVisualizationController::class, 'show'])
+    ->whereNumber('id')
+    ->name('data-visualizations.show');
+Route::get('/embed/data-grafik/{id}', [DataVisualizationController::class, 'embed'])
+    ->whereNumber('id')
+    ->name('data-visualizations.embed');
 
 Route::group(['prefix' => 'laravel-filemanager', 'middleware' => ['web', 'auth']], function () {
     \UniSharp\LaravelFilemanager\Lfm::routes();
