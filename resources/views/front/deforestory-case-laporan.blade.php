@@ -21,7 +21,11 @@
     $laporanContent = $laporanTrans->content ?? '';
     $cover = $imageUrl($laporanTrans->image ?? $laporan->image ?? $case->featured_image);
 
-    $caseUrl = route('deforestory.case', ['locale' => $locale, 'slug' => $case->slug]);
+    // Dipakai dua jalur: halaman publik dan pratinjau editor.
+    $preview = $preview ?? false;
+    $caseUrl = $preview
+        ? route('deforestory.case.preview', ['caseSlug' => $case->slug, 'locale' => $locale])
+        : route('deforestory.case', ['locale' => $locale, 'slug' => $case->slug]);
     $archiveUrl = route('deforestory', ['locale' => $locale]);
 @endphp
 
@@ -79,10 +83,25 @@
     </div>
 </section>
 
+{{-- Komentar dilewati di pratinjau: laporannya belum terbit, jadi belum ada
+     yang bisa dikomentari, dan formnya sungguhan. --}}
+@unless ($preview)
 <section class="bg-paper border-t border-line px-5 py-12 sm:py-16" aria-label="Komentar">
     <div class="max-w-[720px] mx-auto">
         <livewire:comment-section :commentable="$laporan" wire:key="comments-{{ $laporan->id }}" />
     </div>
 </section>
+@endunless
+
+@if ($preview)
+    <x-preview-bar
+        label="Pratinjau laporan"
+        :status="$laporan->status"
+        :locale="$locale"
+        :id-url="route('deforestory.laporan.preview', ['caseSlug' => $case->slug, 'laporanSlug' => $laporan->slug, 'locale' => 'id'])"
+        :en-url="route('deforestory.laporan.preview', ['caseSlug' => $case->slug, 'laporanSlug' => $laporan->slug, 'locale' => 'en'])"
+        :cms-url="route('deforestory.laporan.edit', ['laporanId' => $laporan->id])"
+    />
+@endif
 
 @endsection

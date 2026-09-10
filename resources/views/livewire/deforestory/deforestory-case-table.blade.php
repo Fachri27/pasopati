@@ -159,6 +159,10 @@
                                      dan itu pula yang membuat barisnya membungkus tak beraturan. --}}
                                 <div class="flex flex-wrap items-center gap-2">
                                     <a href="{{ $laporanUrl }}" class="admin-btn admin-btn--primary admin-btn--sm">Kelola laporan</a>
+                                    <a href="{{ route('deforestory.case.preview', ['caseSlug' => $row['slug'], 'locale' => 'id']) }}"
+                                       target="_blank" rel="noopener"
+                                       class="admin-btn admin-btn--ghost admin-btn--sm"
+                                       title="Lihat arsip termasuk laporan yang masih draft">Preview</a>
                                     <a href="{{ $publicUrl }}" target="_blank" rel="noopener"
                                        class="admin-btn admin-btn--ghost admin-btn--sm">Lihat</a>
                                     <button wire:click="deleteCard('{{ $row['slug'] }}')"

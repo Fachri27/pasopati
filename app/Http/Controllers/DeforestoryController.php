@@ -79,6 +79,69 @@ class DeforestoryController extends Controller
      * slug di dalam kasus. Judul kasus (breadcrumb) dari kartu API.
      * GET /{locale}/deforestory/{slug}/{laporanSlug}
      */
+    /**
+     * Pratinjau arsip kasus untuk editor.
+     * GET /admin/deforestory/{caseSlug}/preview/{locale?}
+     *
+     * Memakai view publik yang sama persis, tapi tanpa saringan status: kasus
+     * dan laporan yang masih draft ikut tampil. Justru itu gunanya — yang
+     * perlu diperiksa sebelum terbit adalah yang BELUM terbit, dan lewat
+     * halaman publik hal itu mustahil dilihat.
+     *
+     * Route-nya berada di balik middleware auth, dan viewnya memasang spanduk
+     * pratinjau supaya halaman ini tidak pernah tertukar dengan yang publik.
+     */
+    public function previewCase($caseSlug, $locale = null)
+    {
+        $locale = in_array($locale, ['id', 'en'], true) ? $locale : 'id';
+        app()->setLocale($locale);
+
+        $case = DeforestoryCase::where('slug', $caseSlug)->firstOrFail();
+
+        $laporans = $case->laporans()
+            ->with(['translations' => function ($q) use ($locale) {
+                $q->where('locale', $locale)->orWhere('locale', 'id');
+            }])
+            ->orderBy('sort')
+            ->get();
+
+        $apiCard = $this->findApiCard($locale, $caseSlug);
+
+        return view('front.deforestory-case-archive', [
+            'case' => $case,
+            'apiTitle' => $apiCard['title'] ?? null,
+            'laporans' => $laporans,
+            'preview' => true,
+        ]);
+    }
+
+    /**
+     * Pratinjau satu laporan, pasangan dari previewCase().
+     * GET /admin/deforestory/{caseSlug}/preview/{laporanSlug}/{locale?}
+     *
+     * Tanpa ini, tautan laporan draft di halaman pratinjau arsip akan
+     * memantul balik ke arsip publik — pratinjau yang tidak bisa dibuka isinya
+     * tidak banyak menolong.
+     */
+    public function previewLaporan($caseSlug, $laporanSlug, $locale = null)
+    {
+        $locale = in_array($locale, ['id', 'en'], true) ? $locale : 'id';
+        app()->setLocale($locale);
+
+        $case = DeforestoryCase::where('slug', $caseSlug)->firstOrFail();
+        $laporan = $case->laporans()->where('slug', $laporanSlug)->with('translations')->firstOrFail();
+
+        $apiCard = $this->findApiCard($locale, $caseSlug);
+
+        return view('front.deforestory-case-laporan', [
+            'case' => $case,
+            'laporan' => $laporan,
+            'laporanTrans' => $laporan->translation($locale),
+            'apiTitle' => $apiCard['title'] ?? null,
+            'preview' => true,
+        ]);
+    }
+
     public function laporan($locale, $slug, $laporanSlug)
     {
         $case = DeforestoryCase::where('slug', $slug)

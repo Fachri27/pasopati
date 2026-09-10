@@ -138,6 +138,15 @@ Route::middleware(['auth', 'role:admin,editor'])->group(function () {
     Route::get('/admin/deforestory/{caseSlug}/laporan/create', DeforestoryLaporanForm::class)->name('deforestory.laporan.create');
     Route::get('/admin/deforestory/laporan/{laporanId}/edit', DeforestoryLaporanForm::class)->name('deforestory.laporan.edit');
     Route::get('/admin/deforestory/subscribers', DeforestorySubscriberTable::class)->name('deforestory.subscribers');
+    // Pratinjau untuk editor: view publik yang sama, tapi tanpa saringan
+    // status sehingga kasus dan laporan draft ikut tampil. Sengaja berada di
+    // dalam grup auth — yang belum terbit tidak boleh bisa dibuka publik.
+    Route::get('/admin/deforestory/{caseSlug}/preview/{locale?}', [DeforestoryController::class, 'previewCase'])
+        ->where('locale', 'id|en')
+        ->name('deforestory.case.preview');
+    Route::get('/admin/deforestory/{caseSlug}/preview-laporan/{laporanSlug}/{locale?}', [DeforestoryController::class, 'previewLaporan'])
+        ->where('locale', 'id|en')
+        ->name('deforestory.laporan.preview');
     Route::get('/admin/petisi/create', PetitionForm::class)->name('petition.admin.create');
     Route::get('/admin/petisi/{petitionId}/edit', PetitionForm::class)->name('petition.admin.edit');
     Route::get('/admin/petisi/{petitionId}/signatures', PetitionSignatureList::class)->name('petition.admin.signatures');

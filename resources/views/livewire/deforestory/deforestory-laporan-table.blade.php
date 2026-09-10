@@ -30,11 +30,13 @@
 
         <div class="flex flex-wrap items-center justify-between mb-4 gap-3">
             <input type="text" wire:model.live.debounce.150ms="search" placeholder="Cari judul / slug laporan..." class="border p-2 rounded">
-            <a href="{{ route('deforestory.case', ['locale' => 'id', 'slug' => $case->slug]) }}" target="_blank">
-                <button class="bg-admin-raised hover:bg-admin-raised text-admin-ash px-4 py-2 rounded-lg text-sm font-medium border">
-                    👁 Lihat arsip publik
-                </button>
-            </a>
+            <div class="flex items-center gap-2">
+                <a href="{{ route('deforestory.case.preview', ['caseSlug' => $case->slug, 'locale' => 'id']) }}"
+                   target="_blank" rel="noopener" class="admin-btn admin-btn--ghost admin-btn--sm"
+                   title="Lihat arsip termasuk laporan yang masih draft">Preview arsip</a>
+                <a href="{{ route('deforestory.case', ['locale' => 'id', 'slug' => $case->slug]) }}"
+                   target="_blank" rel="noopener" class="admin-btn admin-btn--ghost admin-btn--sm">Arsip publik</a>
+            </div>
         </div>
 
         <div class="overflow-x-auto">

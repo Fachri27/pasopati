@@ -13,6 +13,10 @@
         : 'Spatial analysis of deforestation in Mayawana and its links to the RGE group supply chain.');
     $archiveUrl = route('deforestory', ['locale' => $locale]);
 
+    // View ini dipakai dua jalur: halaman publik dan pratinjau editor. Semua
+    // yang berbeda di antara keduanya disaring lewat $preview.
+    $preview = $preview ?? false;
+
     $imageUrl = function ($path) {
         if (! $path) return '';
         return \Illuminate\Support\Str::startsWith($path, ['http://', 'https://'])
@@ -60,11 +64,17 @@
                 $lTitle = $lt->title ?? '';
                 $lExcerpt = $lt->excerpt ?? '';
                 $lImg = $imageUrl($laporan->translation($locale)?->image ?? $laporan->image ?? $case->featured_image);
-                $lHref = route('deforestory.case.laporan', [
-                    'locale' => $locale,
-                    'slug' => $case->slug,
-                    'laporanSlug' => $laporan->slug,
-                ]);
+                $lHref = $preview
+                    ? route('deforestory.laporan.preview', [
+                        'caseSlug' => $case->slug,
+                        'laporanSlug' => $laporan->slug,
+                        'locale' => $locale,
+                    ])
+                    : route('deforestory.case.laporan', [
+                        'locale' => $locale,
+                        'slug' => $case->slug,
+                        'laporanSlug' => $laporan->slug,
+                    ]);
                 $cardYear = $yearStart
                     ? (string) min($yearStart + $index, ($yearEnd ?: $yearStart))
                     : ($case->year ?: '');
@@ -84,6 +94,13 @@
 
                 {{-- Teks --}}
                 <div class="md:pt-0 pt-4">
+                    @if ($preview && $laporan->status !== 'active')
+                        {{-- Tanpa penanda ini, laporan draft dan yang sudah
+                             terbit tampak persis sama di pratinjau. --}}
+                        <span class="inline-block mb-2 rounded-full bg-amber-100 px-2.5 py-0.5 font-mono-ui text-[.65rem] font-semibold uppercase tracking-[.1em] text-amber-800">
+                            {{ $laporan->status }} — belum tampil publik
+                        </span>
+                    @endif
                     @if ($cardYear)
                         <p class="text-pasopati font-bold md:text-md font-sans">{{ $cardYear }}</p>
                     @endif
@@ -113,7 +130,9 @@
     </section>
 @endif
 
-{{-- BERLANGGANAN (per-kasus) --}}
+{{-- BERLANGGANAN (per-kasus) — formnya sungguhan, jadi tidak dipasang
+     di pratinjau supaya editor tidak sengaja mendaftarkan diri. --}}
+@unless ($preview)
 <section class="bg-paper border-t border-line px-5 py-16" aria-label="{{ $isId ? 'Berlangganan kasus' : 'Subscribe to case' }}">
     <div class="max-w-[1200px] mx-auto grid md:grid-cols-[1fr_1.2fr] gap-10 items-center">
         <div>
@@ -130,5 +149,17 @@
         <livewire:deforestory-subscribe :locale="$locale" variant="case" :case-id="$case->id" />
     </div>
 </section>
+@endunless
+
+@if ($preview)
+    <x-preview-bar
+        label="Pratinjau arsip"
+        :status="$case->status"
+        :locale="$locale"
+        :id-url="route('deforestory.case.preview', ['caseSlug' => $case->slug, 'locale' => 'id'])"
+        :en-url="route('deforestory.case.preview', ['caseSlug' => $case->slug, 'locale' => 'en'])"
+        :cms-url="route('deforestory.laporan.index', ['caseSlug' => $case->slug])"
+    />
+@endif
 
 @endsection
