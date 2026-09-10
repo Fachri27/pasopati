@@ -23,7 +23,13 @@ class DataVisualizationController extends Controller
                 'id' => $item->id,
                 'title' => $item->title,
                 'chart_type' => $item->chart_type,
-                'embed_url' => route('data-visualizations.embed', $item->id),
+                // Host-relatif: nilai ini ditanam editor sebagai src <iframe> ke
+                // dalam konten laporan, dan iframe-nya selalu sama-origin. Bentuk
+                // absolut hanya menanam nama host ke dalam konten, lalu mati
+                // begitu situs diakses lewat host lain. Kode embed untuk situs
+                // LUAR dibuat terpisah di halaman daftar Data & Grafik, dan yang
+                // itu memang absolut.
+                'embed_url' => route('data-visualizations.embed', $item->id, false),
             ]);
 
         return response()->json(['data' => $items]);

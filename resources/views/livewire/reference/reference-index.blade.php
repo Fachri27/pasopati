@@ -157,11 +157,23 @@
                 $isImage = str_starts_with($item->mime_type ?: 'image/', 'image/');
                 $isVideo = str_starts_with($item->mime_type ?: '', 'video/');
                 $isPdf = ($item->mime_type ?: '') === 'application/pdf';
-                // Gambar dipakai langsung di konten publik, jadi URL-nya harus
-                // URL storage biasa. Berkas non-publik hanya bisa lewat route.
-                $fileUrl = ($item->disk ?: 'public') === 'public'
-                    ? url('storage/' . $item->image_path)
+                $publik = ($item->disk ?: 'public') === 'public';
+                // Dua bentuk URL, sengaja.
+                //
+                // $editorUrl yang ditanam ke dalam konten laporan: host-relatif,
+                // mengikuti config filesystems disk public. Konten kaya tidak
+                // pernah keluar lewat API Deforestory (yang dikirim hanya judul,
+                // excerpt, dan gambar), jadi tidak ada yang butuh bentuk absolut
+                // — sementara menanam nama host membuat gambar mati begitu situs
+                // diakses lewat host lain. Itu persis yang bikin thumbnail LFM
+                // dan media kejadian sempat kosong.
+                //
+                // $fileUrl untuk mata manusia: tombol "Salin URL" dan pratinjau
+                // di kartu, jadi tetap absolut supaya bisa ditempel ke mana pun.
+                $editorUrl = $publik
+                    ? Storage::disk('public')->url($item->image_path)
                     : route('reference.download', $item->id);
+                $fileUrl = url($editorUrl);
                 $previewUrl = ($isVideo || $isPdf) ? route('reference.preview', $item->id) : null;
                 $downloadUrl = route('reference.download', $item->id);
                 $fileName = $item->original_name ?: basename($item->image_path);
@@ -211,7 +223,7 @@
                             type="button"
                             data-reference-gallery-toggle
                             data-reference-id="{{ $item->id }}"
-                            data-image-url="{{ $fileUrl }}"
+                            data-image-url="{{ $editorUrl }}"
                             data-image-title="{{ $item->title }}"
                             data-image-alt="{{ $item->alt_text }}"
                             aria-pressed="false"
@@ -222,7 +234,7 @@
                             type="button"
                             data-reference-select
                             data-editor-key="{{ $editorKey }}"
-                            data-image-url="{{ $fileUrl }}"
+                            data-image-url="{{ $editorUrl }}"
                             data-image-title="{{ $item->title }}"
                             data-image-alt="{{ $item->alt_text }}"
                             class="w-full rounded-lg bg-admin-amber px-3 py-2 text-xs font-semibold text-white hover:opacity-90"

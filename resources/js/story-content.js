@@ -63,17 +63,41 @@ const initializePublicStoryGalleries = () => {
         gallery.setAttribute('tabindex', '0');
         gallery.querySelectorAll('img').forEach((image) => image.setAttribute('draggable', 'false'));
 
-        const updateControls = () => {
-            const slideWidth = gallery.clientWidth || 1;
-            activeIndex = Math.max(0, Math.min(slides.length - 1, Math.round(gallery.scrollLeft / slideWidth)));
+        // Dipisah dari updateControls: menekan tombol sudah menentukan slide
+        // tujuannya, jadi labelnya tidak perlu menunggu event scroll. Menunggu
+        // event itu membuat tombolnya tampak mati di peramban yang tidak
+        // mengirimkan scroll untuk perpindahan tanpa animasi.
+        const terapkanKontrol = (index) => {
+            activeIndex = Math.max(0, Math.min(slides.length - 1, index));
             previous.disabled = activeIndex === 0;
             next.disabled = activeIndex === slides.length - 1;
             counter.textContent = `${activeIndex + 1} / ${slides.length}`;
         };
 
+        // Dipakai saat galeri digeser sendiri oleh pembaca (seret atau
+        // trackpad): posisinya yang menentukan slide mana yang aktif.
+        const updateControls = () => {
+            const slideWidth = gallery.clientWidth || 1;
+            terapkanKontrol(Math.round(gallery.scrollLeft / slideWidth));
+        };
+
         const goTo = (index) => {
             const targetIndex = Math.max(0, Math.min(slides.length - 1, index));
-            gallery.scrollTo({ left: slides[targetIndex].offsetLeft - gallery.offsetLeft, behavior: 'smooth' });
+            const tujuan = slides[targetIndex].offsetLeft - gallery.offsetLeft;
+            const asal = gallery.scrollLeft;
+
+            gallery.scrollTo({ left: tujuan, behavior: 'smooth' });
+            terapkanKontrol(targetIndex);
+
+            // Pada kontainer scroll-snap, Chrome bisa mengabaikan animasi
+            // smooth sepenuhnya: scrollTo dipanggil, posisinya tidak bergeser
+            // sedikit pun, dan tombolnya jadi diam-diam tak berfungsi. Kalau
+            // setelah dua frame masih di tempat, pindahkan tanpa animasi.
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                if (asal !== tujuan && gallery.scrollLeft === asal) {
+                    gallery.scrollTo({ left: tujuan, behavior: 'instant' });
+                }
+            }));
         };
 
         previous.addEventListener('click', () => goTo(activeIndex - 1));

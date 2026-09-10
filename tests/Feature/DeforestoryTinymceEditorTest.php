@@ -152,7 +152,9 @@ class DeforestoryTinymceEditorTest extends TestCase
         $response->assertOk();
         $response->assertJsonCount(1, 'data');
         $response->assertJsonPath('data.0.title', 'Laju deforestasi');
-        $response->assertJsonPath('data.0.embed_url', route('data-visualizations.embed', $aktif));
+        // Host-relatif: nilai ini jadi src <iframe> di dalam konten laporan,
+        // jadi tidak boleh membawa nama host.
+        $response->assertJsonPath('data.0.embed_url', route('data-visualizations.embed', $aktif, false));
     }
 
     public function test_embed_grafik_publik_dan_ikut_mati_saat_dinonaktifkan(): void
