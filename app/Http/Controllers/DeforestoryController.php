@@ -5,7 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\DeforestoryCase;
 use App\Models\DeforestorySubscriber;
 use App\Services\DeforestoryApiService;
+use App\Support\DeforestoryPreviewLock;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\URL;
+use Illuminate\Validation\ValidationException;
 
 class DeforestoryController extends Controller
 {
@@ -131,6 +135,21 @@ class DeforestoryController extends Controller
         $case = DeforestoryCase::where('slug', $caseSlug)->firstOrFail();
         $laporan = $case->laporans()->where('slug', $laporanSlug)->with('translations')->firstOrFail();
 
+        $kunci = app(DeforestoryPreviewLock::class);
+
+        if ($laporan->is_locked && ! $kunci->terbuka(request())) {
+            return view('front.deforestory-preview-unlock', [
+                'case' => $case,
+                'laporan' => $laporan,
+                'locale' => $locale,
+                'belumDiatur' => ! $kunci->sudahDiatur(),
+                // Ikut ditandatangani: route unlock berada di grup yang sama,
+                // jadi kiriman dari peninjau luar (yang tidak punya sesi CMS)
+                // hanya lolos kalau membawa tanda tangan yang sah.
+                'unlockUrl' => self::tautanUnlock($case->slug, $laporan->slug),
+            ]);
+        }
+
         $apiCard = $this->findApiCard($locale, $caseSlug);
 
         return view('front.deforestory-case-laporan', [
@@ -140,6 +159,88 @@ class DeforestoryController extends Controller
             'apiTitle' => $apiCard['title'] ?? null,
             'preview' => true,
         ]);
+    }
+
+    /**
+     * Memeriksa password global lalu membuka kunci pratinjau untuk sesi ini.
+     * POST /preview/deforestory/{caseSlug}/laporan/{laporanSlug}/unlock
+     *
+     * Dibatasi dua lapis: throttle:10,1 di route menahan banjir permintaan,
+     * dan RateLimiter di bawah menahan tebakan password beruntun dari satu IP.
+     */
+    public function unlockPreview(Request $request, $caseSlug, $laporanSlug)
+    {
+        $case = DeforestoryCase::where('slug', $caseSlug)->firstOrFail();
+        $laporan = $case->laporans()->where('slug', $laporanSlug)->firstOrFail();
+
+        $kunci = app(DeforestoryPreviewLock::class);
+        $tujuan = route('deforestory.laporan.preview', [
+            'caseSlug' => $case->slug,
+            'laporanSlug' => $laporan->slug,
+            'locale' => app()->getLocale(),
+        ]);
+
+        if (! $laporan->is_locked || $kunci->terbuka($request)) {
+            return redirect()->to($tujuan);
+        }
+
+        $data = $request->validate(['password' => ['required', 'string', 'max:100']]);
+
+        $kunciBatas = 'deforestory-preview:'.$request->ip();
+
+        if (RateLimiter::tooManyAttempts($kunciBatas, 5)) {
+            throw ValidationException::withMessages([
+                'password' => 'Terlalu banyak percobaan. Coba lagi dalam '
+                    .RateLimiter::availableIn($kunciBatas).' detik.',
+            ]);
+        }
+
+        if (! $kunci->cocok($data['password'])) {
+            RateLimiter::hit($kunciBatas, 60);
+
+            throw ValidationException::withMessages([
+                'password' => $kunci->sudahDiatur()
+                    ? 'Password salah.'
+                    : 'Password pratinjau belum diatur di CMS.',
+            ]);
+        }
+
+        RateLimiter::clear($kunciBatas);
+        $kunci->tandaiTerbuka($request);
+
+        return redirect()->to($tujuan);
+    }
+
+    /** URL unlock bertanda tangan, pasangan gerbang password. */
+    public static function tautanUnlock(string $caseSlug, string $laporanSlug, int $jam = 6): string
+    {
+        return URL::temporarySignedRoute('deforestory.laporan.preview.unlock', now()->addHours($jam), [
+            'caseSlug' => $caseSlug,
+            'laporanSlug' => $laporanSlug,
+        ]);
+    }
+
+    /**
+     * Tautan pratinjau bertanda tangan yang bisa dibagikan ke luar CMS.
+     *
+     * Berumur terbatas dengan sengaja: tautan pratinjau beredar di email dan
+     * ruang obrolan, dan yang berlaku selamanya berarti draft lama tetap
+     * terbuka lama setelah peninjauannya selesai.
+     */
+    public static function tautanBagikan(string $caseSlug, ?string $laporanSlug = null, string $locale = 'id', int $hari = 7): string
+    {
+        $kedaluwarsa = now()->addDays($hari);
+
+        return $laporanSlug === null
+            ? URL::temporarySignedRoute('deforestory.case.preview', $kedaluwarsa, [
+                'caseSlug' => $caseSlug,
+                'locale' => $locale,
+            ])
+            : URL::temporarySignedRoute('deforestory.laporan.preview', $kedaluwarsa, [
+                'caseSlug' => $caseSlug,
+                'laporanSlug' => $laporanSlug,
+                'locale' => $locale,
+            ]);
     }
 
     public function laporan($locale, $slug, $laporanSlug)

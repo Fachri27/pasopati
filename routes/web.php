@@ -138,15 +138,6 @@ Route::middleware(['auth', 'role:admin,editor'])->group(function () {
     Route::get('/admin/deforestory/{caseSlug}/laporan/create', DeforestoryLaporanForm::class)->name('deforestory.laporan.create');
     Route::get('/admin/deforestory/laporan/{laporanId}/edit', DeforestoryLaporanForm::class)->name('deforestory.laporan.edit');
     Route::get('/admin/deforestory/subscribers', DeforestorySubscriberTable::class)->name('deforestory.subscribers');
-    // Pratinjau untuk editor: view publik yang sama, tapi tanpa saringan
-    // status sehingga kasus dan laporan draft ikut tampil. Sengaja berada di
-    // dalam grup auth — yang belum terbit tidak boleh bisa dibuka publik.
-    Route::get('/admin/deforestory/{caseSlug}/preview/{locale?}', [DeforestoryController::class, 'previewCase'])
-        ->where('locale', 'id|en')
-        ->name('deforestory.case.preview');
-    Route::get('/admin/deforestory/{caseSlug}/preview-laporan/{laporanSlug}/{locale?}', [DeforestoryController::class, 'previewLaporan'])
-        ->where('locale', 'id|en')
-        ->name('deforestory.laporan.preview');
     Route::get('/admin/petisi/create', PetitionForm::class)->name('petition.admin.create');
     Route::get('/admin/petisi/{petitionId}/edit', PetitionForm::class)->name('petition.admin.edit');
     Route::get('/admin/petisi/{petitionId}/signatures', PetitionSignatureList::class)->name('petition.admin.signatures');
@@ -223,6 +214,28 @@ Route::get('/data-grafik/{id}', [DataVisualizationController::class, 'show'])
 Route::get('/embed/data-grafik/{id}', [DataVisualizationController::class, 'embed'])
     ->whereNumber('id')
     ->name('data-visualizations.embed');
+
+// Pratinjau Deforestory.
+//
+// Berada di luar grup auth dengan sengaja: selain editor, halaman ini dibuka
+// peninjau luar lewat tautan bertanda tangan yang dibuat dari CMS dan
+// kedaluwarsa sendiri. Middleware deforestory.preview yang memutuskan —
+// editor yang login, atau tanda tangan yang sah.
+//
+// Yang ditampilkan adalah view publik yang sama tanpa saringan status, jadi
+// laporan draft ikut terlihat. Laporan yang ditandai terkunci masih menuntut
+// password global sebelum isinya terbuka.
+Route::middleware('deforestory.preview')->prefix('preview/deforestory')->group(function () {
+    Route::get('/{caseSlug}/{locale?}', [DeforestoryController::class, 'previewCase'])
+        ->where('locale', 'id|en')
+        ->name('deforestory.case.preview');
+    Route::get('/{caseSlug}/laporan/{laporanSlug}/{locale?}', [DeforestoryController::class, 'previewLaporan'])
+        ->where('locale', 'id|en')
+        ->name('deforestory.laporan.preview');
+    Route::post('/{caseSlug}/laporan/{laporanSlug}/unlock', [DeforestoryController::class, 'unlockPreview'])
+        ->middleware('throttle:10,1')
+        ->name('deforestory.laporan.preview.unlock');
+});
 
 Route::group(['prefix' => 'laravel-filemanager', 'middleware' => ['web', 'auth']], function () {
     \UniSharp\LaravelFilemanager\Lfm::routes();

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\DeforestoryApiAuth;
+use App\Http\Middleware\DeforestoryPreviewAccess;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use App\Http\Middleware\RedirectOldPublicUrls;
 use App\Http\Middleware\RedirectOldUrls;
@@ -29,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'guest' => RedirectIfAuthenticated::class,
             'role' => RoleMiddleware::class,
             'deforestory.api' => DeforestoryApiAuth::class,
+            'deforestory.preview' => DeforestoryPreviewAccess::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -82,6 +82,22 @@
                                 </select>
                             </div>
 
+                            {{-- Kunci pratinjau --}}
+                            <div class="rounded-lg border border-admin-line bg-admin-base p-3">
+                                <label class="flex cursor-pointer items-start gap-2.5">
+                                    <input type="checkbox" wire:model="is_locked" class="mt-0.5">
+                                    <span>
+                                        <span class="block text-sm font-medium text-admin-smoke">Kunci pratinjau</span>
+                                        <span class="mt-1 block text-xs leading-5 text-admin-muted">
+                                            Peninjau luar yang membuka tautan pratinjau laporan ini harus memasukkan
+                                            password pratinjau Deforestory lebih dulu. Password diatur sekali untuk
+                                            semua laporan di halaman daftar kasus. Kamu yang sedang login CMS tetap
+                                            bisa membukanya langsung.
+                                        </span>
+                                    </span>
+                                </label>
+                            </div>
+
                             {{-- Sort --}}
                             <div>
                                 <label class="text-sm">Urutan</label>

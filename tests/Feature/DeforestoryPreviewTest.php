@@ -142,8 +142,12 @@ class DeforestoryPreviewTest extends TestCase
             route('deforestory.laporan.preview', ['caseSlug' => 'mayawana', 'laporanSlug' => 'masih-draft', 'locale' => 'id']),
         ];
 
+        // Ditolak, bukan diarahkan ke login: sejak pratinjau bisa dibuka lewat
+        // tautan bertanda tangan, URL tanpa tanda tangan yang sah harus
+        // terbaca sebagai tautan tidak berlaku — bukan sebagai halaman yang
+        // menuntut akun.
         foreach ($rute as $url) {
-            $this->get($url)->assertRedirect('/login');
+            $this->get($url)->assertForbidden();
         }
 
         $komentator = User::factory()->create(['role' => 'commenter']);

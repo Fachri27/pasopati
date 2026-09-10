@@ -66,6 +66,11 @@
                                 'laporanSlug' => $laporan->slug,
                                 'locale' => 'id',
                             ]);
+                            // Tautan bertanda tangan, berlaku 7 hari: untuk
+                            // peninjau yang tidak punya akun CMS.
+                            $bagikanUrl = \App\Http\Controllers\DeforestoryController::tautanBagikan(
+                                $case->slug, $laporan->slug, 'id',
+                            );
                         @endphp
                         <tr>
                             <td class="p-3">
@@ -90,6 +95,15 @@
                                 @else
                                     <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-admin-raised text-admin-ash">Inactive</span>
                                 @endif
+                                @if ($laporan->is_locked)
+                                    <span class="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-admin-muted"
+                                          title="Pratinjau laporan ini menuntut password">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                        </svg>
+                                        terkunci
+                                    </span>
+                                @endif
                             </td>
                             <td class="p-3">
                                 {{-- Anchor diberi kelas tombol, bukan membungkus <button>:
@@ -100,6 +114,14 @@
                                     <a href="{{ $previewUrl }}" target="_blank" rel="noopener"
                                        class="admin-btn admin-btn--ghost admin-btn--sm"
                                        title="Lihat laporan ini apa adanya, termasuk saat masih draft">Preview</a>
+                                    <button type="button"
+                                            x-data="{ disalin: false }"
+                                            x-on:click="navigator.clipboard.writeText(@js($bagikanUrl)); disalin = true; setTimeout(() => disalin = false, 1600)"
+                                            class="admin-btn admin-btn--ghost admin-btn--sm"
+                                            title="Salin tautan pratinjau berlaku 7 hari untuk peninjau di luar CMS">
+                                        <span x-show="!disalin">Salin tautan</span>
+                                        <span x-show="disalin" x-cloak>Tersalin ✓</span>
+                                    </button>
                                     <button wire:click='delete({{ $laporan->id }})'
                                             wire:confirm="Hapus laporan ini?"
                                             class="admin-btn admin-btn--danger admin-btn--sm">Hapus</button>

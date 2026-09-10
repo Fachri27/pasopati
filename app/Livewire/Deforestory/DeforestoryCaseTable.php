@@ -5,6 +5,7 @@ namespace App\Livewire\Deforestory;
 use App\Models\DeforestoryCard;
 use App\Models\DeforestoryCase;
 use App\Services\DeforestoryApiService;
+use App\Support\DeforestoryPreviewLock;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -24,6 +25,43 @@ class DeforestoryCaseTable extends Component
     public $search = '';
 
     public $locale = 'id';
+
+    /** Panel pengaturan password pratinjau global. */
+    public bool $panelKunci = false;
+
+    public string $passwordPratinjau = '';
+
+    public function bukaPanelKunci(): void
+    {
+        $this->panelKunci = ! $this->panelKunci;
+        $this->resetValidation();
+        // Diisi dengan yang sedang berlaku supaya editor bisa membacanya,
+        // bukan hanya menggantinya — lihat catatan di migrasi.
+        $this->passwordPratinjau = $this->panelKunci
+            ? (string) app(DeforestoryPreviewLock::class)->passwordTerbuka()
+            : '';
+    }
+
+    public function simpanPasswordPratinjau(): void
+    {
+        $this->validate(
+            ['passwordPratinjau' => ['required', 'string', 'min:6', 'max:100']],
+            [],
+            ['passwordPratinjau' => 'password pratinjau'],
+        );
+
+        app(DeforestoryPreviewLock::class)->simpanPassword($this->passwordPratinjau);
+
+        session()->flash('success', 'Password pratinjau disimpan. Sesi yang sudah terbuka dengan password lama otomatis tertutup.');
+    }
+
+    public function hapusPasswordPratinjau(): void
+    {
+        app(DeforestoryPreviewLock::class)->hapusPassword();
+        $this->passwordPratinjau = '';
+
+        session()->flash('success', 'Password pratinjau dihapus. Laporan yang dikunci tidak bisa dibuka siapa pun sampai password baru diatur.');
+    }
 
     public function refreshList()
     {
@@ -88,7 +126,12 @@ class DeforestoryCaseTable extends Component
             ['path' => request()->url(), 'query' => request()->query()],
         );
 
-        return view('livewire.deforestory.deforestory-case-table', compact('cases'))
+        $kunci = app(DeforestoryPreviewLock::class);
+
+        return view('livewire.deforestory.deforestory-case-table', [
+            'cases' => $cases,
+            'passwordSudahDiatur' => $kunci->sudahDiatur(),
+        ])
             ->layout('layouts.admin');
     }
 

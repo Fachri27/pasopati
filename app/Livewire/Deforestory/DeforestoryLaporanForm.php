@@ -58,6 +58,9 @@ class DeforestoryLaporanForm extends Component
 
     public $status = 'draft';
 
+    /** Pratinjau laporan ini menuntut password global sebelum isinya terbuka. */
+    public $is_locked = false;
+
     public $sort = 0;
 
     public $published_at;
@@ -86,6 +89,7 @@ class DeforestoryLaporanForm extends Component
                 'laporan_content_id' => $idTrans->content ?? '',
                 'laporan_content_en' => $enTrans->content ?? '',
                 'status' => $this->laporan->status,
+                'is_locked' => (bool) $this->laporan->is_locked,
                 'sort' => $this->laporan->sort ?? 0,
                 'published_at' => $this->laporan->published_at?->format('Y-m-d'),
                 'old_image_id' => $idTrans->image ?? null,
@@ -139,6 +143,7 @@ class DeforestoryLaporanForm extends Component
                 ->where('case_id', $this->caseId)
                 ->ignore($this->laporanId)],
             'status' => 'required|in:draft,active,inactive',
+            'is_locked' => 'boolean',
             'sort' => 'nullable|integer',
             'published_at' => 'nullable|date',
             'image_id' => 'nullable|image',
@@ -170,6 +175,7 @@ class DeforestoryLaporanForm extends Component
             'slug' => $slug,
             'sort' => (int) $this->sort,
             'status' => $this->status,
+            'is_locked' => (bool) $this->is_locked,
             'published_at' => $this->published_at ?: null,
         ];
 

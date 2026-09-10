@@ -12,8 +12,18 @@
                 </p>
             </div>
 
+            <div class="flex items-center gap-2 shrink-0">
+            <button wire:click="bukaPanelKunci" type="button" class="admin-btn admin-btn--ghost admin-btn--sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                </svg>
+                Password pratinjau
+                <span class="ml-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase {{ $passwordSudahDiatur ? 'badge-active' : 'badge-draft' }}">
+                    {{ $passwordSudahDiatur ? 'aktif' : 'kosong' }}
+                </span>
+            </button>
             <button wire:click="refreshList" wire:loading.attr="disabled" wire:target="refreshList"
-                    class="admin-btn admin-btn--ghost admin-btn--sm shrink-0">
+                    class="admin-btn admin-btn--ghost admin-btn--sm">
                 <svg wire:loading.remove wire:target="refreshList" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                 </svg>
@@ -24,7 +34,36 @@
                 <span wire:loading.remove wire:target="refreshList">Refresh</span>
                 <span wire:loading wire:target="refreshList">Memuat…</span>
             </button>
+            </div>
         </div>
+
+        {{-- Password pratinjau: satu untuk seluruh Deforestory. Laporan yang
+             ditandai "Kunci pratinjau" menuntut password ini sebelum isinya
+             terbuka bagi peninjau di luar CMS. --}}
+        @if ($panelKunci)
+            <div class="admin-card mb-5 p-5">
+                <h3 class="text-sm font-semibold text-admin-smoke">Password pratinjau Deforestory</h3>
+                <p class="mt-1 text-xs leading-relaxed text-admin-muted max-w-2xl">
+                    Berlaku untuk semua laporan yang dikunci. Bagikan bersama tautan pratinjau kepada
+                    peninjau yang tidak punya akun CMS. Mengganti password akan menutup kembali semua
+                    sesi yang sudah terbuka dengan password lama.
+                </p>
+
+                <div class="mt-4 flex flex-wrap items-start gap-2">
+                    <div class="w-full sm:w-80">
+                        <input type="text" wire:model="passwordPratinjau" class="admin-input font-mono"
+                               placeholder="Minimal 6 karakter" aria-label="Password pratinjau">
+                        @error('passwordPratinjau') <p class="mt-1 text-xs font-medium text-red-500">{{ $message }}</p> @enderror
+                    </div>
+                    <button wire:click="simpanPasswordPratinjau" type="button" class="admin-btn admin-btn--primary admin-btn--sm">Simpan</button>
+                    @if ($passwordSudahDiatur)
+                        <button wire:click="hapusPasswordPratinjau" type="button"
+                                wire:confirm="Hapus password pratinjau? Laporan yang dikunci tidak akan bisa dibuka siapa pun sampai password baru diatur."
+                                class="admin-btn admin-btn--danger admin-btn--sm">Hapus</button>
+                    @endif
+                </div>
+            </div>
+        @endif
 
         @if (session('success'))
             <div class="mb-4 p-3 bg-admin-raised border border-admin-line text-admin-amber rounded-lg text-sm">{{ session('success') }}</div>

@@ -19,11 +19,13 @@ class DeforestoryLaporan extends Model
         'image',
         'sort',
         'status',
+        'is_locked',
         'published_at',
     ];
 
     protected $casts = [
         'published_at' => 'date',
+        'is_locked' => 'boolean',
     ];
 
     protected static function boot()
