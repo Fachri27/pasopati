@@ -235,6 +235,394 @@ const applyTinyMceCaptionCommand = (captionEditor, editableElement, command, pre
     return true;
 };
 
+/**
+ * Dialog pemilih Data & Grafik.
+ *
+ * Dipisahkan dari penyetel editor supaya editor artikel — yang punya
+ * konfigurasi TinyMCE sendiri dengan LFM dan tombol slider — bisa memakai
+ * dialog yang sama tanpa menyalin ulang isinya. Cara menyisipkan hasilnya
+ * diserahkan ke pemanggil: form Deforestory membungkusnya sebagai blok atomik
+ * yang tak bisa disunting, editor artikel cukup menyisipkannya apa adanya.
+ */
+const bukaPemilihGrafik = async (editor, optionsUrl, sisipkan) => {
+    if (!optionsUrl) return;
+
+    let visualizations = [];
+    try {
+        const response = await fetch(optionsUrl, {
+            headers: { Accept: 'application/json' },
+            credentials: 'same-origin',
+        });
+        if (!response.ok) throw new Error('Gagal memuat Data & Grafik.');
+        const payload = await response.json();
+        visualizations = Array.isArray(payload.data) ? payload.data : [];
+    } catch (error) {
+        editor.notificationManager.open({
+            text: error.message || 'Gagal memuat Data & Grafik.',
+            type: 'error',
+        });
+        return;
+    }
+
+    if (!visualizations.length) {
+        editor.notificationManager.open({
+            text: 'Belum ada Data & Grafik aktif. Publikasikan grafik dari menu Data & Grafik terlebih dahulu.',
+            type: 'info',
+        });
+        return;
+    }
+
+    let selected = visualizations[0];
+    const previousBodyOverflow = document.body.style.overflow;
+    const modal = document.createElement('div');
+    modal.dataset.visualizationCardPicker = '';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Pilih Data dan Grafik');
+    Object.assign(modal.style, {
+        position: 'fixed',
+        inset: '0',
+        zIndex: '100000',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '16px',
+        background: 'rgba(15, 23, 42, .55)',
+    });
+
+    const panel = document.createElement('div');
+    Object.assign(panel.style, {
+        display: 'flex',
+        width: 'min(1400px, 100%)',
+        maxHeight: 'calc(100vh - 32px)',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        border: '1px solid #dbe2e8',
+        background: '#fff',
+        boxShadow: '0 24px 70px rgba(15, 23, 42, .24)',
+    });
+
+    const header = document.createElement('div');
+    Object.assign(header.style, {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '16px',
+        padding: '16px 18px',
+        borderBottom: '1px solid #e5e7eb',
+    });
+    const heading = document.createElement('div');
+    heading.innerHTML = '<h2 style="margin:0;color:#111827;font-size:18px;font-weight:700;">Pilih Data &amp; Grafik</h2><p style="margin:4px 0 0;color:#6b7280;font-size:12px;">Klik salah satu card grafik aktif yang ingin dimasukkan.</p>';
+    const closeButton = document.createElement('button');
+    closeButton.type = 'button';
+    closeButton.setAttribute('aria-label', 'Tutup');
+    closeButton.textContent = '×';
+    Object.assign(closeButton.style, {
+        border: '0',
+        background: 'transparent',
+        color: '#374151',
+        fontSize: '26px',
+        lineHeight: '1',
+        cursor: 'pointer',
+    });
+    header.append(heading, closeButton);
+
+    const cardGrid = document.createElement('div');
+    Object.assign(cardGrid.style, {
+        display: 'grid',
+        gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+        alignItems: 'start',
+        gap: '12px',
+        height: 'min(540px, calc(100vh - 250px))',
+        overflowY: 'auto',
+        padding: '16px 18px',
+        background: '#f8fafc',
+    });
+
+    const cards = [];
+    const pickerIframeWindows = [];
+    const previewObservers = [];
+    const visualizationsPerPage = 8;
+    let currentVisualizationPage = 1;
+    const updateVisualizationGridColumns = () => {
+        cardGrid.style.gridTemplateColumns = window.innerWidth >= 1100
+            ? 'repeat(4, minmax(0, 1fr))'
+            : window.innerWidth >= 650
+                ? 'repeat(2, minmax(0, 1fr))'
+                : 'minmax(0, 1fr)';
+    };
+    const updateSelectedCard = () => {
+        cards.forEach(({ card, badge, item }) => {
+            const isSelected = String(item.id) === String(selected.id);
+            card.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+            card.style.borderColor = isSelected ? '#376a64' : '#dbe2e8';
+            card.style.boxShadow = isSelected ? '0 0 0 2px rgba(55, 106, 100, .18)' : 'none';
+            badge.style.visibility = isSelected ? 'visible' : 'hidden';
+        });
+    };
+
+    visualizations.forEach((item) => {
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.dataset.visualizationCard = String(item.id);
+        Object.assign(card.style, {
+            display: 'block',
+            minWidth: '0',
+            overflow: 'hidden',
+            padding: '0',
+            border: '1px solid #dbe2e8',
+            background: '#fff',
+            textAlign: 'left',
+            cursor: 'pointer',
+            outline: 'none',
+        });
+
+        const preview = document.createElement('div');
+        Object.assign(preview.style, {
+            position: 'relative',
+            width: '100%',
+            aspectRatio: '16 / 9',
+            overflow: 'hidden',
+            borderBottom: '1px solid #e5e7eb',
+            background: '#fff',
+        });
+        const iframe = document.createElement('iframe');
+        iframe.src = item.embed_url;
+        iframe.title = item.title || 'Preview Data dan Grafik';
+        iframe.loading = 'lazy';
+        iframe.scrolling = 'no';
+        iframe.tabIndex = -1;
+        Object.assign(iframe.style, {
+            position: 'absolute',
+            top: '0',
+            left: '0',
+            width: '960px',
+            height: '540px',
+            border: '0',
+            pointerEvents: 'none',
+            transformOrigin: 'top left',
+        });
+        const fitPreview = () => {
+            const scale = preview.clientWidth / 960;
+            iframe.style.transform = `scale(${scale})`;
+        };
+        if (typeof ResizeObserver !== 'undefined') {
+            const previewObserver = new ResizeObserver(fitPreview);
+            previewObserver.observe(preview);
+            previewObservers.push(previewObserver);
+        } else {
+            window.requestAnimationFrame(fitPreview);
+        }
+        iframe.addEventListener('load', () => {
+            const iframeWindow = iframe.contentWindow;
+            if (!iframeWindow) return;
+            pickerIframeWindows.push(iframeWindow);
+            iframeWindow.addEventListener('keydown', onPickerKeydown, true);
+        });
+        preview.append(iframe);
+
+        const details = document.createElement('div');
+        Object.assign(details.style, { padding: '10px 12px 12px' });
+        const meta = document.createElement('div');
+        Object.assign(meta.style, {
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '10px',
+            marginBottom: '5px',
+        });
+        const type = document.createElement('span');
+        type.textContent = String(item.chart_type || 'Grafik').replaceAll('-', ' ');
+        Object.assign(type.style, {
+            color: '#376a64',
+            fontSize: '11px',
+            fontWeight: '700',
+            textTransform: 'uppercase',
+            letterSpacing: '.06em',
+        });
+        const badge = document.createElement('span');
+        badge.textContent = 'Dipilih';
+        Object.assign(badge.style, {
+            color: '#376a64',
+            fontSize: '11px',
+            fontWeight: '700',
+        });
+        meta.append(type, badge);
+        const title = document.createElement('strong');
+        title.textContent = item.title || 'Data & Grafik';
+        Object.assign(title.style, {
+            display: 'block',
+            overflow: 'hidden',
+            color: '#111827',
+            fontSize: '13px',
+            lineHeight: '1.45',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+        });
+        details.append(meta, title);
+        card.append(preview, details);
+        card.addEventListener('click', () => {
+            selected = item;
+            updateSelectedCard();
+        });
+        cards.push({ card, badge, item });
+        cardGrid.append(card);
+    });
+
+    const pagination = document.createElement('div');
+    Object.assign(pagination.style, {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '16px',
+        padding: '10px 18px',
+        borderTop: '1px solid #e5e7eb',
+        background: '#f8fafc',
+    });
+    const paginationSummary = document.createElement('span');
+    Object.assign(paginationSummary.style, {
+        color: '#6b7280',
+        fontSize: '12px',
+    });
+    const paginationButtons = document.createElement('div');
+    Object.assign(paginationButtons.style, {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '6px',
+    });
+    pagination.append(paginationSummary, paginationButtons);
+
+    const renderVisualizationPage = () => {
+        const totalPages = Math.max(1, Math.ceil(cards.length / visualizationsPerPage));
+        currentVisualizationPage = Math.min(totalPages, Math.max(1, currentVisualizationPage));
+        const firstIndex = (currentVisualizationPage - 1) * visualizationsPerPage;
+        const lastIndex = Math.min(firstIndex + visualizationsPerPage, cards.length);
+
+        cards.forEach(({ card }, index) => {
+            card.style.display = index >= firstIndex && index < lastIndex ? 'block' : 'none';
+        });
+
+        paginationSummary.textContent = `Menampilkan ${firstIndex + 1}–${lastIndex} dari ${cards.length} data`;
+        paginationButtons.replaceChildren();
+
+        const createPageButton = (label, page, disabled = false, active = false) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.textContent = label;
+            button.disabled = disabled;
+            button.setAttribute('aria-label', label === '‹' ? 'Halaman sebelumnya' : label === '›' ? 'Halaman berikutnya' : `Halaman ${label}`);
+            if (active) button.setAttribute('aria-current', 'page');
+            Object.assign(button.style, {
+                display: 'inline-flex',
+                width: '32px',
+                height: '32px',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: `1px solid ${active ? '#376a64' : '#d1d5db'}`,
+                background: active ? '#376a64' : '#fff',
+                color: active ? '#fff' : disabled ? '#9ca3af' : '#374151',
+                fontSize: '12px',
+                fontWeight: '700',
+                cursor: disabled ? 'not-allowed' : 'pointer',
+            });
+            if (!disabled) {
+                button.addEventListener('click', () => {
+                    currentVisualizationPage = page;
+                    renderVisualizationPage();
+                    cardGrid.scrollTop = 0;
+                });
+            }
+            return button;
+        };
+
+        paginationButtons.append(createPageButton('‹', currentVisualizationPage - 1, currentVisualizationPage === 1));
+        for (let page = 1; page <= totalPages; page += 1) {
+            paginationButtons.append(createPageButton(String(page), page, false, page === currentVisualizationPage));
+        }
+        paginationButtons.append(createPageButton('›', currentVisualizationPage + 1, currentVisualizationPage === totalPages));
+    };
+
+    const footer = document.createElement('div');
+    Object.assign(footer.style, {
+        display: 'flex',
+        justifyContent: 'flex-end',
+        gap: '10px',
+        padding: '12px 18px',
+        borderTop: '1px solid #e5e7eb',
+        background: '#fff',
+    });
+    const cancelButton = document.createElement('button');
+    cancelButton.type = 'button';
+    cancelButton.textContent = 'Batal';
+    const insertButton = document.createElement('button');
+    insertButton.type = 'button';
+    insertButton.textContent = 'Masukkan Grafik';
+    [cancelButton, insertButton].forEach((button) => {
+        Object.assign(button.style, {
+            minHeight: '38px',
+            padding: '0 15px',
+            border: '1px solid #d1d5db',
+            background: '#fff',
+            color: '#1f2937',
+            fontSize: '13px',
+            fontWeight: '700',
+            cursor: 'pointer',
+        });
+    });
+    Object.assign(insertButton.style, {
+        borderColor: '#376a64',
+        background: '#376a64',
+        color: '#fff',
+    });
+    footer.append(cancelButton, insertButton);
+    panel.append(header, cardGrid, pagination, footer);
+    modal.append(panel);
+
+    const closePicker = () => {
+        if (!modal.isConnected) return;
+        document.removeEventListener('keydown', onPickerKeydown, true);
+        window.removeEventListener('keydown', onPickerKeydown, true);
+        window.removeEventListener('resize', updateVisualizationGridColumns);
+        pickerIframeWindows.forEach((iframeWindow) => {
+            iframeWindow.removeEventListener('keydown', onPickerKeydown, true);
+        });
+        previewObservers.forEach((observer) => observer.disconnect());
+        document.body.style.overflow = previousBodyOverflow;
+        modal.remove();
+        editor.focus();
+    };
+    const onPickerKeydown = (event) => {
+        if (event.key !== 'Escape') return;
+        event.preventDefault();
+        event.stopPropagation();
+        closePicker();
+    };
+    closeButton.addEventListener('click', closePicker);
+    cancelButton.addEventListener('click', closePicker);
+    modal.addEventListener('click', (event) => {
+        if (event.target === modal) closePicker();
+    });
+    insertButton.addEventListener('click', () => {
+        const embedUrl = editor.dom.encode(selected.embed_url);
+        const title = editor.dom.encode(selected.title || 'Data & Grafik');
+        sisipkan(`<figure class="story-data-visualization" data-story-data-visualization data-visualization-id="${selected.id}" contenteditable="false" style="display:block;width:100%;margin:24px 0;padding:0;"><div style="position:relative;width:100%;aspect-ratio:16 / 9;overflow:hidden;background:#fff;"><iframe src="${embedUrl}" title="${title}" width="100%" height="100%" frameborder="0" scrolling="no" loading="lazy" style="position:absolute;inset:0;display:block;width:100%;height:100%;border:0;overflow:hidden;" referrerpolicy="strict-origin-when-cross-origin"></iframe></div></figure>`);
+        closePicker();
+    });
+
+    updateSelectedCard();
+    updateVisualizationGridColumns();
+    renderVisualizationPage();
+    document.addEventListener('keydown', onPickerKeydown, true);
+    window.addEventListener('keydown', onPickerKeydown, true);
+    window.addEventListener('resize', updateVisualizationGridColumns, { passive: true });
+    document.body.style.overflow = 'hidden';
+    document.body.append(modal);
+    cards[0]?.card.focus();
+};
+
+// Dipakai partial TinyMCE artikel yang dirakit di Blade, bukan di bundel ini.
+window.bukaPemilihGrafik = bukaPemilihGrafik;
+
 const initializeTinyMceEditors = () => {
     const tinymce = window.tinymce;
     if (!tinymce) return;
@@ -1375,383 +1763,14 @@ const initializeTinyMceEditors = () => {
                 editor.ui.registry.addButton('addDataVisualization', {
                     text: '+ Data/Grafik',
                     tooltip: 'Pilih Data & Grafik yang sudah dipublikasikan',
-                    onAction: async () => {
-                        const optionsUrl = wrapper.dataset.tinymceVisualizationOptionsUrl;
-                        if (!optionsUrl) return;
-
-                        let visualizations = [];
-                        try {
-                            const response = await fetch(optionsUrl, {
-                                headers: { Accept: 'application/json' },
-                                credentials: 'same-origin',
-                            });
-                            if (!response.ok) throw new Error('Gagal memuat Data & Grafik.');
-                            const payload = await response.json();
-                            visualizations = Array.isArray(payload.data) ? payload.data : [];
-                        } catch (error) {
-                            editor.notificationManager.open({
-                                text: error.message || 'Gagal memuat Data & Grafik.',
-                                type: 'error',
-                            });
-                            return;
-                        }
-
-                        if (!visualizations.length) {
-                            editor.notificationManager.open({
-                                text: 'Belum ada Data & Grafik aktif. Publikasikan grafik dari menu Data & Grafik terlebih dahulu.',
-                                type: 'info',
-                            });
-                            return;
-                        }
-
-                        let selected = visualizations[0];
-                        const previousBodyOverflow = document.body.style.overflow;
-                        const modal = document.createElement('div');
-                        modal.dataset.visualizationCardPicker = '';
-                        modal.setAttribute('role', 'dialog');
-                        modal.setAttribute('aria-modal', 'true');
-                        modal.setAttribute('aria-label', 'Pilih Data dan Grafik');
-                        Object.assign(modal.style, {
-                            position: 'fixed',
-                            inset: '0',
-                            zIndex: '100000',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            padding: '16px',
-                            background: 'rgba(15, 23, 42, .55)',
-                        });
-
-                        const panel = document.createElement('div');
-                        Object.assign(panel.style, {
-                            display: 'flex',
-                            width: 'min(1400px, 100%)',
-                            maxHeight: 'calc(100vh - 32px)',
-                            flexDirection: 'column',
-                            overflow: 'hidden',
-                            border: '1px solid #dbe2e8',
-                            background: '#fff',
-                            boxShadow: '0 24px 70px rgba(15, 23, 42, .24)',
-                        });
-
-                        const header = document.createElement('div');
-                        Object.assign(header.style, {
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            gap: '16px',
-                            padding: '16px 18px',
-                            borderBottom: '1px solid #e5e7eb',
-                        });
-                        const heading = document.createElement('div');
-                        heading.innerHTML = '<h2 style="margin:0;color:#111827;font-size:18px;font-weight:700;">Pilih Data &amp; Grafik</h2><p style="margin:4px 0 0;color:#6b7280;font-size:12px;">Klik salah satu card grafik aktif yang ingin dimasukkan.</p>';
-                        const closeButton = document.createElement('button');
-                        closeButton.type = 'button';
-                        closeButton.setAttribute('aria-label', 'Tutup');
-                        closeButton.textContent = '×';
-                        Object.assign(closeButton.style, {
-                            border: '0',
-                            background: 'transparent',
-                            color: '#374151',
-                            fontSize: '26px',
-                            lineHeight: '1',
-                            cursor: 'pointer',
-                        });
-                        header.append(heading, closeButton);
-
-                        const cardGrid = document.createElement('div');
-                        Object.assign(cardGrid.style, {
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
-                            alignItems: 'start',
-                            gap: '12px',
-                            height: 'min(540px, calc(100vh - 250px))',
-                            overflowY: 'auto',
-                            padding: '16px 18px',
-                            background: '#f8fafc',
-                        });
-
-                        const cards = [];
-                        const pickerIframeWindows = [];
-                        const previewObservers = [];
-                        const visualizationsPerPage = 8;
-                        let currentVisualizationPage = 1;
-                        const updateVisualizationGridColumns = () => {
-                            cardGrid.style.gridTemplateColumns = window.innerWidth >= 1100
-                                ? 'repeat(4, minmax(0, 1fr))'
-                                : window.innerWidth >= 650
-                                    ? 'repeat(2, minmax(0, 1fr))'
-                                    : 'minmax(0, 1fr)';
-                        };
-                        const updateSelectedCard = () => {
-                            cards.forEach(({ card, badge, item }) => {
-                                const isSelected = String(item.id) === String(selected.id);
-                                card.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
-                                card.style.borderColor = isSelected ? '#376a64' : '#dbe2e8';
-                                card.style.boxShadow = isSelected ? '0 0 0 2px rgba(55, 106, 100, .18)' : 'none';
-                                badge.style.visibility = isSelected ? 'visible' : 'hidden';
-                            });
-                        };
-
-                        visualizations.forEach((item) => {
-                            const card = document.createElement('button');
-                            card.type = 'button';
-                            card.dataset.visualizationCard = String(item.id);
-                            Object.assign(card.style, {
-                                display: 'block',
-                                minWidth: '0',
-                                overflow: 'hidden',
-                                padding: '0',
-                                border: '1px solid #dbe2e8',
-                                background: '#fff',
-                                textAlign: 'left',
-                                cursor: 'pointer',
-                                outline: 'none',
-                            });
-
-                            const preview = document.createElement('div');
-                            Object.assign(preview.style, {
-                                position: 'relative',
-                                width: '100%',
-                                aspectRatio: '16 / 9',
-                                overflow: 'hidden',
-                                borderBottom: '1px solid #e5e7eb',
-                                background: '#fff',
-                            });
-                            const iframe = document.createElement('iframe');
-                            iframe.src = item.embed_url;
-                            iframe.title = item.title || 'Preview Data dan Grafik';
-                            iframe.loading = 'lazy';
-                            iframe.scrolling = 'no';
-                            iframe.tabIndex = -1;
-                            Object.assign(iframe.style, {
-                                position: 'absolute',
-                                top: '0',
-                                left: '0',
-                                width: '960px',
-                                height: '540px',
-                                border: '0',
-                                pointerEvents: 'none',
-                                transformOrigin: 'top left',
-                            });
-                            const fitPreview = () => {
-                                const scale = preview.clientWidth / 960;
-                                iframe.style.transform = `scale(${scale})`;
-                            };
-                            if (typeof ResizeObserver !== 'undefined') {
-                                const previewObserver = new ResizeObserver(fitPreview);
-                                previewObserver.observe(preview);
-                                previewObservers.push(previewObserver);
-                            } else {
-                                window.requestAnimationFrame(fitPreview);
-                            }
-                            iframe.addEventListener('load', () => {
-                                const iframeWindow = iframe.contentWindow;
-                                if (!iframeWindow) return;
-                                pickerIframeWindows.push(iframeWindow);
-                                iframeWindow.addEventListener('keydown', onPickerKeydown, true);
-                            });
-                            preview.append(iframe);
-
-                            const details = document.createElement('div');
-                            Object.assign(details.style, { padding: '10px 12px 12px' });
-                            const meta = document.createElement('div');
-                            Object.assign(meta.style, {
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                gap: '10px',
-                                marginBottom: '5px',
-                            });
-                            const type = document.createElement('span');
-                            type.textContent = String(item.chart_type || 'Grafik').replaceAll('-', ' ');
-                            Object.assign(type.style, {
-                                color: '#376a64',
-                                fontSize: '11px',
-                                fontWeight: '700',
-                                textTransform: 'uppercase',
-                                letterSpacing: '.06em',
-                            });
-                            const badge = document.createElement('span');
-                            badge.textContent = 'Dipilih';
-                            Object.assign(badge.style, {
-                                color: '#376a64',
-                                fontSize: '11px',
-                                fontWeight: '700',
-                            });
-                            meta.append(type, badge);
-                            const title = document.createElement('strong');
-                            title.textContent = item.title || 'Data & Grafik Simontini';
-                            Object.assign(title.style, {
-                                display: 'block',
-                                overflow: 'hidden',
-                                color: '#111827',
-                                fontSize: '13px',
-                                lineHeight: '1.45',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                            });
-                            details.append(meta, title);
-                            card.append(preview, details);
-                            card.addEventListener('click', () => {
-                                selected = item;
-                                updateSelectedCard();
-                            });
-                            cards.push({ card, badge, item });
-                            cardGrid.append(card);
-                        });
-
-                        const pagination = document.createElement('div');
-                        Object.assign(pagination.style, {
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            gap: '16px',
-                            padding: '10px 18px',
-                            borderTop: '1px solid #e5e7eb',
-                            background: '#f8fafc',
-                        });
-                        const paginationSummary = document.createElement('span');
-                        Object.assign(paginationSummary.style, {
-                            color: '#6b7280',
-                            fontSize: '12px',
-                        });
-                        const paginationButtons = document.createElement('div');
-                        Object.assign(paginationButtons.style, {
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                        });
-                        pagination.append(paginationSummary, paginationButtons);
-
-                        const renderVisualizationPage = () => {
-                            const totalPages = Math.max(1, Math.ceil(cards.length / visualizationsPerPage));
-                            currentVisualizationPage = Math.min(totalPages, Math.max(1, currentVisualizationPage));
-                            const firstIndex = (currentVisualizationPage - 1) * visualizationsPerPage;
-                            const lastIndex = Math.min(firstIndex + visualizationsPerPage, cards.length);
-
-                            cards.forEach(({ card }, index) => {
-                                card.style.display = index >= firstIndex && index < lastIndex ? 'block' : 'none';
-                            });
-
-                            paginationSummary.textContent = `Menampilkan ${firstIndex + 1}–${lastIndex} dari ${cards.length} data`;
-                            paginationButtons.replaceChildren();
-
-                            const createPageButton = (label, page, disabled = false, active = false) => {
-                                const button = document.createElement('button');
-                                button.type = 'button';
-                                button.textContent = label;
-                                button.disabled = disabled;
-                                button.setAttribute('aria-label', label === '‹' ? 'Halaman sebelumnya' : label === '›' ? 'Halaman berikutnya' : `Halaman ${label}`);
-                                if (active) button.setAttribute('aria-current', 'page');
-                                Object.assign(button.style, {
-                                    display: 'inline-flex',
-                                    width: '32px',
-                                    height: '32px',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    border: `1px solid ${active ? '#376a64' : '#d1d5db'}`,
-                                    background: active ? '#376a64' : '#fff',
-                                    color: active ? '#fff' : disabled ? '#9ca3af' : '#374151',
-                                    fontSize: '12px',
-                                    fontWeight: '700',
-                                    cursor: disabled ? 'not-allowed' : 'pointer',
-                                });
-                                if (!disabled) {
-                                    button.addEventListener('click', () => {
-                                        currentVisualizationPage = page;
-                                        renderVisualizationPage();
-                                        cardGrid.scrollTop = 0;
-                                    });
-                                }
-                                return button;
-                            };
-
-                            paginationButtons.append(createPageButton('‹', currentVisualizationPage - 1, currentVisualizationPage === 1));
-                            for (let page = 1; page <= totalPages; page += 1) {
-                                paginationButtons.append(createPageButton(String(page), page, false, page === currentVisualizationPage));
-                            }
-                            paginationButtons.append(createPageButton('›', currentVisualizationPage + 1, currentVisualizationPage === totalPages));
-                        };
-
-                        const footer = document.createElement('div');
-                        Object.assign(footer.style, {
-                            display: 'flex',
-                            justifyContent: 'flex-end',
-                            gap: '10px',
-                            padding: '12px 18px',
-                            borderTop: '1px solid #e5e7eb',
-                            background: '#fff',
-                        });
-                        const cancelButton = document.createElement('button');
-                        cancelButton.type = 'button';
-                        cancelButton.textContent = 'Batal';
-                        const insertButton = document.createElement('button');
-                        insertButton.type = 'button';
-                        insertButton.textContent = 'Masukkan Grafik';
-                        [cancelButton, insertButton].forEach((button) => {
-                            Object.assign(button.style, {
-                                minHeight: '38px',
-                                padding: '0 15px',
-                                border: '1px solid #d1d5db',
-                                background: '#fff',
-                                color: '#1f2937',
-                                fontSize: '13px',
-                                fontWeight: '700',
-                                cursor: 'pointer',
-                            });
-                        });
-                        Object.assign(insertButton.style, {
-                            borderColor: '#376a64',
-                            background: '#376a64',
-                            color: '#fff',
-                        });
-                        footer.append(cancelButton, insertButton);
-                        panel.append(header, cardGrid, pagination, footer);
-                        modal.append(panel);
-
-                        const closePicker = () => {
-                            if (!modal.isConnected) return;
-                            document.removeEventListener('keydown', onPickerKeydown, true);
-                            window.removeEventListener('keydown', onPickerKeydown, true);
-                            window.removeEventListener('resize', updateVisualizationGridColumns);
-                            pickerIframeWindows.forEach((iframeWindow) => {
-                                iframeWindow.removeEventListener('keydown', onPickerKeydown, true);
-                            });
-                            previewObservers.forEach((observer) => observer.disconnect());
-                            document.body.style.overflow = previousBodyOverflow;
-                            modal.remove();
-                            editor.focus();
-                        };
-                        const onPickerKeydown = (event) => {
-                            if (event.key !== 'Escape') return;
-                            event.preventDefault();
-                            event.stopPropagation();
-                            closePicker();
-                        };
-                        closeButton.addEventListener('click', closePicker);
-                        cancelButton.addEventListener('click', closePicker);
-                        modal.addEventListener('click', (event) => {
-                            if (event.target === modal) closePicker();
-                        });
-                        insertButton.addEventListener('click', () => {
-                            const embedUrl = editor.dom.encode(selected.embed_url);
-                            const title = editor.dom.encode(selected.title || 'Data & Grafik Simontini');
-                            insertAtomicContent(`<figure class="story-data-visualization" data-story-data-visualization data-visualization-id="${selected.id}" contenteditable="false" style="display:block;width:100%;margin:24px 0;padding:0;"><div style="position:relative;width:100%;aspect-ratio:16 / 9;overflow:hidden;background:#fff;"><iframe src="${embedUrl}" title="${title}" width="100%" height="100%" frameborder="0" scrolling="no" loading="lazy" style="position:absolute;inset:0;display:block;width:100%;height:100%;border:0;overflow:hidden;" referrerpolicy="strict-origin-when-cross-origin"></iframe></div></figure>`);
+                    onAction: () => bukaPemilihGrafik(
+                        editor,
+                        wrapper.dataset.tinymceVisualizationOptionsUrl,
+                        (html) => {
+                            insertAtomicContent(html);
                             normalizeAtomicStoryBlocks();
-                            closePicker();
-                        });
-
-                        updateSelectedCard();
-                        updateVisualizationGridColumns();
-                        renderVisualizationPage();
-                        document.addEventListener('keydown', onPickerKeydown, true);
-                        window.addEventListener('keydown', onPickerKeydown, true);
-                        window.addEventListener('resize', updateVisualizationGridColumns, { passive: true });
-                        document.body.style.overflow = 'hidden';
-                        document.body.append(modal);
-                        cards[0]?.card.focus();
-                    },
+                        },
+                    ),
                 });
                 editor.ui.registry.addButton('addVideo', {
                     text: '+ Video',

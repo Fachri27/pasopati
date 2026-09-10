@@ -176,6 +176,23 @@ class DeforestoryTinymceEditorTest extends TestCase
         $this->get(route('data-visualizations.embed', $id))->assertNotFound();
     }
 
+    public function test_editor_artikel_ikut_mendapat_tombol_grafik(): void
+    {
+        $response = $this->actingAs($this->admin())->get(route('pages.create'));
+
+        $response->assertOk();
+        // Editor artikel punya konfigurasi TinyMCE sendiri (LFM + tombol
+        // slider), jadi ia hanya meminjam dialog pemilihnya lewat
+        // window.bukaPemilihGrafik — bukan memakai <x-tinymce-editor>.
+        $response->assertSee('addDataVisualization', escape: false);
+        $response->assertSee('window.bukaPemilihGrafik', escape: false);
+        $response->assertSee(route('data-visualizations.options'), escape: false);
+
+        // Yang sudah ada sebelumnya tidak boleh hilang.
+        $response->assertSee('addSlider', escape: false);
+        $response->assertSee('/laravel-filemanager', escape: false);
+    }
+
     public function test_reference_tertutup_untuk_yang_bukan_editor(): void
     {
         $this->get(route('reference.index'))->assertRedirect('/login');

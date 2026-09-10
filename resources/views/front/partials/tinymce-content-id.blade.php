@@ -8,7 +8,7 @@
                             relative_urls: false,
                             target: this.$refs.editor_id,
                             plugins: 'advlist anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount code fullscreen insertdatetime help preview',
-                            toolbar: 'undo redo | styles | addImage | addVideo | addBorderMerah | addSlider | bold italic underline strikethrough forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image media table | code removeformat | fullscreen preview',
+                            toolbar: 'undo redo | styles | addImage | addDataVisualization | addVideo | addBorderMerah | addSlider | bold italic underline strikethrough forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image media table | code removeformat | fullscreen preview',
                             extended_valid_elements: 'iframe[src|width|height|frameborder|allowfullscreen|style|class|loading|referrerpolicy]',
                             verify_html: false,
                             forced_root_block: '',
@@ -99,6 +99,23 @@
                                     </figure>
                                             `);
                                         }
+                                });
+
+                                {{-- Dialog pemilihnya milik resources/js/cms-tinymce.js dan
+                                     dipakai bersama form Deforestory, jadi tampilan serta
+                                     markup yang disisipkan selalu sama di kedua CMS. Di sini
+                                     hasilnya disisipkan apa adanya: editor artikel tidak
+                                     punya mesin blok atomik seperti form Deforestory. --}}
+                                editor.ui.registry.addButton('addDataVisualization', {
+                                    text: '+ Data/Grafik',
+                                    tooltip: 'Pilih Data & Grafik yang sudah dipublikasikan',
+                                    onAction: function () {
+                                        window.bukaPemilihGrafik(
+                                            editor,
+                                            '{{ route('data-visualizations.options') }}',
+                                            function (html) { editor.insertContent(html); },
+                                        );
+                                    }
                                 });
 
                                 editor.ui.registry.addButton('addBorderMerah', {
