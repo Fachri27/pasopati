@@ -176,6 +176,24 @@ class DeforestoryPreviewLockTest extends TestCase
         $this->get($this->tautan())->assertDontSee('ISI YANG DILINDUNGI', escape: false);
     }
 
+    public function test_kunci_tidak_menyentuh_halaman_publik(): void
+    {
+        // Batas yang disengaja, dan mudah bergeser: kode simontini menggerbangi
+        // halaman publiknya juga. Di sini kunci hanya berlaku untuk tautan
+        // pratinjau — laporan yang sudah terbit memang untuk dibaca publik,
+        // jadi menandainya terkunci tidak boleh menutupnya bagi pembaca.
+        $this->aturPassword();
+        $this->laporan->update(['status' => 'active']);
+
+        $response = $this->get(route('deforestory.case.laporan', [
+            'locale' => 'id', 'slug' => 'mayawana', 'laporanSlug' => 'draft-terkunci',
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('ISI YANG DILINDUNGI', escape: false);
+        $response->assertDontSee('Pratinjau terkunci');
+    }
+
     public function test_password_bisa_dibaca_kembali_oleh_editor(): void
     {
         $this->aturPassword('rahasia123');

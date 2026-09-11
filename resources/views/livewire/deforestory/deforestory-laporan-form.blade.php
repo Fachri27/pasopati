@@ -92,7 +92,8 @@
                                             Peninjau luar yang membuka tautan pratinjau laporan ini harus memasukkan
                                             password pratinjau Deforestory lebih dulu. Password diatur sekali untuk
                                             semua laporan di halaman daftar kasus. Kamu yang sedang login CMS tetap
-                                            bisa membukanya langsung.
+                                            bisa membukanya langsung. Tidak memengaruhi halaman publik: laporan yang
+                                            sudah berstatus Active tetap terbuka penuh bagi pembaca.
                                         </span>
                                     </span>
                                 </label>
