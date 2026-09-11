@@ -40,7 +40,6 @@
         }
      }" x-init="initEditor" wire:ignore>
 
-    <label class="block font-medium mb-1">Excerpt ID</label>
-    <textarea x-ref="excerpt_editor_id" id="excerpt_editor_id"></textarea>
+    <textarea x-ref="excerpt_editor_id" id="excerpt_editor_id" aria-label="Excerpt ID"></textarea>
     <input type="hidden" name="excerpt_id" :value="excerpt_id">
 </div>

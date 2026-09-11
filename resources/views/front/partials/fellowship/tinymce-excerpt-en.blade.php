@@ -41,7 +41,6 @@
         }
      }" x-init="initEditor" wire:ignore>
 
-    <label class="block font-medium mb-1">Excerpt (EN)</label>
-    <textarea x-ref="excerpt_editor_en" id="excerpt_editor_en"></textarea>
+    <textarea x-ref="excerpt_editor_en" id="excerpt_editor_en" aria-label="Excerpt (EN)"></textarea>
     <input type="hidden" name="excerpt_en" :value="excerpt_en">
 </div>

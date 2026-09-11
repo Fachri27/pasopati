@@ -1,5 +1,7 @@
 @props([
-    'label',
+    // Opsional: saat editornya sudah duduk di bawah judul seksi yang menyebut
+    // hal yang sama, label di sini hanya mengulanginya.
+    'label' => null,
     'hint' => null,
     'preset' => 'content',
     'value' => '',
@@ -12,12 +14,14 @@
 <div>
     <div class="mb-2 flex items-end justify-between gap-4">
         <div>
-            <label class="block text-sm font-semibold text-admin-ash">{{ $label }}</label>
+            @if ($label)
+                <label class="block text-sm font-semibold text-admin-ash">{{ $label }}</label>
+            @endif
             @if ($hint)
-                <p class="mt-0.5 text-xs text-admin-muted">{{ $hint }}</p>
+                <p class="text-xs text-admin-muted">{{ $hint }}</p>
             @endif
         </div>
-        <span class="bg-admin-raised px-2.5 py-1 text-[11px] font-medium uppercase tracking-wide text-admin-muted">TinyMCE custom</span>
+        <span class="shrink-0 bg-admin-raised px-2.5 py-1 text-[11px] font-medium uppercase tracking-wide text-admin-muted">TinyMCE custom</span>
     </div>
 
     {{-- Dua textarea, bukan satu. Yang di dalam wire:ignore adalah tempat
@@ -34,7 +38,7 @@
         data-tinymce-visualization-options-url="{{ route('data-visualizations.options') }}"
     >
         <div wire:ignore>
-            <textarea data-tinymce-editor>{{ $value }}</textarea>
+            <textarea data-tinymce-editor aria-label="{{ $label ?: $hint }}">{{ $value }}</textarea>
         </div>
         <textarea data-tinymce-input wire:model="{{ $wireModel }}" class="hidden" aria-hidden="true">{{ $value }}</textarea>
     </div>

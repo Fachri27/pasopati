@@ -182,7 +182,6 @@
                         });
                     }
                 }" x-init="initEditor" wire:ignore>
-    <label class="block font-medium mb-1">Content (ID)</label>
-    <textarea x-ref="editor_id" id="editor_id"></textarea>
+    <textarea x-ref="editor_id" id="editor_id" aria-label="Content (ID)"></textarea>
 </div>
 

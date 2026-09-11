@@ -166,6 +166,5 @@
                         });
                     }
                 }" x-init="initEditor" wire:ignore>
-    <label class="block font-medium mb-1">Content (EN)</label>
-    <textarea x-ref="editor_en" id="editor_en"></textarea>
+    <textarea x-ref="editor_en" id="editor_en" aria-label="Content (EN)"></textarea>
 </div>

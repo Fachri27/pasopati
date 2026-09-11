@@ -178,7 +178,6 @@
                                 <x-tinymce-editor
                                     wire:model="laporan_content_id"
                                     :value="$laporan_content_id"
-                                    label="Isi Laporan (ID)"
                                     hint="HTML lengkap dengan TinyMCE dan Source Code"
                                 />
                             </div>
@@ -186,7 +185,6 @@
                                 <x-tinymce-editor
                                     wire:model="laporan_content_en"
                                     :value="$laporan_content_en"
-                                    label="Report Content (EN)"
                                     hint="Full custom HTML with TinyMCE and Source Code"
                                 />
                             </div>
