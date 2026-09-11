@@ -93,15 +93,27 @@
 
                 {{-- Teks --}}
                 <div class="md:pt-0 pt-4">
-                    @if ($preview && $laporan->status !== 'active')
-                        {{-- Tanpa penanda ini, laporan draft dan yang sudah
-                             terbit tampak persis sama di pratinjau. --}}
-                        <span class="inline-block mb-2 rounded-full bg-amber-100 px-2.5 py-0.5 font-mono-ui text-[.65rem] font-semibold uppercase tracking-[.1em] text-amber-800">
-                            {{ $laporan->status }} — belum tampil publik
-                        </span>
-                    @endif
-                    @if ($cardYear)
-                        <p class="text-pasopati font-bold md:text-md font-sans">{{ $cardYear }}</p>
+                    {{-- Penanda status disandingkan dengan tahun, bukan ditumpuk
+                         di atasnya: ia keterangan tentang kartu ini, sederajat
+                         dengan tahun, dan sebaris membuat kartunya tidak
+                         kehilangan satu baris penuh. Kalimat penjelasnya pindah
+                         ke title — di daftar yang panjang, satu kata status
+                         sudah cukup membedakan. --}}
+                    @if ($cardYear || ($preview && $laporan->status !== 'active'))
+                        <div class="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                            @if ($cardYear)
+                                <span class="text-pasopati font-bold md:text-md font-sans">{{ $cardYear }}</span>
+                            @endif
+                            @if ($preview && $laporan->status !== 'active')
+                                <span class="inline-flex items-center gap-1 border border-amber-300 bg-amber-50 px-1.5 py-[.15rem] font-mono-ui text-[.6rem] font-semibold uppercase tracking-[.1em] text-amber-800"
+                                      title="{{ $laporan->status }} — belum tampil publik">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+                                    </svg>
+                                    {{ $laporan->status }}
+                                </span>
+                            @endif
+                        </div>
                     @endif
                     <h2 class="text-gray-800 font-semibold tracking-tight text-sm uppercase mt-2 font-sans">
                         {{ $isId ? 'Investigasi Deforestory' : 'Deforestory Investigation' }}
