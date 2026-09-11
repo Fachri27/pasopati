@@ -16,7 +16,7 @@
 {{-- Tanpa sidebar dan header CMS: halaman ini hanya muncul di dalam modal
      editor TinyMCE, dan kroma navigasi di ruang sesempit itu justru menutupi
      grid gambarnya. --}}
-<body class="bg-admin-base text-admin-smoke font-admin antialiased">
+<body class="admin-shell bg-admin-base text-admin-smoke font-admin antialiased">
     <main class="mx-auto max-w-6xl px-4 py-5">
         {{ $slot }}
     </main>

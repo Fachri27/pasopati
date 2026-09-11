@@ -398,7 +398,7 @@ figure.media-caption figcaption {
     align-items: center;
     gap: 0.75rem;
     padding: 0.5rem 0.75rem;
-    border-radius: 0.5rem;
+    border-radius: 0;   /* CMS bersudut lurus */
     font-size: 0.875rem;
     font-weight: 500;
     color: var(--color-admin-ash);
@@ -429,7 +429,7 @@ figure.media-caption figcaption {
    keadaan fokus yang terlihat. */
 .admin-input {
     width: 100%;
-    border-radius: 0.5rem;
+    border-radius: 0;   /* CMS bersudut lurus */
     border: 1px solid var(--color-admin-line);
     background-color: var(--color-admin-surface);
     padding: 0.5rem 0.75rem;
@@ -471,7 +471,7 @@ textarea.admin-input {
 .admin-input[type="file"]::file-selector-button {
     margin-right: 0.75rem;
     border: 0;
-    border-radius: 0.375rem;
+    border-radius: 0;   /* CMS bersudut lurus */
     background-color: var(--color-admin-base);
     padding: 0.375rem 0.75rem;
     font-family: inherit;
@@ -530,7 +530,7 @@ textarea.admin-input {
 
 /* ── Kartu / panel ───────────────────────────────────────────────────── */
 .admin-card {
-    border-radius: 0.75rem;
+    border-radius: 0;   /* CMS bersudut lurus */
     border: 1px solid var(--color-admin-line);
     background-color: var(--color-admin-raised);
 }
@@ -545,7 +545,7 @@ textarea.admin-input {
     justify-content: center;
     gap: 0.5rem;
     border: 1px solid transparent;
-    border-radius: 0.5rem;
+    border-radius: 0;   /* CMS bersudut lurus */
     padding: 0.5rem 0.875rem;
     font-size: 0.875rem;
     font-weight: 500;
@@ -971,4 +971,24 @@ textarea.admin-input {
     background: #376a64;
     content: '';
     pointer-events: none;
+}
+
+/* ==========================================================================
+   CMS tanpa sudut membulat
+   --------------------------------------------------------------------------
+   Sudut lurus di seluruh CMS. Diterapkan dari cangkang admin, bukan dengan
+   menyisir kelas rounded-* di tiap view: jumlahnya ratusan, dan menyisirnya
+   berarti setiap view baru harus ingat aturan ini sendiri.
+
+   !important memang maksudnya — mengalahkan utilitas rounded-* yang sudah
+   tertulis di markup, termasuk rounded-full pada avatar, lencana status, dan
+   titik indikator. Semuanya ikut kotak.
+
+   Cakupannya berhenti di cangkang CMS. Halaman publik dan bilah pratinjau —
+   yang hidup di layout front-end — tidak tersentuh. --------------------- */
+.admin-shell,
+.admin-shell *,
+.admin-shell *::before,
+.admin-shell *::after {
+    border-radius: 0 !important;
 }

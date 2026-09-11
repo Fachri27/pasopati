@@ -14,7 +14,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 </head>
-<body class="bg-admin-base text-admin-smoke font-admin antialiased">
+<body class="admin-shell bg-admin-base text-admin-smoke font-admin antialiased">
 
     {{-- Mobile sidebar overlay --}}
     {{-- Gulirannya dibiarkan di viewport (min-h-screen), BUKAN dikurung di
