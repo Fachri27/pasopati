@@ -98,13 +98,35 @@ class DeforestoryPreviewLockTest extends TestCase
     {
         $this->aturPassword();
 
-        $this->from($this->tautan())
-            ->post($this->tautanUnlock(), ['password' => 'rahasia123'])
-            ->assertRedirect();
+        // Mengikuti perjalanan peninjau sungguhan: buka tautan, kirim password
+        // ke URL yang tertera di form-nya, lalu IKUTI pengalihannya.
+        //
+        // Versi sebelumnya berhenti di assertRedirect() lalu memanggil ulang
+        // tautan bertanda tangan secara terpisah — dan justru karena itu ia
+        // lolos ketika pengalihannya mengarah ke URL tanpa tanda tangan, yang
+        // di peramban berakhir 403 tepat setelah password yang benar.
+        $gerbang = $this->get($this->tautan());
+        $gerbang->assertOk();
 
-        $this->get($this->tautan())
+        $urlUnlock = $this->urlUnlockDariGerbang($gerbang->getContent());
+
+        $this->post($urlUnlock, ['password' => 'rahasia123'])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->followingRedirects()
+            ->post($urlUnlock, ['password' => 'rahasia123'])
             ->assertOk()
             ->assertSee('ISI YANG DILINDUNGI', escape: false);
+    }
+
+    /** URL unlock yang benar-benar dipasang di form gerbang. */
+    private function urlUnlockDariGerbang(string $html): string
+    {
+        preg_match('/<form method="POST" action="([^"]+)"/', $html, $cocok);
+        $this->assertNotEmpty($cocok, 'form gerbang tidak ditemukan');
+
+        return html_entity_decode($cocok[1]);
     }
 
     public function test_password_salah_ditolak_dan_isinya_tetap_tertutup(): void
