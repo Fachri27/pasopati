@@ -32,6 +32,15 @@ class DeforestoryPreviewAccess
             return $next($request);
         }
 
-        abort(403, 'Tautan pratinjau tidak berlaku atau sudah kedaluwarsa.');
+        // Pesannya menyebut ketiga sebabnya, bukan hanya "kedaluwarsa".
+        // Tanda tangan Laravel mencakup HOST, jadi tautan yang sama gagal
+        // begitu dibuka lewat alamat lain — localhost vs 127.0.0.1, atau
+        // dengan/tanpa www. Itu sebab yang paling sering dan paling tidak
+        // tertebak, dan pesan yang hanya bilang "kedaluwarsa" mengirim orang
+        // mencari jawaban ke arah yang salah.
+        abort(403, 'Tautan pratinjau tidak berlaku. Tautan mungkin sudah kedaluwarsa, '
+            .'tersalin tidak utuh, atau dibuka lewat alamat yang berbeda dari saat dibuat '
+            .'(misalnya localhost padahal tautannya dibuat untuk 127.0.0.1). '
+            .'Minta tautan baru kepada pengirimnya.');
     }
 }

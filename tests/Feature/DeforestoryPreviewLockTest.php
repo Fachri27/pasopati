@@ -176,6 +176,23 @@ class DeforestoryPreviewLockTest extends TestCase
         $this->get($this->tautan())->assertDontSee('ISI YANG DILINDUNGI', escape: false);
     }
 
+    public function test_tautan_gagal_kalau_dibuka_lewat_host_lain(): void
+    {
+        // Tanda tangan Laravel mencakup host. Ini bukan bug, tapi jebakan yang
+        // mudah terbaca sebagai "tautannya rusak" — dikunci di sini supaya
+        // perilakunya tidak berubah diam-diam dan pesan errornya tetap perlu.
+        $tautan = $this->tautan();
+        $hostAsli = parse_url($tautan, PHP_URL_HOST);
+
+        $lewatHostLain = str_replace('://'.$hostAsli, '://host-lain.test', $tautan);
+        $this->assertNotSame($tautan, $lewatHostLain, 'host tautan tidak tertukar');
+
+        $this->get($lewatHostLain)->assertForbidden();
+
+        // Host aslinya sendiri tetap sah — yang gagal memang penukarannya.
+        $this->get($tautan)->assertOk();
+    }
+
     public function test_kunci_tidak_menyentuh_halaman_publik(): void
     {
         // Batas yang disengaja, dan mudah bergeser: kode simontini menggerbangi
