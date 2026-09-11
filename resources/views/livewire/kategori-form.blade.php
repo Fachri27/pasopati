@@ -2,11 +2,11 @@
     <div x-data="{lang:'id'}" class="">
         <div class="max-w-4xl mx-auto bg-admin-surface p-6 rounded-lg shadow-md">
             <h1 class="text-2xl font-bold mb-6 text-admin-ash">
-                {{ $isEdit ? '✏️ Edit Kategori' : '➕ Tambah Kategori' }}
+                {{ $isEdit ? 'Edit Kategori' : 'Tambah Kategori' }}
             </h1>
 
             <div class="mb-6">
-                <label class="font-medium text-admin-ash">🌐 Pilih Bahasa</label>
+                <label class="font-medium text-admin-ash">Pilih Bahasa</label>
                 <select x-model="lang" class="border pr-8 py-2 rounded-lg ml-3">
                     <option value="id">Indonesia</option>
                     <option value="en">English</option>
@@ -33,7 +33,7 @@
                 <div>
                     <button type="submit"
                         class="admin-btn admin-btn--primary">
-                        {{ $isEdit ? '💾 Update' : '🚀 Create' }}
+                        {{ $isEdit ? 'Update' : 'Create' }}
                     </button>
                 </div>
             </form>

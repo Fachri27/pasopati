@@ -5,7 +5,7 @@
                 <h2 class="text-lg font-semibold text-admin-smoke mb-4">Daftar Halaman</h2>
                 <a href="{{ route('kategori.create') }}">
                     <button class="admin-btn admin-btn--primary">
-                        🚀 Create
+                        Create
                     </button>
                 </a>
             </div>

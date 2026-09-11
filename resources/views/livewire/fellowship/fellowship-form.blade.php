@@ -10,14 +10,14 @@
             <span class="text-admin-muted">›</span>
 
             <span class="text-admin-amber font-semibold">
-                {{ isset($fellowship) ? '✏️ Edit Fellowship' : '➕ Add Fellowship' }}
+                {{ isset($fellowship) ? 'Edit Fellowship' : 'Add Fellowship' }}
             </span>
         </nav>
 
 
         {{-- ================= TITLE ================= --}}
         <h1 class="text-2xl font-bold mb-8 text-admin-ash">
-            {{ isset($fellowship) ? '✏️ Edit Fellowship' : '➕ Add Fellowship' }}
+            {{ isset($fellowship) ? 'Edit Fellowship' : 'Add Fellowship' }}
         </h1>
 
 
@@ -35,7 +35,7 @@
 
                         {{-- ================= LANGUAGE ================= --}}
                         <div>
-                            <label class="font-medium">🌐 Bahasa</label>
+                            <label class="font-medium">Bahasa</label>
 
                             <select x-model="lang" class="admin-input admin-select mt-1">
                                 <option value="id">Indonesia</option>
@@ -89,12 +89,12 @@
                         <div class="grid grid-cols-2 gap-3">
 
                             <div>
-                                <label class="text-sm">📅 Mulai</label>
+                                <label class="text-sm">Mulai</label>
                                 <input type="date" wire:model="start_date" class="w-full border rounded-lg px-2 py-2">
                             </div>
 
                             <div>
-                                <label class="text-sm">📅 Selesai</label>
+                                <label class="text-sm">Selesai</label>
                                 <input type="date" wire:model="end_date" class="w-full border rounded-lg px-2 py-2">
                             </div>
 
@@ -119,7 +119,7 @@
                         ===================================================== --}}
                         <div class="border-t pt-4 space-y-5">
 
-                            <h3 class="font-semibold text-admin-ash">🖼 Images</h3>
+                            <h3 class="font-semibold text-admin-ash">Images</h3>
 
 
                             {{-- ================= INDONESIA ================= --}}
@@ -254,7 +254,7 @@
 
                     <button type="submit" wire:loading.attr="disabled" class="bg-admin-amber hover:bg-admin-amber/85 disabled:opacity-60 text-white px-6 py-2 rounded-lg font-medium">
 
-                        {{ isset($fellowship) ? '💾 Update' : '🚀 Create' }}
+                        {{ isset($fellowship) ? 'Update' : 'Create' }}
                     </button>
 
                 </div>

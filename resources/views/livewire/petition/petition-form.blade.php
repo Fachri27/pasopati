@@ -14,7 +14,7 @@
             </nav>
 
             <h1 class="text-2xl font-bold mb-8 text-admin-ash">
-                {{ $petition ? '✏️ Edit Petisi' : '➕ Tambah Petisi' }}
+                {{ $petition ? 'Edit Petisi' : 'Tambah Petisi' }}
             </h1>
 
             <form wire:submit.prevent="save">
@@ -26,7 +26,7 @@
 
                             {{-- Language --}}
                             <div>
-                                <label class="font-medium">🌐 Bahasa</label>
+                                <label class="font-medium">Bahasa</label>
                                 <select x-model="lang" class="admin-input admin-select mt-1">
                                     <option value="id">Indonesia</option>
                                     <option value="en">English</option>
@@ -63,7 +63,7 @@
 
                             {{-- Publish Date --}}
                             <div>
-                                <label class="text-sm">📅 Tanggal Publikasi</label>
+                                <label class="text-sm">Tanggal Publikasi</label>
                                 <input type="date" wire:model="published_at"
                                     class="w-full border rounded-lg px-2 py-2 mt-1">
                             </div>
@@ -155,7 +155,7 @@
                             </svg>
 
                             <span wire:loading.remove wire:target="save">
-                                {{ $petition ? '💾 Update' : '🚀 Create' }}
+                                {{ $petition ? 'Update' : 'Create' }}
                             </span>
                             <span wire:loading wire:target="save">Saving...</span>
                         </button>

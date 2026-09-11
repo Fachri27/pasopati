@@ -2,7 +2,7 @@
     <section id="hero" class="flex flex-col justify-center items-center">
         <div class="max-w-md mx-auto">
             <h1 class="text-2xl font-bold mb-6 text-admin-ash">
-                {{ $userId ? '✏️ Edit Profile' : '➕ Add User' }}
+                {{ $userId ? 'Edit Profile' : 'Add User' }}
             </h1>
 
             <form wire:submit.prevent="save">
@@ -58,13 +58,17 @@
                         <div class="flex items-center justify-between w-full border border-admin-line rounded-xl bg-admin-surface p-3 transition-all duration-200 ease-in-out focus-within:border-admin-amber focus-within:ring-2 focus-within:ring-indigo-400/50 group-hover:shadow-md">
                             <div class="flex items-center gap-2">
                                 <div class="bg-admin-raised p-2 rounded-lg text-admin-muted">
-                                    📁
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/>
+                                    </svg>
                                 </div>
                                 <span x-text="fileName" class="text-admin-muted text-sm truncate w-44"></span>
                             </div>
 
                             <div class="text-admin-muted">
-                                📎
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
+                                </svg>
                             </div>
                             @if ($image)
                             <div class="mt-3">

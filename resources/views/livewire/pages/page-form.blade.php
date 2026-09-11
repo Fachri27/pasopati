@@ -10,12 +10,12 @@
                 </a>
                 <span class="text-admin-muted">›</span>
                 <span class="text-admin-amber font-semibold">
-                    {{ $page ? '✏️ Edit Page' : 'Tambah Artikel' }}
+                    {{ $page ? 'Edit Page' : 'Tambah Artikel' }}
                 </span>
             </nav>
 
             <h1 class="text-2xl font-bold mb-8 text-admin-ash">
-                {{ $page ? '✏️ Edit Page' : '➕ Add Page' }}
+                {{ $page ? 'Edit Page' : 'Add Page' }}
             </h1>
 
             <form wire:submit.prevent="save">
@@ -36,7 +36,7 @@
 
                             {{-- Language --}}
                             <div>
-                                <label class="font-medium">🌐 Bahasa</label>
+                                <label class="font-medium">Bahasa</label>
                                 <select x-model="lang" class="admin-input admin-select mt-1">
                                     <option value="id">Indonesia</option>
                                     <option value="en">English</option>
@@ -87,7 +87,7 @@
                             {{-- Publish + Page Type --}}
                             <div class="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label class="text-sm">📅 Publish</label>
+                                    <label class="text-sm">Publish</label>
                                     <input type="date" wire:model="published_at"
                                         class="w-full border rounded-lg px-2 py-2">
                                 </div>
@@ -705,7 +705,7 @@
 
                             {{-- Text --}}
                             <span wire:loading.remove wire:target="save">
-                                {{ $page ? '💾 Update' : '🚀 Create' }}
+                                {{ $page ? 'Update' : 'Create' }}
                             </span>
 
                             <span wire:loading wire:target="save">

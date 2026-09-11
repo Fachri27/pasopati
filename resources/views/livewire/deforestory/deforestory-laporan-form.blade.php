@@ -8,11 +8,11 @@
                 <span class="text-admin-muted">›</span>
                 <a href="{{ route('deforestory.laporan.index', ['caseSlug' => $caseSlug]) }}" class="text-admin-smoke hover:text-admin-amber font-medium">Laporan /{{ $caseSlug }}</a>
                 <span class="text-admin-muted">›</span>
-                <span class="text-admin-amber font-semibold">{{ $laporan ? '✏️ Edit' : '➕ Tambah' }}</span>
+                <span class="text-admin-amber font-semibold">{{ $laporan ? 'Edit' : 'Tambah' }}</span>
             </nav>
 
             <h1 class="text-2xl font-bold mb-8 text-admin-ash">
-                {{ $laporan ? '✏️ Edit Laporan' : '➕ Tambah Laporan' }}
+                {{ $laporan ? 'Edit Laporan' : 'Tambah Laporan' }}
                 <span class="text-admin-muted font-normal text-base">— kasus /{{ $caseSlug }}</span>
             </h1>
 
@@ -34,7 +34,7 @@
 
                             {{-- Language --}}
                             <div>
-                                <label class="font-medium">🌐 Bahasa</label>
+                                <label class="font-medium">Bahasa</label>
                                 <select x-model="lang" class="admin-input admin-select mt-1">
                                     <option value="id">Indonesia</option>
                                     <option value="en">English</option>
@@ -204,7 +204,7 @@
                             </svg>
 
                             <span wire:loading.remove wire:target="save">
-                                {{ $laporan ? '💾 Update' : '🚀 Create' }}
+                                {{ $laporan ? 'Update' : 'Create' }}
                             </span>
 
                             <span wire:loading wire:target="save">Saving...</span>

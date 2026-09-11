@@ -50,11 +50,11 @@ $user = auth()->user()->role;
                             <form method="POST" action="">
                                 @csrf
                                 <button type="submit" class="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100">
-                                    🚪 Logout
+                                    Logout
                                 </button>
                             </form>
                             <a href="" class="block w-full text-left px-4 py-2 hover:bg-gray-100 text-gray-700">
-                                👤 Profile
+                                Profile
                             </a>
                         </div>
                     </div>
@@ -75,7 +75,7 @@ $user = auth()->user()->role;
             </div>
         </div>
     </nav>
-    <main class="bg-gray-100 min-h-screen mt-[-500px]">      
+    <main class="bg-gray-100 min-h-screen mt-[-500px]">
         @yield('content')
         {{ $slot ?? '' }}
     </main>
