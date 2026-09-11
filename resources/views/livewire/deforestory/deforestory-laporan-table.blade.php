@@ -17,10 +17,12 @@
                     Judul & identitas kasus diambil dari kartu API.
                 </p>
             </div>
-            <a href="{{ route('deforestory.laporan.create', ['caseSlug' => $case->slug]) }}">
-                <button class="admin-btn admin-btn--primary text-sm font-medium">
-                    ➕ Tambah laporan
-                </button>
+            <a href="{{ route('deforestory.laporan.create', ['caseSlug' => $case->slug]) }}"
+               class="admin-btn admin-btn--primary shrink-0">
+                <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"/>
+                </svg>
+                Tambah laporan
             </a>
         </div>
 
@@ -29,7 +31,17 @@
         @endif
 
         <div class="flex flex-wrap items-center justify-between mb-4 gap-3">
-            <input type="text" wire:model.live.debounce.150ms="search" placeholder="Cari judul / slug laporan..." class="border p-2 rounded">
+            <div class="relative w-full sm:w-80">
+                <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-admin-muted pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/>
+                </svg>
+                {{-- Ruang ikon ditulis inline: .admin-input memakai padding
+                     shorthand di luar @layer utilities, jadi pl-* selalu kalah. --}}
+                <input type="text" wire:model.live.debounce.150ms="search"
+                       placeholder="Cari judul atau slug laporan…"
+                       class="admin-input" style="padding-left: 2.25rem"
+                       aria-label="Cari laporan">
+            </div>
             <div class="flex items-center gap-2">
                 <a href="{{ route('deforestory.case.preview', ['caseSlug' => $case->slug, 'locale' => 'id']) }}"
                    target="_blank" rel="noopener" class="admin-btn admin-btn--ghost admin-btn--sm"
@@ -40,15 +52,18 @@
         </div>
 
         <div class="overflow-x-auto">
-            <table class="admin-table min-w-full border-collapse table-fixed">
+            {{-- Tanpa table-fixed: dengan lebar kolom dipatok, kolom Aksi
+                 selebar 14rem memaksa empat tombolnya membungkus jadi dua
+                 baris. Lebarnya sekarang mengikuti isinya. --}}
+            <table class="admin-table min-w-full">
                 <thead>
-                    <tr class="bg-admin-raised text-left text-sm font-medium text-admin-ash">
-                        <th class="p-3 w-20">Gambar</th>
-                        <th class="p-3">Judul laporan</th>
-                        <th class="p-3 w-40">Slug</th>
-                        <th class="p-3 w-24">Urutan</th>
-                        <th class="p-3 w-28">Status</th>
-                        <th class="p-3 w-56">Aksi</th>
+                    <tr>
+                        <th class="w-20">Gambar</th>
+                        <th>Judul laporan</th>
+                        <th class="w-48 max-w-48">Slug</th>
+                        <th class="w-20">Urutan</th>
+                        <th class="w-28">Status</th>
+                        <th class="w-[22rem]">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="text-sm text-admin-ash">
@@ -72,27 +87,28 @@
                                 ->bagikan($case->slug, $laporan->slug, 'id');
                         @endphp
                         <tr>
-                            <td class="p-3">
+                            <td>
                                 @if ($imgUrl)
                                     <img src="{{ $imgUrl }}" alt="" class="w-16 h-10 object-cover rounded">
                                 @else
                                     <span class="text-xs text-admin-muted">—</span>
                                 @endif
                             </td>
-                            <td class="p-3">
-                                <span class="text-sm font-medium text-admin-smoke block">{{ $title }}</span>
+                            <td>
+                                <span class="block font-medium text-admin-smoke">{{ $title }}</span>
                             </td>
-                            <td class="p-3">
-                                <span class="text-xs font-mono text-admin-muted">/{{ $laporan->slug }}</span>
+                            <td>
+                                <span class="block truncate font-mono text-[11px] text-admin-muted"
+                                      title="/{{ $laporan->slug }}">/{{ $laporan->slug }}</span>
                             </td>
-                            <td class="p-3 text-xs">{{ $laporan->sort }}</td>
-                            <td class="p-3">
+                            <td class="font-mono text-xs text-admin-ash">{{ $laporan->sort }}</td>
+                            <td>
                                 @if ($laporan->status === 'active')
-                                    <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-emerald-500/10 text-emerald-400">Aktif</span>
+                                    <span class="inline-block px-2.5 py-1 text-xs font-semibold badge-active">Aktif</span>
                                 @elseif ($laporan->status === 'draft')
-                                    <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-admin-amber/10 text-admin-amber">Draft</span>
+                                    <span class="inline-block px-2.5 py-1 text-xs font-semibold badge-pending">Draft</span>
                                 @else
-                                    <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-admin-raised text-admin-ash">Inactive</span>
+                                    <span class="inline-block px-2.5 py-1 text-xs font-semibold badge-draft">Inactive</span>
                                 @endif
                                 @if ($laporan->is_locked)
                                     <span class="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-admin-muted"
@@ -104,10 +120,10 @@
                                     </span>
                                 @endif
                             </td>
-                            <td class="p-3">
+                            <td>
                                 {{-- Anchor diberi kelas tombol, bukan membungkus <button>:
                                      tombol di dalam tautan itu sarang interaktif yang tidak sah. --}}
-                                <div class="flex flex-wrap items-center gap-2">
+                                <div class="flex flex-wrap items-center gap-2 [&>*]:whitespace-nowrap">
                                     <a href="{{ route('deforestory.laporan.edit', $laporan->id) }}"
                                        class="admin-btn admin-btn--primary admin-btn--sm">Edit</a>
                                     <a href="{{ $previewUrl }}" target="_blank" rel="noopener"
