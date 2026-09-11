@@ -68,9 +68,8 @@
                             ]);
                             // Tautan bertanda tangan, berlaku 7 hari: untuk
                             // peninjau yang tidak punya akun CMS.
-                            $bagikanUrl = \App\Http\Controllers\DeforestoryController::tautanBagikan(
-                                $case->slug, $laporan->slug, 'id',
-                            );
+                            $bagikanUrl = app(\App\Support\DeforestoryPreviewLink::class)
+                                ->bagikan($case->slug, $laporan->slug, 'id');
                         @endphp
                         <tr>
                             <td class="p-3">

@@ -23,8 +23,9 @@
 
     // Dipakai dua jalur: halaman publik dan pratinjau editor.
     $preview = $preview ?? false;
+    $tautan = app(\App\Support\DeforestoryPreviewLink::class);
     $caseUrl = $preview
-        ? route('deforestory.case.preview', ['caseSlug' => $case->slug, 'locale' => $locale])
+        ? $tautan->kasus($case->slug, $locale)
         : route('deforestory.case', ['locale' => $locale, 'slug' => $case->slug]);
     $archiveUrl = route('deforestory', ['locale' => $locale]);
 @endphp
@@ -98,9 +99,9 @@
         label="Pratinjau laporan"
         :status="$laporan->status"
         :locale="$locale"
-        :id-url="route('deforestory.laporan.preview', ['caseSlug' => $case->slug, 'laporanSlug' => $laporan->slug, 'locale' => 'id'])"
-        :en-url="route('deforestory.laporan.preview', ['caseSlug' => $case->slug, 'laporanSlug' => $laporan->slug, 'locale' => 'en'])"
-        :cms-url="route('deforestory.laporan.edit', ['laporanId' => $laporan->id])"
+        :id-url="$tautan->laporan($case->slug, $laporan->slug, 'id')"
+        :en-url="$tautan->laporan($case->slug, $laporan->slug, 'en')"
+        :cms-url="auth()->check() ? route('deforestory.laporan.edit', ['laporanId' => $laporan->id]) : null"
     />
 @endif
 

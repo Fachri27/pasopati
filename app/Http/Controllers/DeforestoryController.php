@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\DeforestoryCase;
 use App\Models\DeforestorySubscriber;
 use App\Services\DeforestoryApiService;
+use App\Support\DeforestoryPreviewLink;
 use App\Support\DeforestoryPreviewLock;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -147,7 +148,7 @@ class DeforestoryController extends Controller
                 // Ikut ditandatangani: route unlock berada di grup yang sama,
                 // jadi kiriman dari peninjau luar (yang tidak punya sesi CMS)
                 // hanya lolos kalau membawa tanda tangan yang sah.
-                'unlockUrl' => self::tautanUnlock($case->slug, $laporan->slug, $this->kedaluwarsaTautan()),
+                'unlockUrl' => app(DeforestoryPreviewLink::class)->unlock($case->slug, $laporan->slug),
             ]);
         }
 
@@ -182,11 +183,8 @@ class DeforestoryController extends Controller
         //
         // Masa berlakunya mewarisi tautan asal bila ada, supaya membuka kunci
         // tidak diam-diam memperpanjang umur tautan yang sudah dibagikan.
-        $tujuan = URL::temporarySignedRoute('deforestory.laporan.preview', $this->kedaluwarsaTautan(), [
-            'caseSlug' => $case->slug,
-            'laporanSlug' => $laporan->slug,
-            'locale' => app()->getLocale(),
-        ]);
+        $tujuan = app(DeforestoryPreviewLink::class)
+            ->laporan($case->slug, $laporan->slug, app()->getLocale());
 
         if (! $laporan->is_locked || $kunci->terbuka($request)) {
             return redirect()->to($tujuan);
@@ -219,58 +217,8 @@ class DeforestoryController extends Controller
         return redirect()->to($tujuan);
     }
 
-    /**
-     * Masa berlaku tautan yang sedang dibuka.
-     *
-     * Editor CMS membuka tanpa tanda tangan sama sekali, jadi tidak ada
-     * `expires` untuk diwarisi; untuk mereka umurnya tidak penting.
-     */
-    private function kedaluwarsaTautan(): Carbon
-    {
-        return request()->integer('expires')
-            ? Carbon::createFromTimestamp(request()->integer('expires'))
-            : now()->addDays(7);
-    }
 
-    /**
-     * URL unlock bertanda tangan, pasangan gerbang password.
-     *
-     * Masa berlakunya disamakan dengan tautan pratinjau yang membawanya ke
-     * sini, bukan dihitung sendiri: kalau lebih pendek, gerbangnya mati lebih
-     * dulu daripada tautannya; kalau lebih panjang, membuka kunci diam-diam
-     * memperpanjang umur tautan yang sudah dibagikan.
-     */
-    public static function tautanUnlock(string $caseSlug, string $laporanSlug, $kedaluwarsa = null): string
-    {
-        return URL::temporarySignedRoute(
-            'deforestory.laporan.preview.unlock',
-            $kedaluwarsa ?: now()->addDays(7),
-            ['caseSlug' => $caseSlug, 'laporanSlug' => $laporanSlug],
-        );
-    }
 
-    /**
-     * Tautan pratinjau bertanda tangan yang bisa dibagikan ke luar CMS.
-     *
-     * Berumur terbatas dengan sengaja: tautan pratinjau beredar di email dan
-     * ruang obrolan, dan yang berlaku selamanya berarti draft lama tetap
-     * terbuka lama setelah peninjauannya selesai.
-     */
-    public static function tautanBagikan(string $caseSlug, ?string $laporanSlug = null, string $locale = 'id', int $hari = 7): string
-    {
-        $kedaluwarsa = now()->addDays($hari);
-
-        return $laporanSlug === null
-            ? URL::temporarySignedRoute('deforestory.case.preview', $kedaluwarsa, [
-                'caseSlug' => $caseSlug,
-                'locale' => $locale,
-            ])
-            : URL::temporarySignedRoute('deforestory.laporan.preview', $kedaluwarsa, [
-                'caseSlug' => $caseSlug,
-                'laporanSlug' => $laporanSlug,
-                'locale' => $locale,
-            ]);
-    }
 
     public function laporan($locale, $slug, $laporanSlug)
     {

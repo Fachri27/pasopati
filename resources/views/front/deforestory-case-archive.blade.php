@@ -16,6 +16,9 @@
     // View ini dipakai dua jalur: halaman publik dan pratinjau editor. Semua
     // yang berbeda di antara keduanya disaring lewat $preview.
     $preview = $preview ?? false;
+    // Semua tautan lanjutan di dalam pratinjau dibuat lewat helper ini: bagi
+    // peninjau luar, tanda tangannya harus ikut terbawa ke halaman berikutnya.
+    $tautan = app(\App\Support\DeforestoryPreviewLink::class);
 
     $imageUrl = function ($path) {
         if (! $path) return '';
@@ -65,11 +68,7 @@
                 $lExcerpt = $lt->excerpt ?? '';
                 $lImg = $imageUrl($laporan->translation($locale)?->image ?? $laporan->image ?? $case->featured_image);
                 $lHref = $preview
-                    ? route('deforestory.laporan.preview', [
-                        'caseSlug' => $case->slug,
-                        'laporanSlug' => $laporan->slug,
-                        'locale' => $locale,
-                    ])
+                    ? $tautan->laporan($case->slug, $laporan->slug, $locale)
                     : route('deforestory.case.laporan', [
                         'locale' => $locale,
                         'slug' => $case->slug,
@@ -156,9 +155,9 @@
         label="Pratinjau arsip"
         :status="$case->status"
         :locale="$locale"
-        :id-url="route('deforestory.case.preview', ['caseSlug' => $case->slug, 'locale' => 'id'])"
-        :en-url="route('deforestory.case.preview', ['caseSlug' => $case->slug, 'locale' => 'en'])"
-        :cms-url="route('deforestory.laporan.index', ['caseSlug' => $case->slug])"
+        :id-url="$tautan->kasus($case->slug, 'id')"
+        :en-url="$tautan->kasus($case->slug, 'en')"
+        :cms-url="auth()->check() ? route('deforestory.laporan.index', ['caseSlug' => $case->slug]) : null"
     />
 @endif
 

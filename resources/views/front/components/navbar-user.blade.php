@@ -38,11 +38,19 @@
                     $currentPath = '/' . implode('/', $segments);
                     $switchUrl = '/' . $otherLocale . $currentPath;
                     @endphp
-                    <a href="{{ $switchUrl }}"
-                        class="hover:text-green-900 {{ app()->getLocale() === 'en' ? 'font-bold text-red-600' : '' }}">EN</a>
-                    <span>|</span>
-                    <a href="{{ $switchUrl }}"
-                        class="hover:text-green-900 {{ app()->getLocale() === 'id' ? 'font-bold text-red-600' : '' }}">ID</a>
+                    {{-- Disembunyikan di halaman pratinjau. Penukar ini menganggap
+                         locale selalu berada di segmen PERTAMA path, sedangkan URL
+                         pratinjau menaruhnya di akhir dan membawa tanda tangan —
+                         hasilnya tautan seperti /en/preview/... yang tidak menuju
+                         ke mana pun. Bilah pratinjau punya penukarnya sendiri yang
+                         ikut menandatangani ulang. --}}
+                    @unless ($preview ?? false)
+                        <a href="{{ $switchUrl }}"
+                            class="hover:text-green-900 {{ app()->getLocale() === 'en' ? 'font-bold text-red-600' : '' }}">EN</a>
+                        <span>|</span>
+                        <a href="{{ $switchUrl }}"
+                            class="hover:text-green-900 {{ app()->getLocale() === 'id' ? 'font-bold text-red-600' : '' }}">ID</a>
+                    @endunless
 
                     <a href="https://forum.pasopati.id/"
                         class="hidden md:inline-block text-black hover:text-gray-600 font-bold ml-4"

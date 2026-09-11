@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Http\Controllers\DeforestoryController;
+use App\Support\DeforestoryPreviewLink;
 use App\Models\DeforestoryCase;
 use App\Models\DeforestoryCaseTranslation;
 use App\Models\DeforestoryLaporan;
@@ -53,12 +53,12 @@ class DeforestoryPreviewLockTest extends TestCase
 
     private function tautan(): string
     {
-        return DeforestoryController::tautanBagikan('mayawana', 'draft-terkunci', 'id');
+        return app(DeforestoryPreviewLink::class)->bagikan('mayawana', 'draft-terkunci', 'id');
     }
 
     private function tautanUnlock(): string
     {
-        return DeforestoryController::tautanUnlock('mayawana', 'draft-terkunci');
+        return app(DeforestoryPreviewLink::class)->unlock('mayawana', 'draft-terkunci');
     }
 
     private function aturPassword(string $password = 'rahasia123'): void
@@ -75,7 +75,7 @@ class DeforestoryPreviewLockTest extends TestCase
 
     public function test_tanda_tangan_kedaluwarsa_ditolak(): void
     {
-        $tautan = DeforestoryController::tautanBagikan('mayawana', 'draft-terkunci', 'id', 7);
+        $tautan = app(DeforestoryPreviewLink::class)->bagikan('mayawana', 'draft-terkunci', 'id', 7);
 
         $this->travel(8)->days();
 

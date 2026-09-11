@@ -16,10 +16,22 @@
         $alternateUrl = url(str_replace("/{$locale}/", "/{$alternate}/", request()->getRequestUri()));
     @endphp
 
+    @php $preview = $preview ?? false; @endphp
+    @if ($preview)
+        {{-- Halaman pratinjau memuat draft dan beredar lewat tautan yang
+             ditempel di email dan ruang obrolan. Ia tidak boleh terindeks, dan
+             tidak boleh memancarkan canonical maupun og:url — keduanya membuang
+             tanda tangan dari URL, jadi yang tertinggal justru alamat yang
+             dijawab 403. --}}
+        <meta name="robots" content="noindex, nofollow">
+    @endif
+
     <title>{{ $meta['title'] }}</title>
     <meta name="description" content="{{ $meta['description'] }}">
     <meta name="title" content="{{ $meta['title'] }}">
-    <link rel="canonical" href="{{ url()->current() }}">
+    @unless ($preview)
+        <link rel="canonical" href="{{ url()->current() }}">
+    @endunless
 
     <meta itemprop="name" content="{{ $meta['title'] }}">
     <meta itemprop="description" content="{{ $meta['description'] }}">
@@ -27,7 +39,9 @@
 
     <meta property="og:locale" content="{{ app()->getLocale() }}">
     <meta property="og:site_name" content="{{ config('app.name') }}">
-    <meta property="og:url" content="{{ url()->current() }}">
+    @unless ($preview)
+        <meta property="og:url" content="{{ url()->current() }}">
+    @endunless
     <meta property="og:type" content="{{ $meta['type'] ?? 'website' }}">
     <meta property="og:title" content="{{ $meta['title'] }}">
     <meta property="og:description" content="{{ $meta['description'] }}">
