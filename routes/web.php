@@ -93,6 +93,14 @@ Route::middleware(['setlocale'])->prefix('{locale}')->where(['locale' => 'id|en'
     // Search route - harus sebelum catch-all route
     Route::get('/search', [SearchController::class, 'search'])->name('search');
 
+    // Mockup "Off Track" (Earthsight × Auriga, embargo s.d. 17 Nov 2026). Hanya
+    // di lokal: view dan aset di public/mockups/ tidak ikut git (.git/info/exclude).
+    // Naskahnya statis, jadi tiap bahasa punya view sendiri (off-track-id = terjemahan).
+    if (app()->isLocal()) {
+        Route::get('/off-track', fn (string $locale) => view($locale === 'id' ? 'off-track-id' : 'off-track'))
+            ->name('off-track');
+    }
+
     // public catch-all page preview (at end)
     Route::get('/{page_type}/{slug}', [PageController::class, 'preview'])->name('show-page');
 });
