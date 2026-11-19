@@ -142,7 +142,7 @@
                 <div x-show="page_type === 'expose'">
                     <x-admin.card title="Blok konten terstruktur"
                                   description="Blok khusus seperti info acara, agenda, bio pembicara, kutipan, atau gambar.">
-                        <x-slot:actions><x-admin.salin-id wire="salinBlokDariId" /></x-slot:actions>
+                        <x-slot:actions><x-admin.salin-id wire="salinBlokDariId" wire-gambar="salinGambarBlokDariId" /></x-slot:actions>
                         @foreach (['id' => $content_blocks_id, 'en' => $content_blocks_en] as $loc => $blocks)
                             <div x-show="lang === '{{ $loc }}'" @if ($loc !== 'id') x-cloak @endif class="grid gap-4">
                                 @foreach ($blocks as $index => $block)

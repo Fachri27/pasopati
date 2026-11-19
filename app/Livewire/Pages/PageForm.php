@@ -151,6 +151,38 @@ class PageForm extends Component
         $this->blocksVersion++;
     }
 
+    /**
+     * Menyalin hanya blok Gambar dari Indonesia ke English, di urutan yang
+     * sama, ketika teks English sudah ditulis. Gambar yang sumbernya sudah
+     * ada di English dilewati.
+     */
+    public function salinGambarBlokDariId()
+    {
+        $en = $this->content_blocks_en;
+        $sudahAda = collect($en)
+            ->where('type', 'image')
+            ->map(fn ($blok) => $blok['data']['src'] ?? null)
+            ->filter()
+            ->all();
+
+        foreach ($this->content_blocks_id as $urutan => $blok) {
+            if (($blok['type'] ?? null) !== 'image') {
+                continue;
+            }
+
+            $src = $blok['data']['src'] ?? null;
+            if ($src && in_array($src, $sudahAda, true)) {
+                continue;
+            }
+
+            array_splice($en, min($urutan, count($en)), 0, [$blok]);
+            $sudahAda[] = $src;
+        }
+
+        $this->content_blocks_en = $en;
+        $this->blocksVersion++;
+    }
+
     public function removeBlock($locale, $index)
     {
         $prop = 'content_blocks_'.$locale;

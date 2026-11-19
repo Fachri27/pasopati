@@ -2099,3 +2099,64 @@ window.cmsSalinPembungkus = (kunciDari, kunciKe) => {
         .querySelector(`[wire\\:key="${kunci}"] [data-tinymce-wrapper]`)?.tinyMceEditor;
     salinIsiEditor(editorDi(kunciDari), editorDi(kunciKe));
 };
+
+/**
+ * Menyalin hanya gambar/media dari editor Indonesia ke editor English yang
+ * teksnya sudah ditulis ("Salin gambar saja"). Teks English tidak disentuh.
+ *
+ * Penempatannya mengikuti urutan: terjemahan biasanya mempertahankan susunan
+ * paragraf, jadi media di urutan ke-n tingkat atas Indonesia disisipkan di
+ * urutan ke-n English (atau di akhir kalau English lebih pendek). Media yang
+ * sudah ada di English (sumber yang sama) dilewati, jadi aman dipencet ulang.
+ */
+const PENANDA_MEDIA = 'img, iframe, video, figure, .story-content-gallery';
+
+const sumberMedia = (simpul) => [...simpul.querySelectorAll('img, iframe, video, source')]
+    .map((el) => el.getAttribute('src'))
+    .concat(simpul.matches?.('img, iframe, video') ? [simpul.getAttribute('src')] : [])
+    .filter(Boolean);
+
+const salinGambarEditor = (sumber, tujuan) => {
+    if (!sumber || !tujuan) {
+        window.alert('Editor belum siap. Tunggu sebentar lalu coba lagi.');
+        return;
+    }
+
+    const badanId = sumber.getBody();
+    const badanEn = tujuan.getBody();
+
+    const sudahAda = new Set();
+    [...badanEn.children].forEach((simpul) => sumberMedia(simpul).forEach((src) => sudahAda.add(src)));
+
+    let disisipkan = 0;
+    [...badanId.children].forEach((simpul, urutan) => {
+        const adaMedia = simpul.matches(PENANDA_MEDIA) || simpul.querySelector(PENANDA_MEDIA);
+        if (!adaMedia) return;
+
+        const sumberSimpul = sumberMedia(simpul);
+        if (sumberSimpul.length && sumberSimpul.every((src) => sudahAda.has(src))) return;
+
+        const salinan = simpul.cloneNode(true);
+        const acuan = badanEn.children[urutan] ?? null;
+        badanEn.insertBefore(salinan, acuan);
+        sumberSimpul.forEach((src) => sudahAda.add(src));
+        disisipkan += 1;
+    });
+
+    if (disisipkan === 0) {
+        window.alert('Tidak ada gambar baru untuk disalin.');
+        return;
+    }
+
+    tujuan.fire('change');
+};
+
+window.cmsSalinGambarEditor = (idDari, idKe) => {
+    salinGambarEditor(window.tinymce?.get(idDari), window.tinymce?.get(idKe));
+};
+
+window.cmsSalinGambarPembungkus = (kunciDari, kunciKe) => {
+    const editorDi = (kunci) => document
+        .querySelector(`[wire\\:key="${kunci}"] [data-tinymce-wrapper]`)?.tinyMceEditor;
+    salinGambarEditor(editorDi(kunciDari), editorDi(kunciKe));
+};

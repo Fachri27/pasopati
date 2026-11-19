@@ -10,6 +10,8 @@
       dari + ke      — id textarea TinyMCE (x-ref/id di partial editor).
       kunciDari + kunciKe — nilai wire:key pembungkus <x-tinymce-editor>.
       wire           — nama method Livewire yang menyalin sendiri (blok).
+    wireGambar menambahkan tombol kedua "Salin gambar saja" (mode wire); dua
+    mode lainnya otomatis memilikinya.
 --}}
 @props([
     'dari' => null,
@@ -17,9 +19,11 @@
     'kunciDari' => null,
     'kunciKe' => null,
     'wire' => null,
+    'wireGambar' => null,
 ])
 
-<button type="button" x-show="lang === 'en'" x-cloak
+<div x-show="lang === 'en'" x-cloak class="flex flex-wrap items-center justify-end gap-1.5">
+<button type="button"
         class="admin-btn admin-btn--ghost admin-btn--sm"
         title="Isi Indonesia disalin ke sini, lengkap dengan gambarnya. Isi English yang ada akan diganti."
         @if ($wire)
@@ -33,3 +37,17 @@
     <x-admin.icon name="doc" class="size-3.5" />
     Salin dari Indonesia
 </button>
+
+<button type="button"
+        class="admin-btn admin-btn--quiet admin-btn--sm"
+        title="Hanya gambar dan media yang disalin, di urutan yang sama. Teks English tidak diubah."
+        @if ($wire)
+            wire:click="{{ $wireGambar }}"
+        @elseif ($dari)
+            @click="cmsSalinGambarEditor('{{ $dari }}', '{{ $ke }}')"
+        @else
+            @click="cmsSalinGambarPembungkus('{{ $kunciDari }}', '{{ $kunciKe }}')"
+        @endif>
+    Salin gambar saja
+</button>
+</div>

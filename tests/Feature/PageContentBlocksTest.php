@@ -125,4 +125,23 @@ class PageContentBlocksTest extends TestCase
             ->call('salinBlokDariId')
             ->assertSet('content_blocks_en', $blok);
     }
+
+    public function test_only_image_blocks_are_copied_and_not_duplicated()
+    {
+        $this->actingAs(User::factory()->create(['role' => 'admin']));
+
+        $gambar = ['type' => 'image', 'data' => ['src' => '/storage/a.jpg', 'caption' => 'ID']];
+        $teksId = ['type' => 'paragraph', 'data' => ['html' => '<p>Teks Indonesia</p>']];
+        $teksEn = ['type' => 'paragraph', 'data' => ['html' => '<p>English text</p>']];
+
+        $uji = \Livewire\Livewire::test(\App\Livewire\Pages\PageForm::class)
+            ->set('content_blocks_id', [$teksId, $gambar])
+            ->set('content_blocks_en', [$teksEn])
+            ->call('salinGambarBlokDariId')
+            ->assertSet('content_blocks_en', [$teksEn, $gambar]);
+
+        // Dipencet lagi: gambar yang sama tidak digandakan.
+        $uji->call('salinGambarBlokDariId')
+            ->assertSet('content_blocks_en', [$teksEn, $gambar]);
+    }
 }
