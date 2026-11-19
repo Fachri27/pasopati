@@ -10,14 +10,23 @@ use Laragear\WebAuthn\Http\Requests\AttestedRequest;
 class WebAuthnRegisterController
 {
     /**
-     * Tantangan untuk perangkat. userless(): kuncinya disimpan di perangkat
-     * (discoverable), jadi nanti bisa masuk tanpa mengetik email, dan
-     * verifikasi pengguna (sidik jari/wajah/PIN perangkat) selalu diminta.
-     * Perangkat yang sama tidak bisa didaftarkan dua kali.
+     * Tantangan untuk perangkat. Yang diminta adalah authenticator bawaan
+     * perangkat ini (Touch ID, Face ID, Windows Hello) lewat
+     * authenticatorAttachment=platform dan petunjuk client-device, supaya
+     * peramban tidak menawarkan kunci keamanan USB atau ponsel lain lebih
+     * dulu. Peramban tetap memutuskan tempat penyimpanannya (mis. Chrome bisa
+     * menawarkan Google Password Manager); situs tidak bisa memaksa itu.
+     * Verifikasi pengguna (sidik jari/wajah/PIN) selalu diminta. Kunci
+     * disimpan di perangkat bila memungkinkan (residentKey=preferred).
      */
     public function options(AttestationRequest $request): Responsable
     {
-        return $request->userless()->toCreate();
+        $opsi = $request->secureRegistration()->toCreate();
+
+        $opsi->set('authenticatorSelection.authenticatorAttachment', 'platform');
+        $opsi->set('hints', ['client-device']);
+
+        return $opsi;
     }
 
     public function register(AttestedRequest $request): Response

@@ -37,15 +37,16 @@ class PasskeyTest extends TestCase
         $this->actingAs($pembaca)->postJson(route('webauthn.register.options'))->assertForbidden();
     }
 
-    public function test_editor_gets_registration_options_that_require_user_verification(): void
+    public function test_editor_gets_registration_options_for_the_built_in_authenticator(): void
     {
         $editor = User::factory()->create(['role' => 'editor']);
 
         $this->actingAs($editor)
             ->postJson(route('webauthn.register.options'))
             ->assertOk()
-            ->assertJsonPath('authenticatorSelection.residentKey', 'required')
-            ->assertJsonPath('authenticatorSelection.userVerification', 'required');
+            ->assertJsonPath('authenticatorSelection.authenticatorAttachment', 'platform')
+            ->assertJsonPath('authenticatorSelection.userVerification', 'required')
+            ->assertJsonPath('hints', ['client-device']);
     }
 
     public function test_user_can_only_remove_own_devices(): void
@@ -74,5 +75,11 @@ class PasskeyTest extends TestCase
             ->test(UserForm::class, ['userId' => $editor->id])
             ->call('hapusPerangkat', 'apa-saja')
             ->assertForbidden();
+    }
+
+    public function test_auth_provider_understands_webauthn_credentials(): void
+    {
+        // Tanpa driver ini login biometrik gagal 500 (Laravel mencari kolom rawId di tabel users).
+        $this->assertSame('eloquent-webauthn', config('auth.providers.users.driver'));
     }
 }

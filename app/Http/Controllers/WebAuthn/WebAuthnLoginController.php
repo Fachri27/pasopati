@@ -11,12 +11,16 @@ use Laragear\WebAuthn\Http\Requests\AssertionRequest;
 class WebAuthnLoginController
 {
     /**
-     * Tantangan masuk tanpa email: perangkat sendiri yang memilihkan kunci
-     * (passkey) yang tersimpan untuk situs ini.
+     * Tantangan masuk. Tanpa email, perangkat sendiri yang memilihkan kunci
+     * (passkey) tersimpan untuk situs ini. Kalau email diisi, tantangan
+     * dibatasi pada kunci milik akun itu — dibutuhkan untuk kunci yang hanya
+     * tersimpan di perangkat (tidak bisa ditemukan tanpa tahu akunnya).
      */
     public function options(AssertionRequest $request): Responsable
     {
-        return $request->toVerify();
+        $email = $request->validate(['email' => 'nullable|email|string'])['email'] ?? null;
+
+        return $request->toVerify($email ? ['email' => $email] : null);
     }
 
     /**

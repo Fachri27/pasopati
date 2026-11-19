@@ -60,10 +60,10 @@
             <div x-data="{ didukung: window.cmsPasskey?.didukung() ?? false, sibuk: false, galat: '',
                     async masuk() {
                         this.sibuk = true; this.galat = '';
-                        const { success } = await window.cmsPasskey.masuk();
+                        const { success, error } = await window.cmsPasskey.masuk(document.getElementById('email')?.value.trim());
                         if (success) { window.location.href = '{{ route('dashboard') }}'; return; }
                         this.sibuk = false;
-                        this.galat = 'Biometrik tidak dikenali. Daftarkan perangkat ini dulu di profil Anda, atau masuk dengan email dan kata sandi.';
+                        this.galat = 'Biometrik tidak dikenali. Daftarkan perangkat ini dulu di profil Anda. Kalau sudah, isi email di atas lalu coba lagi, atau masuk dengan email dan kata sandi.' + (error ? ' (' + error + ')' : '');
                     } }" x-show="didukung || !window.isSecureContext" x-cloak class="mt-6">
                 <div x-show="didukung" class="mb-4 flex items-center gap-3 text-[12.5px] text-admin-muted">
                     <span class="h-px flex-1 bg-admin-line"></span>atau<span class="h-px flex-1 bg-admin-line"></span>

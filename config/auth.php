@@ -61,7 +61,10 @@ return [
 
     'providers' => [
         'users' => [
-            'driver' => 'eloquent',
+            // eloquent-webauthn: sama dengan eloquent, ditambah kemampuan
+            // mengenali login biometrik (laragear/webauthn). Login dengan
+            // email dan kata sandi tetap berjalan seperti biasa.
+            'driver' => 'eloquent-webauthn',
             'model' => env('AUTH_MODEL', App\Models\User::class),
         ],
 

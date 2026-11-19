@@ -113,10 +113,10 @@
                 <div x-data="{ nama: '', sibuk: false, galat: '', didukung: window.cmsPasskey?.didukung() ?? false,
                     async tambah() {
                         this.sibuk = true; this.galat = '';
-                        const { success } = await window.cmsPasskey.daftar(this.nama);
+                        const { success, error } = await window.cmsPasskey.daftar(this.nama);
                         this.sibuk = false;
                         if (success) { this.nama = ''; $wire.$refresh(); }
-                        else { this.galat = 'Perangkat tidak jadi didaftarkan. Coba lagi, dan setujui permintaan sidik jari atau wajah di perangkat.'; }
+                        else { this.galat = 'Perangkat tidak jadi didaftarkan. Coba lagi, dan setujui permintaan sidik jari atau wajah di perangkat.' + (error ? ' (' + error + ')' : ''); }
                     } }">
                     @if ($perangkat->isNotEmpty())
                         <ul class="mb-4 divide-y divide-admin-line rounded-md border border-admin-line">
