@@ -202,7 +202,7 @@
                                                                 }
                                                             });
                                                         }
-                                                    }" x-init="initEditor" wire:ignore>
+                                                    }" x-init="cmsBilaTampak($el, () => initEditor())" wire:ignore>
                                                         <textarea id="paragraph_editor_{{ $loc }}_{{ $editorIdx }}" rows="5" class="admin-input font-admin-mono text-[13px]"></textarea>
                                                     </div>
                                                     @break

@@ -43,6 +43,6 @@
                             },
                         });
                     }
-                }" x-init="initEditor" wire:ignore>
+                }" x-init="cmsBilaTampak($el, () => initEditor())" wire:ignore>
     <textarea x-ref="excerpt_editor_en" id="excerpt_editor_en" aria-label="Excerpt (EN)"></textarea>
 </div>

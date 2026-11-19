@@ -168,6 +168,6 @@
                             }
                         });
                     }
-                }" x-init="initEditor" wire:ignore>
+                }" x-init="cmsBilaTampak($el, () => initEditor())" wire:ignore>
     <textarea x-ref="editor_en" id="editor_en" aria-label="Content (EN)"></textarea>
 </div>

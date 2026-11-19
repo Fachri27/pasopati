@@ -41,7 +41,15 @@
                     initEditor(catId, locale) {
                     let textareaId = 'content_' + locale + '_' + catId;
                     let self = this;
-    
+
+                    // Tab bahasa yang sedang tersembunyi: tunggu sampai tampil,
+                    // kalau tidak toolbarnya terukur selebar 0 dan kosong.
+                    let target = document.getElementById(textareaId);
+                    if (target && target.getClientRects().length === 0) {
+                    cmsBilaTampak(target, () => this.initEditor(catId, locale));
+                    return;
+                    }
+
                     if (tinymce.get(textareaId)) tinymce.get(textareaId).remove();
     
                     tinymce.init({

@@ -41,7 +41,7 @@
             }
             });
         }
-     }" x-init="initEditor" wire:ignore>
+     }" x-init="cmsBilaTampak($el, () => initEditor())" wire:ignore>
 
     <textarea x-ref="excerpt_editor_id" id="excerpt_editor_id" aria-label="Excerpt ID"></textarea>
     <input type="hidden" name="excerpt_id" :value="excerpt_id">

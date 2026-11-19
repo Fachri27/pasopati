@@ -634,6 +634,18 @@ const initializeTinyMceEditors = () => {
         const input = wrapper.querySelector('[data-tinymce-input]');
         if (!editorElement || !input) return;
 
+        // Editor di tab bahasa yang tersembunyi dibuat nanti, saat tabnya
+        // terbuka (lihat window.cmsBilaTampak di akhir berkas).
+        // Sebelum Alpine memproses x-show, tab yang tersembunyi masih tampak
+        // (tersembunyi baru setelah Alpine menyala) — tunggu 'alpine:initialized'.
+        const pembungkusX = editorElement.closest('[x-show]');
+        if (pembungkusX && pembungkusX._x_isShown === undefined) return;
+
+        if (editorElement.getClientRects().length === 0) {
+            window.cmsBilaTampak(editorElement, initializeTinyMceEditors);
+            return;
+        }
+
         const isCaptionEditor = wrapper.dataset.tinymcePreset === 'caption';
         const referenceStorageKey = `pasopati-reference-selection:${wrapper.dataset.tinymcePickerId}`;
         let lastReferenceSelection = 0;
@@ -2031,3 +2043,27 @@ document.addEventListener('livewire:init', () => {
     });
 });
 document.addEventListener('livewire:navigated', initializeTinyMceEditors);
+document.addEventListener('alpine:initialized', initializeTinyMceEditors);
+
+/**
+ * Menjalankan `mulai` begitu `el` benar-benar tampil.
+ *
+ * TinyMCE yang dibuat di dalam elemen tersembunyi (tab bahasa English yang
+ * x-show-nya belum aktif) mengukur toolbarnya selebar 0, jadi seluruh tombol
+ * terlipat dan bilahnya kosong ketika tab dibuka. Pembuatan editor karena itu
+ * ditunda sampai elemennya punya ukuran. Dipakai lewat
+ * x-init="cmsBilaTampak($el, () => initEditor())".
+ */
+window.cmsBilaTampak = (el, mulai) => {
+    if (el.getClientRects().length > 0) {
+        mulai();
+        return;
+    }
+
+    const pengamat = new IntersectionObserver((entri) => {
+        if (!entri.some((e) => e.isIntersecting || e.target.getClientRects().length > 0)) return;
+        pengamat.disconnect();
+        mulai();
+    });
+    pengamat.observe(el);
+};

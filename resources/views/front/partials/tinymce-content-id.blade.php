@@ -184,7 +184,7 @@
                             }
                         });
                     }
-                }" x-init="initEditor" wire:ignore>
+                }" x-init="cmsBilaTampak($el, () => initEditor())" wire:ignore>
     <textarea x-ref="editor_id" id="editor_id" aria-label="Content (ID)"></textarea>
 </div>
 
