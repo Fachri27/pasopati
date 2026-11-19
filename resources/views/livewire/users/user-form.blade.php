@@ -136,19 +136,27 @@
                         <p class="admin-hint mb-3">Belum ada perangkat terdaftar.</p>
                     @endif
 
-                    <template x-if="didukung">
-                        <div class="flex flex-wrap items-end gap-2">
-                            <div class="min-w-[200px] flex-1">
-                                <label for="nama-perangkat" class="admin-label">Nama perangkat (opsional)</label>
-                                <input id="nama-perangkat" type="text" x-model="nama" maxlength="60" placeholder="Contoh: Laptop kantor" class="admin-input">
-                            </div>
-                            <button type="button" @click="tambah" :disabled="sibuk" class="admin-btn admin-btn--ghost">
-                                <span x-show="!sibuk">Tambah perangkat ini</span>
-                                <span x-show="sibuk" x-cloak>Menunggu perangkat…</span>
-                            </button>
+                    <div class="flex flex-wrap items-end gap-2">
+                        <div class="min-w-[200px] flex-1">
+                            <label for="nama-perangkat" class="admin-label">Nama perangkat (opsional)</label>
+                            <input id="nama-perangkat" type="text" x-model="nama" maxlength="60" placeholder="Contoh: Laptop kantor" class="admin-input">
                         </div>
-                    </template>
-                    <p x-show="!didukung" x-cloak class="admin-hint">Peramban ini tidak mendukung biometrik. Pakai peramban terbaru lewat HTTPS.</p>
+                        <button type="button" @click="tambah" :disabled="sibuk || !didukung" class="admin-btn admin-btn--ghost">
+                            <span x-show="!sibuk">Tambah perangkat ini</span>
+                            <span x-show="sibuk" x-cloak>Menunggu perangkat…</span>
+                        </button>
+                    </div>
+                    {{-- Tombol selalu tampil supaya jelas di mana tempatnya; kalau
+                         peramban menolak WebAuthn, alasannya dijelaskan di sini. --}}
+                    <p x-show="!didukung" x-cloak class="admin-error">
+                        <template x-if="!window.isSecureContext">
+                            <span>Biometrik hanya jalan lewat https. Buka halaman ini lewat
+                                <a class="underline" :href="'https://' + location.host + location.pathname" x-text="'https://' + location.host"></a>.</span>
+                        </template>
+                        <template x-if="window.isSecureContext">
+                            <span>Peramban ini tidak mendukung biometrik. Pakai peramban terbaru.</span>
+                        </template>
+                    </p>
                     <p x-show="galat" x-cloak x-text="galat" class="admin-error"></p>
                 </div>
             </x-admin.card>

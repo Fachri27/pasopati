@@ -122,6 +122,6 @@ class DashboardAdminTest extends TestCase
         $this->actingAs($editor)
             ->get(route('dashboard'))
             ->assertOk()
-            ->assertDontSee(route('user.index'));
+            ->assertDontSee('href="'.route('user.index').'"', false);
     }
 }

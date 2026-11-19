@@ -130,6 +130,10 @@
             </a>
 
             <div class="admin-side__user mt-1 flex items-center gap-2.5 px-1.5 py-1.5">
+                {{-- Foto dan nama membuka profil sendiri: tempat mengganti
+                     password, foto, dan mendaftarkan biometrik. Satu-satunya
+                     jalan ke sana bagi editor, yang tak punya menu Pengguna. --}}
+                <a href="{{ route('user.edit', $pengguna->id) }}" class="flex min-w-0 flex-1 items-center gap-2.5 rounded-md hover:bg-admin-inset" title="Profil saya" aria-label="Profil saya">
                 @if ($pengguna->image)
                     <img src="{{ asset('storage/'.$pengguna->image) }}" alt="" class="size-7 shrink-0 rounded-full object-cover">
                 @else
@@ -141,6 +145,7 @@
                     <p class="truncate text-[13px] font-medium text-admin-smoke">{{ $pengguna->name }}</p>
                     <p class="admin-eyebrow truncate">{{ ucfirst($pengguna->role) }}</p>
                 </div>
+                </a>
                 <form action="{{ route('logout') }}" method="POST">
                     @csrf
                     <button type="submit" class="admin-icon-btn" title="Keluar" aria-label="Keluar">
@@ -165,6 +170,9 @@
                         onclick="window.dispatchEvent(new CustomEvent('admin-palet'))">
                     <x-admin.icon name="search" />
                 </button>
+                <a href="{{ route('user.edit', $pengguna->id) }}" class="admin-icon-btn" title="Profil saya" aria-label="Profil saya">
+                    <x-admin.icon name="user" />
+                </a>
                 <a href="{{ url('/') }}" target="_blank" rel="noopener" class="admin-icon-btn" title="Lihat situs" aria-label="Lihat situs">
                     <x-admin.icon name="external" />
                 </a>
