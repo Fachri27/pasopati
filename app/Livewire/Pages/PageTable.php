@@ -59,7 +59,10 @@ class PageTable extends Component
                     }
                 }
 
-            })->paginate(5);
+            })
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->paginate(5);
 
         return view('livewire.pages.page-table', compact('pages'))
             ->layout('layouts.admin');
