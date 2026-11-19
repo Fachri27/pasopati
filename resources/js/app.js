@@ -5,6 +5,7 @@ import './infinite-scroll';
 import './cms-tinymce';
 import './story-content';
 import './data-visualization';
+import './passkey';
 import gsap from 'gsap';
 
 if (document.getElementById('preloader')) {

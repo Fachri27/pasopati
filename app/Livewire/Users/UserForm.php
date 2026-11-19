@@ -133,9 +133,28 @@ class UserForm extends Component
         }
     }
 
+    /** Perangkat biometrik hanya dikelola pemilik akunnya sendiri. */
+    private function adalahAkunSendiri(): bool
+    {
+        return $this->userId && (int) $this->userId === auth()->id();
+    }
+
+    public function hapusPerangkat(string $id)
+    {
+        abort_unless($this->adalahAkunSendiri(), 403);
+
+        auth()->user()->webAuthnCredentials()->whereKey($id)->delete();
+
+        session()->flash('success', 'Perangkat dihapus.');
+    }
+
     public function render()
     {
-        return view('livewire.users.user-form')
+        return view('livewire.users.user-form', [
+            'perangkat' => $this->adalahAkunSendiri()
+                ? auth()->user()->webAuthnCredentials()->latest()->get()
+                : null,
+        ])
             ->layout('layouts.admin');
     }
 }

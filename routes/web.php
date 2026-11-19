@@ -14,6 +14,8 @@ use App\Http\Controllers\PageController;
 use App\Http\Controllers\PetitionController;
 use App\Http\Controllers\ReferenceController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\WebAuthn\WebAuthnLoginController;
+use App\Http\Controllers\WebAuthn\WebAuthnRegisterController;
 use App\Livewire\Auth\LoginForm;
 use App\Livewire\Deforestory\DeforestoryCaseTable;
 use App\Livewire\Deforestory\DeforestoryLaporanForm;
@@ -193,6 +195,19 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 });
 
 Route::get('/login', LoginForm::class)->name('login');
+
+// Masuk dengan biometrik (passkey). Pendaftaran perangkat hanya untuk yang
+// sudah masuk; masuknya sendiri untuk tamu dan dibatasi lajunya.
+Route::middleware('guest')->group(function () {
+    Route::post('/webauthn/login/options', [WebAuthnLoginController::class, 'options'])
+        ->middleware('throttle:20,1')->name('webauthn.login.options');
+    Route::post('/webauthn/login', [WebAuthnLoginController::class, 'login'])
+        ->middleware('throttle:10,1')->name('webauthn.login');
+});
+Route::middleware(['auth', 'role:admin,editor'])->group(function () {
+    Route::post('/webauthn/register/options', [WebAuthnRegisterController::class, 'options'])->name('webauthn.register.options');
+    Route::post('/webauthn/register', [WebAuthnRegisterController::class, 'register'])->name('webauthn.register');
+});
 
 Route::post('/logout', function () {
     Auth::logout();

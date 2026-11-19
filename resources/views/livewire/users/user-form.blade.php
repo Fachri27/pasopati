@@ -104,6 +104,55 @@
                 </div>
             </x-admin.card>
         </form>
+
+        @if ($perangkat !== null)
+            {{-- Di luar <form>: daftar dan tombolnya tidak ikut tersimpan
+                 bersama profil. Hanya tampil di akun sendiri. --}}
+            <x-admin.card class="mt-5" title="Masuk dengan biometrik"
+                          description="Sidik jari, wajah, atau PIN perangkat bisa dipakai masuk tanpa mengetik email dan password.">
+                <div x-data="{ nama: '', sibuk: false, galat: '', didukung: window.cmsPasskey?.didukung() ?? false,
+                    async tambah() {
+                        this.sibuk = true; this.galat = '';
+                        const { success } = await window.cmsPasskey.daftar(this.nama);
+                        this.sibuk = false;
+                        if (success) { this.nama = ''; $wire.$refresh(); }
+                        else { this.galat = 'Perangkat tidak jadi didaftarkan. Coba lagi, dan setujui permintaan sidik jari atau wajah di perangkat.'; }
+                    } }">
+                    @if ($perangkat->isNotEmpty())
+                        <ul class="mb-4 divide-y divide-admin-line rounded-md border border-admin-line">
+                            @foreach ($perangkat as $kunci)
+                                <li class="flex items-center gap-3 py-2 pr-1.5 pl-3" wire:key="kunci-{{ $kunci->getKey() }}">
+                                    <span class="min-w-0 flex-1">
+                                        <span class="block truncate text-[13.5px] font-medium text-admin-smoke">{{ $kunci->alias ?: 'Perangkat' }}</span>
+                                        <span class="block text-[12.5px] text-admin-muted">Didaftarkan {{ $kunci->created_at->translatedFormat('j F Y') }}</span>
+                                    </span>
+                                    <button type="button" wire:click="hapusPerangkat('{{ $kunci->getKey() }}')"
+                                            wire:confirm="Hapus perangkat ini? Perangkat itu tidak bisa lagi dipakai untuk masuk."
+                                            class="admin-btn admin-btn--quiet-danger admin-btn--sm">Hapus</button>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @else
+                        <p class="admin-hint mb-3">Belum ada perangkat terdaftar.</p>
+                    @endif
+
+                    <template x-if="didukung">
+                        <div class="flex flex-wrap items-end gap-2">
+                            <div class="min-w-[200px] flex-1">
+                                <label for="nama-perangkat" class="admin-label">Nama perangkat (opsional)</label>
+                                <input id="nama-perangkat" type="text" x-model="nama" maxlength="60" placeholder="Contoh: Laptop kantor" class="admin-input">
+                            </div>
+                            <button type="button" @click="tambah" :disabled="sibuk" class="admin-btn admin-btn--ghost">
+                                <span x-show="!sibuk">Tambah perangkat ini</span>
+                                <span x-show="sibuk" x-cloak>Menunggu perangkat…</span>
+                            </button>
+                        </div>
+                    </template>
+                    <p x-show="!didukung" x-cloak class="admin-hint">Peramban ini tidak mendukung biometrik. Pakai peramban terbaru lewat HTTPS.</p>
+                    <p x-show="galat" x-cloak x-text="galat" class="admin-error"></p>
+                </div>
+            </x-admin.card>
+        @endif
     </div>
 
     <x-admin.toast />
