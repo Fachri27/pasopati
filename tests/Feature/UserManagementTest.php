@@ -244,4 +244,47 @@ class UserManagementTest extends TestCase
 
         $this->assertDatabaseHas('users', ['id' => $this->admin->id]);
     }
+
+    public function test_editor_cannot_edit_another_users_account(): void
+    {
+        $editor = User::factory()->create(['role' => 'editor']);
+        $korban = User::factory()->create(['role' => 'admin', 'password' => Hash::make('rahasia123')]);
+
+        $this->actingAs($editor)
+            ->get(route('user.edit', $korban->id))
+            ->assertForbidden();
+
+        Livewire::actingAs($editor)
+            ->test(UserForm::class, ['userId' => $korban->id])
+            ->assertForbidden();
+
+        $this->assertTrue(Hash::check('rahasia123', $korban->fresh()->password));
+    }
+
+    public function test_editor_can_edit_own_profile_but_not_role(): void
+    {
+        $editor = User::factory()->create(['role' => 'editor']);
+
+        Livewire::actingAs($editor)
+            ->test(UserForm::class, ['userId' => $editor->id])
+            ->set('name', 'Nama Baru')
+            ->set('role', 'admin')
+            ->call('save');
+
+        $editor->refresh();
+        $this->assertSame('Nama Baru', $editor->name);
+        $this->assertSame('editor', $editor->role);
+    }
+
+    public function test_user_id_cannot_be_tampered_from_the_browser(): void
+    {
+        $editor = User::factory()->create(['role' => 'editor']);
+        $korban = User::factory()->create(['role' => 'admin']);
+
+        $this->expectException(\Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException::class);
+
+        Livewire::actingAs($editor)
+            ->test(UserForm::class, ['userId' => $editor->id])
+            ->set('userId', $korban->id);
+    }
 }

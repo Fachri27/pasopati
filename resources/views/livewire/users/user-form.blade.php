@@ -45,6 +45,7 @@
                     <div class="sm:col-span-2">
                         <label for="pengguna-peran" class="admin-label">Peran</label>
                         <select id="pengguna-peran" wire:model="role" required
+                                @disabled(auth()->user()->role !== 'admin')
                                 class="admin-input sm:max-w-xs" @error('role') aria-invalid="true" @enderror>
                             <option value="">Pilih peran</option>
                             @foreach (['admin', 'editor'] as $r)

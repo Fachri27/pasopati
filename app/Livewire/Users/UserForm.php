@@ -4,6 +4,7 @@ namespace App\Livewire\Users;
 
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -11,6 +12,9 @@ class UserForm extends Component
 {
     use WithFileUploads;
 
+    // Terkunci: properti publik Livewire bisa dipalsukan dari browser, dan
+    // save() memakainya untuk memilih akun yang diperbarui.
+    #[Locked]
     public $userId;
 
     public $name;
@@ -45,8 +49,26 @@ class UserForm extends Component
         return $rules;
     }
 
+    /**
+     * Admin boleh mengelola semua akun; editor hanya profilnya sendiri.
+     * Tanpa ini editor bisa membuka /user/{id}/edit akun mana pun, lalu
+     * mengganti kata sandi atau perannya (termasuk menjadikan diri admin).
+     */
+    private function izinkanAkses(?int $targetId): void
+    {
+        $pengguna = auth()->user();
+
+        if ($pengguna?->role === 'admin') {
+            return;
+        }
+
+        abort_unless($targetId !== null && $pengguna && $pengguna->id === $targetId, 403);
+    }
+
     public function mount($userId = null)
     {
+        $this->izinkanAkses($userId ? (int) $userId : null);
+
         if ($userId) {
             $user = User::findOrFail($userId);
             $this->userId = $user->id;
@@ -59,7 +81,15 @@ class UserForm extends Component
 
     public function save()
     {
+        $this->izinkanAkses($this->userId ? (int) $this->userId : null);
+
         $validatedData = $this->validate();
+
+        // Peran hanya boleh diubah admin; editor yang menyunting profilnya
+        // sendiri tetap pada perannya.
+        if (auth()->user()->role !== 'admin') {
+            $validatedData['role'] = auth()->user()->role;
+        }
 
         if ($this->userId) {
             // Update
