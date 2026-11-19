@@ -83,6 +83,7 @@
                 </x-admin.card>
 
                 <x-admin.card title="Excerpt" description="Ringkasan pendek yang tampil di daftar fellowship.">
+                    <x-slot:actions><x-admin.salin-id dari="excerpt_editor_id" ke="excerpt_editor_en" /></x-slot:actions>
                     <div x-show="lang === 'id'">
                         @include('front.partials.fellowship.tinymce-excerpt-id')
                     </div>

@@ -100,6 +100,7 @@
                 </x-admin.card>
 
                 <x-admin.card title="Ringkasan" description="Excerpt: pengantar singkat yang tampil di daftar artikel.">
+                    <x-slot:actions><x-admin.salin-id dari="excerpt_editor_id" ke="excerpt_editor_en" /></x-slot:actions>
                     <div x-show="lang === 'id'">
                         {{-- excerpt_editor_id --}}
                         @includeWhen(true, 'front.partials.tinymce-excerpt-id')
@@ -113,6 +114,7 @@
 
                 <x-admin.card title="Konten paragraf"
                               description="Isi artikel biasa. Untuk blok khusus (info acara, agenda, dll.) pakai bagian Blok konten terstruktur di bawah.">
+                    <x-slot:actions><x-admin.salin-id dari="editor_id" ke="editor_en" /></x-slot:actions>
                     <div x-show="lang === 'id'">
                         @includeWhen(true, 'front.partials.tinymce-content-id')
                     </div>
@@ -140,6 +142,7 @@
                 <div x-show="page_type === 'expose'">
                     <x-admin.card title="Blok konten terstruktur"
                                   description="Blok khusus seperti info acara, agenda, bio pembicara, kutipan, atau gambar.">
+                        <x-slot:actions><x-admin.salin-id wire="salinBlokDariId" /></x-slot:actions>
                         @foreach (['id' => $content_blocks_id, 'en' => $content_blocks_en] as $loc => $blocks)
                             <div x-show="lang === '{{ $loc }}'" @if ($loc !== 'id') x-cloak @endif class="grid gap-4">
                                 @foreach ($blocks as $index => $block)
@@ -178,7 +181,7 @@
                                                             tinymce.init({
                                                                 target: document.getElementById(id),
                                                                 plugins: 'advlist link lists code',
-                                                                toolbar: 'bold italic underline | bullist numlist | link | undo redo | code',
+                                                                toolbar: 'fontsizeinput | bold italic underline | bullist numlist | link | undo redo | code',
                                                                 menubar: false,
                                                                 statusbar: false,
                                                                 // Bawaan TinyMCE 400px; satu artikel bisa berisi

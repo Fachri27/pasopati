@@ -112,4 +112,17 @@ class PageContentBlocksTest extends TestCase
         $response->assertSee('Block content');
         $response->assertDontSee('Fallback content');
     }
+
+    public function test_blocks_can_be_copied_from_indonesian_to_english()
+    {
+        $this->actingAs(User::factory()->create(['role' => 'admin']));
+
+        $blok = [['type' => 'image', 'data' => ['src' => '/storage/a.jpg', 'caption' => 'Keterangan']]];
+
+        \Livewire\Livewire::test(\App\Livewire\Pages\PageForm::class)
+            ->set('content_blocks_id', $blok)
+            ->set('content_blocks_en', [['type' => 'quote', 'data' => ['text' => 'lama']]])
+            ->call('salinBlokDariId')
+            ->assertSet('content_blocks_en', $blok);
+    }
 }

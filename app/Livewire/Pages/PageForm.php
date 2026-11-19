@@ -141,6 +141,16 @@ class PageForm extends Component
         $this->blocksVersion++;
     }
 
+    /**
+     * Menyalin seluruh blok Indonesia ke English, supaya gambar, info acara,
+     * dan blok lain tidak perlu disusun ulang — yang tersisa menerjemahkan teks.
+     */
+    public function salinBlokDariId()
+    {
+        $this->content_blocks_en = $this->content_blocks_id;
+        $this->blocksVersion++;
+    }
+
     public function removeBlock($locale, $index)
     {
         $prop = 'content_blocks_'.$locale;

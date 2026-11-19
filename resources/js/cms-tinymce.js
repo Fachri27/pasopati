@@ -2067,3 +2067,35 @@ window.cmsBilaTampak = (el, mulai) => {
     });
     pengamat.observe(el);
 };
+
+/**
+ * Menyalin isi satu editor TinyMCE ke editor lain (tombol "Salin dari
+ * Indonesia"). `change` ditembakkan sesudah setContent supaya handler tiap
+ * editor meneruskan isi barunya ke Livewire; setContent saja tidak memicunya.
+ */
+const salinIsiEditor = (sumber, tujuan) => {
+    if (!sumber || !tujuan) {
+        window.alert('Editor belum siap. Tunggu sebentar lalu coba lagi.');
+        return;
+    }
+
+    if (tujuan.getContent({ format: 'text' }).trim() !== ''
+        && !window.confirm('Ganti isi English dengan isi Indonesia? Isi English yang ada akan hilang.')) {
+        return;
+    }
+
+    tujuan.setContent(sumber.getContent());
+    tujuan.fire('change');
+};
+
+window.cmsSalinEditor = (idDari, idKe) => {
+    salinIsiEditor(window.tinymce?.get(idDari), window.tinymce?.get(idKe));
+};
+
+// Untuk <x-tinymce-editor>: editornya disimpan di wrapper-nya, dan wrapper
+// dicari lewat wire:key pembungkus per bahasa.
+window.cmsSalinPembungkus = (kunciDari, kunciKe) => {
+    const editorDi = (kunci) => document
+        .querySelector(`[wire\\:key="${kunci}"] [data-tinymce-wrapper]`)?.tinyMceEditor;
+    salinIsiEditor(editorDi(kunciDari), editorDi(kunciKe));
+};

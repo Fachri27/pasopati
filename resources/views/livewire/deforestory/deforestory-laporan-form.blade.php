@@ -79,6 +79,7 @@
                 </x-admin.card>
 
                 <x-admin.card title="Ringkasan" description="Ringkasan singkat yang tampil di kartu arsip kasus.">
+                    <x-slot:actions><x-admin.salin-id dari="excerpt_editor_id" ke="excerpt_editor_en" /></x-slot:actions>
                     <div x-show="lang === 'id'">
                         @includeWhen(true, 'front.partials.tinymce-excerpt-id')
                     </div>
@@ -88,6 +89,7 @@
                 </x-admin.card>
 
                 <x-admin.card title="Isi laporan" description="Konten utama laporan. Tampil di halaman detail.">
+                    <x-slot:actions><x-admin.salin-id kunci-dari="laporan-content-id" kunci-ke="laporan-content-en" /></x-slot:actions>
                     {{-- wire:key mengikat editor ke bahasanya. Tanpa itu Livewire
                          memakai ulang simpul yang sama saat pilihan bahasa
                          berganti, dan isi ID sempat terbawa ke editor EN. --}}
