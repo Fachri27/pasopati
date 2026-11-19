@@ -62,6 +62,9 @@
                         ],
                         block_formats: 'Paragraph=p; Heading 1=h1; Heading 2=h2; Heading 3=h3; Heading 4=h4; Heading 5=h5; Heading 6=h6',
                         toolbar_sticky: true,
+                        // Bilah atas halaman CMS (48px) menempel di puncak layar;
+                        // tanpa offset ini toolbar yang menempel tersembunyi di baliknya.
+                        toolbar_sticky_offset: 48,
                         promotion: false,
                         branding: false,
                         statusbar: true,
@@ -213,14 +216,14 @@
                         });
                     });
                     }
-                }" x-init="initSelected()" class="p-4" wire:ignore>
+                }" x-init="initSelected()" class="p-5 max-sm:p-4" wire:ignore>
 
     <!-- daftar kategori -->
-    <label class="block font-medium mb-2">Kategori</label>
-    <div class="grid grid-cols-2 gap-2">
+    <p class="admin-label">Kategori</p>
+    <div class="grid gap-x-4 gap-y-2 sm:grid-cols-2">
         <template x-for="cat in categories" :key="cat.id">
-            <label class="flex items-center space-x-2">
-                <input type="checkbox" :value="cat.id" x-model="selectedCategories" @change="toggleCategory($event)">
+            <label class="flex cursor-pointer items-center gap-2 text-[13.5px]">
+                <input type="checkbox" class="size-4 shrink-0" :value="cat.id" x-model="selectedCategories" @change="toggleCategory($event)">
                 <span x-show="lang === 'id'" x-text="cat.id_name"></span>
                 <span x-show="lang === 'en'" x-text="cat.en_name"></span>
             </label>
@@ -229,8 +232,8 @@
 
     <!-- textarea per kategori terpilih -->
     <template x-for="catId in selectedCategories" :key="catId">
-        <div class="mt-4 border p-3 rounded">
-            <h3 class="font-semibold" x-text="categories.find(c => c.id == catId)[(lang + '_name')]">
+        <div class="mt-4 rounded-md border border-admin-line p-3">
+            <h3 class="mb-2 text-[13.5px] font-semibold text-admin-smoke" x-text="categories.find(c => c.id == catId)[(lang + '_name')]">
             </h3>
 
             <div x-show="lang === 'id'">
@@ -252,12 +255,12 @@
                     </div>
                 </template>
             </div>
-            <!-- Status Pivot -->
-            <div class="mt-3">
-                <label class="block text-sm font-medium">Status Pivot</label>
-                <select class="border rounded px-2 py-1" x-model="contents[catId].status"
+            <!-- Status kategori ini (kolom status di tabel pivot) -->
+            <div class="mt-3 sm:w-56">
+                <label class="admin-label" :for="'status_kategori_' + catId">Status kategori</label>
+                <select class="admin-input" :id="'status_kategori_' + catId" x-model="contents[catId].status"
                     @change="$wire.selectedKategori[catId] = Object.assign($wire.selectedKategori[catId] || {}, { status: contents[catId].status })">
-                    <option value="">Pilih Status</option>
+                    <option value="">Pilih status</option>
                     <option value="draft">Draft</option>
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>

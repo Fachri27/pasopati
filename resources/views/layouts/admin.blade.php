@@ -6,178 +6,261 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Pasopati CMS')</title>
 
-    {{-- Fonts: Space Grotesk (display) + DM Sans (body) + IBM Plex Mono (data) --}}
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+    {{-- Sidebar menciut diingat per peramban. Dipasang di sini, sebelum
+         halaman tergambar: kalau menunggu Alpine, sidebar sempat tampil lebar
+         lalu menyusut di tiap pindah halaman. Huruf CMS memakai huruf sistem,
+         jadi tidak ada lagi tautan Google Fonts di layout ini. --}}
+    <script>
+        try { if (localStorage.getItem('cms-ciut') === '1') document.documentElement.setAttribute('data-ciut', ''); } catch (e) {}
+
+        function cmsCiut() {
+            const ciut = document.documentElement.toggleAttribute('data-ciut');
+            try { localStorage.setItem('cms-ciut', ciut ? '1' : '0'); } catch (e) {}
+        }
+    </script>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 </head>
-<body class="admin-shell bg-admin-base text-admin-smoke font-admin antialiased">
+<body class="admin-shell antialiased">
 
-    {{-- Mobile sidebar overlay --}}
+    @php
+        // Satu sumber untuk sidebar, nav mendatar di layar sempit, dan palet
+        // ⌘K. `active` berisi pola nama rute supaya menu tetap menyala di
+        // halaman tambah/ubah, bukan hanya di halaman daftarnya. Pola Fellowship
+        // dan Deforestory ditulis satu per satu karena `fellowship.preview` dan
+        // `deforestory` adalah rute PUBLIK yang kebetulan berawalan sama.
+        $menu = [
+            'Ringkasan' => [
+                ['route' => 'dashboard', 'label' => 'Dashboard', 'icon' => 'home', 'active' => ['dashboard']],
+            ],
+            'Konten' => [
+                ['route' => 'pages.index', 'label' => 'Artikel', 'icon' => 'doc', 'active' => ['pages.*']],
+                ['route' => 'events.index', 'label' => 'Kejadian', 'icon' => 'pin', 'active' => ['events.*']],
+                ['route' => 'fellowship.index', 'label' => 'Fellowship', 'icon' => 'users', 'active' => ['fellowship.index', 'fellowship.create', 'fellowship.edit']],
+                ['route' => 'petition.admin.index', 'label' => 'Petisi', 'icon' => 'pen', 'active' => ['petition.admin.*']],
+                ['route' => 'deforestory.index', 'label' => 'Deforestory', 'icon' => 'tree', 'active' => ['deforestory.index', 'deforestory.laporan.index', 'deforestory.laporan.create', 'deforestory.laporan.edit', 'deforestory.subscribers']],
+            ],
+            'Pustaka' => [
+                ['route' => 'kategori.index', 'label' => 'Kategori', 'icon' => 'tag', 'active' => ['kategori.*']],
+                ['route' => 'reference.index', 'label' => 'Reference', 'icon' => 'image', 'active' => ['reference.*']],
+                ['route' => 'data-visualizations.index', 'label' => 'Data & Grafik', 'icon' => 'chart', 'active' => ['data-visualizations.*']],
+            ],
+        ];
+
+        $baru = [
+            ['route' => 'pages.create', 'label' => 'Artikel baru'],
+            ['route' => 'events.create', 'label' => 'Kejadian baru'],
+            ['route' => 'fellowship.create', 'label' => 'Fellowship baru'],
+            ['route' => 'petition.admin.create', 'label' => 'Petisi baru'],
+            ['route' => 'kategori.create', 'label' => 'Kategori baru'],
+            ['route' => 'data-visualizations.create', 'label' => 'Grafik baru'],
+        ];
+
+        if (auth()->user()->role === 'admin') {
+            $menu['Pengaturan'] = [
+                ['route' => 'user.index', 'label' => 'Pengguna', 'icon' => 'user', 'active' => ['user.*']],
+            ];
+            $baru[] = ['route' => 'user.create', 'label' => 'Pengguna baru'];
+        }
+
+        $palet = [];
+        foreach ($menu as $kelompok => $butir) {
+            foreach ($butir as $item) {
+                $palet[] = ['group' => $kelompok, 'label' => $item['label'], 'url' => route($item['route'])];
+            }
+        }
+        foreach ($baru as $item) {
+            $palet[] = ['group' => 'Buat baru', 'label' => $item['label'], 'url' => route($item['route'])];
+        }
+
+        $pengguna = auth()->user();
+    @endphp
+
     {{-- Gulirannya dibiarkan di viewport (min-h-screen), BUKAN dikurung di
          dalam <main> lewat h-screen + overflow-hidden.
 
-         Sidebar tidak butuh itu untuk tetap diam: ia sudah lg:fixed lg:inset-y-0,
-         dan versi mobile-nya juga fixed. Yang rusak justru sebaliknya —
-         kontainer gulir bersarang membuat semua yang memposisikan diri terhadap
-         viewport meleset: `sticky top-6` dan `sticky bottom-0` pada form
-         fellowship, dan toolbar_sticky milik TinyMCE di tujuh partial, yang
-         menghitung posisinya sendiri lewat JS lalu mengambang menimpa isi
+         Sidebar tidak butuh itu untuk tetap diam: ia sudah fixed. Yang rusak
+         justru sebaliknya — kontainer gulir bersarang membuat semua yang
+         memposisikan diri terhadap viewport meleset: bilah atas halaman dan
+         kartu samping form yang `sticky`, serta toolbar_sticky milik TinyMCE,
+         yang menghitung posisinya sendiri lewat JS lalu mengambang menimpa isi
          halaman. --}}
-    <div x-data="{ sisi: false }" class="flex min-h-screen">
 
-        {{-- Sidebar (desktop: fixed, mobile: slide-over) --}}
-        {{-- Desktop --}}
-        <aside class="hidden lg:flex lg:flex-col lg:w-60 lg:fixed lg:inset-y-0 bg-admin-surface border-r border-admin-line z-30">
-            <div class="admin-thermobar"></div>
+    {{-- Sidebar (lg ke atas). Sewarna alas halaman dan hanya dipisah garis
+         rambut: isi halamanlah yang naik ke permukaan putih, bukan navigasinya. --}}
+    <aside class="admin-side" aria-label="Navigasi CMS">
+        <div class="admin-side__row flex h-12 shrink-0 items-center justify-between gap-2 pr-2 pl-[18px]">
+            <a href="{{ route('dashboard') }}" class="admin-nav-label text-[15px] font-semibold tracking-tight text-admin-smoke">
+                Pasopati <span class="font-medium text-admin-muted">CMS</span>
+            </a>
+            <button type="button" class="admin-icon-btn" onclick="cmsCiut()" title="Ciutkan atau lebarkan sidebar" aria-label="Ciutkan atau lebarkan sidebar">
+                <x-admin.icon name="panel" />
+            </button>
+        </div>
 
-            {{-- Brand --}}
-            <div class="flex items-center gap-2.5 px-5 py-4">
-                <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-admin-amber to-admin-red flex items-center justify-center">
-                    <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                    </svg>
-                </div>
-                <div>
-                    <span class="font-admin-display font-bold text-admin-smoke text-sm tracking-tight">Pasopati</span>
-                    <span class="block text-[10px] text-admin-muted font-medium uppercase tracking-widest">CMS</span>
-                </div>
-            </div>
+        <div class="shrink-0 px-2 pb-1">
+            <button type="button" class="admin-nav-link w-full" title="Cari (⌘K)"
+                    onclick="window.dispatchEvent(new CustomEvent('admin-palet'))">
+                <x-admin.icon name="search" />
+                <span class="admin-nav-label flex-1 text-left font-normal">Cari…</span>
+                <kbd class="admin-kbd admin-nav-label">⌘K</kbd>
+            </button>
+        </div>
 
-            {{-- Nav --}}
-            <nav class="flex-1 overflow-y-auto px-3 py-2 space-y-0.5">
-                @php
-                    $navItems = [
-                        ['route' => 'dashboard', 'label' => 'Dashboard', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>'],
-                        ['route' => 'pages.index', 'label' => 'Artikel', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/>'],
-                        ['route' => 'events.index', 'label' => 'Kejadian', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>'],
-                        ['route' => 'fellowship.index', 'label' => 'Fellowship', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>'],
-                        ['route' => 'petition.admin.index', 'label' => 'Petisi', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>'],
-                        ['route' => 'deforestory.index', 'label' => 'Deforestory', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>'],
-                        ['route' => 'kategori.index', 'label' => 'Kategori', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>'],
-                        ['route' => 'reference.index', 'label' => 'Reference', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>'],
-                        ['route' => 'data-visualizations.index', 'label' => 'Data & Grafik', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>'],
-                    ];
-                @endphp
-
-                @foreach ($navItems as $item)
-                    <a href="{{ route($item['route']) }}"
-                       class="admin-nav-link {{ request()->routeIs($item['route']) ? 'active' : '' }}">
-                        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">{!! $item['icon'] !!}</svg>
-                        <span>{{ $item['label'] }}</span>
-                    </a>
-                @endforeach
-
-                @if (auth()->user()->role === 'admin')
-                    <div class="pt-3 mt-3 border-t border-admin-line">
-                        <a href="{{ route('user.index') }}"
-                           class="admin-nav-link {{ request()->routeIs('user.*') ? 'active' : '' }}">
-                            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                            </svg>
-                            <span>Pengguna</span>
-                        </a>
-                    </div>
-                @endif
-            </nav>
-
-            {{-- Footer: user info --}}
-            <div class="border-t border-admin-line px-3 py-3">
-                <div class="flex items-center gap-3">
-                    @if (auth()->user()->image)
-                        <img src="{{ asset('storage/'.auth()->user()->image) }}" alt="" class="w-8 h-8 rounded-full object-cover">
-                    @else
-                        <div class="w-8 h-8 rounded-full bg-admin-raised flex items-center justify-center text-xs font-bold text-admin-amber">
-                            {{ strtoupper(mb_substr(auth()->user()->name, 0, 1)) }}
-                        </div>
-                    @endif
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium text-admin-smoke truncate">{{ auth()->user()->name }}</p>
-                        <p class="text-xs text-admin-muted truncate">{{ ucfirst(auth()->user()->role) }}</p>
-                    </div>
-                    <form action="{{ route('logout') }}" method="POST">
-                        @csrf
-                        <button type="submit" class="text-admin-muted hover:text-admin-smoke transition" title="Logout">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                            </svg>
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </aside>
-
-        {{-- Mobile sidebar --}}
-        <div x-show="sisi" x-cloak class="lg:hidden fixed inset-0 z-40">
-            <div x-show="sisi" x-transition:enter="transition-opacity duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-                 x-transition:leave="transition-opacity duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-                 @click="sisi = false" class="fixed inset-0 bg-black/60"></div>
-            <aside x-show="sisi" x-transition:enter="transition-transform duration-200" x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0"
-                   x-transition:leave="transition-transform duration-150" x-transition:leave-start="translate-x-0" x-transition:leave-end="-translate-x-full"
-                   class="fixed inset-y-0 left-0 w-64 bg-admin-surface border-r border-admin-line z-50 flex flex-col">
-                <div class="admin-thermobar"></div>
-                <div class="flex items-center justify-between px-5 py-4">
-                    <div class="flex items-center gap-2.5">
-                        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-admin-amber to-admin-red flex items-center justify-center">
-                            <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                            </svg>
-                        </div>
-                        <span class="font-admin-display font-bold text-admin-smoke text-sm">Pasopati</span>
-                    </div>
-                    <button @click="sisi = false" class="text-admin-muted hover:text-admin-smoke">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
-                </div>
-                <nav class="flex-1 overflow-y-auto px-3 py-2 space-y-0.5">
-                    @foreach ($navItems as $item)
-                        <a href="{{ route($item['route']) }}" @click="sisi = false"
-                           class="admin-nav-link {{ request()->routeIs($item['route']) ? 'active' : '' }}">
-                            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">{!! $item['icon'] !!}</svg>
-                            <span>{{ $item['label'] }}</span>
+        <nav class="flex-1 overflow-y-auto px-2 pb-3">
+            @foreach ($menu as $kelompok => $butir)
+                <div class="admin-nav-group">{{ $kelompok }}</div>
+                <div class="grid gap-px">
+                    @foreach ($butir as $item)
+                        <a href="{{ route($item['route']) }}" class="admin-nav-link" title="{{ $item['label'] }}"
+                           @if (request()->routeIs(...$item['active'])) aria-current="page" @endif>
+                            <x-admin.icon :name="$item['icon']" />
+                            <span class="admin-nav-label">{{ $item['label'] }}</span>
                         </a>
                     @endforeach
-                    @if (auth()->user()->role === 'admin')
-                        <div class="pt-3 mt-3 border-t border-admin-line">
-                            <a href="{{ route('user.index') }}" @click="sisi = false"
-                               class="admin-nav-link {{ request()->routeIs('user.*') ? 'active' : '' }}">
-                                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                </svg>
-                                <span>Pengguna</span>
-                            </a>
-                        </div>
-                    @endif
-                </nav>
-            </aside>
-        </div>
+                </div>
+            @endforeach
+        </nav>
 
-        {{-- Main area --}}
-        <div class="flex-1 flex flex-col lg:pl-60 min-h-screen">
-            {{-- Top bar (mobile) --}}
-            <header class="lg:hidden flex items-center gap-3 px-4 h-14 bg-admin-surface border-b border-admin-line sticky top-0 z-20">
-                <button @click="sisi = true" class="text-admin-ash hover:text-admin-smoke">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"/></svg>
-                </button>
-                <span class="font-admin-display font-bold text-admin-smoke text-sm">Pasopati CMS</span>
-            </header>
+        <div class="shrink-0 border-t border-admin-line p-2">
+            <a href="{{ url('/') }}" target="_blank" rel="noopener" class="admin-nav-link" title="Lihat situs">
+                <x-admin.icon name="external" />
+                <span class="admin-nav-label">Lihat situs</span>
+            </a>
 
-            {{-- Page content. Tanpa overflow sendiri — lihat catatan gulir di
-                 pembungkus terluar. --}}
-            <main class="flex-1 p-4 sm:p-6 lg:p-8">
-                @if($__env->yieldContent('content'))
-                    @yield('content')
+            <div class="admin-side__user mt-1 flex items-center gap-2.5 px-1.5 py-1.5">
+                @if ($pengguna->image)
+                    <img src="{{ asset('storage/'.$pengguna->image) }}" alt="" class="size-7 shrink-0 rounded-full object-cover">
                 @else
-                    {{ $slot }}
+                    <div class="grid size-7 shrink-0 place-items-center rounded-full bg-admin-tint-strong text-[11.5px] font-semibold text-admin-smoke">
+                        {{ strtoupper(mb_substr($pengguna->name, 0, 1)) }}
+                    </div>
                 @endif
-            </main>
+                <div class="admin-nav-label min-w-0 flex-1 leading-tight">
+                    <p class="truncate text-[13px] font-medium text-admin-smoke">{{ $pengguna->name }}</p>
+                    <p class="admin-eyebrow truncate">{{ ucfirst($pengguna->role) }}</p>
+                </div>
+                <form action="{{ route('logout') }}" method="POST">
+                    @csrf
+                    <button type="submit" class="admin-icon-btn" title="Keluar" aria-label="Keluar">
+                        <x-admin.icon name="logout" />
+                    </button>
+                </form>
+            </div>
         </div>
+    </aside>
+
+    <div class="admin-main flex min-h-screen flex-col">
+        {{-- Layar sempit: bilah merek + menu mendatar yang bisa digeser,
+             menggantikan laci samping. Sengaja TIDAK menempel — yang menempel
+             adalah bilah atas milik halaman (tombol kembali + Simpan), dan dua
+             bilah menempel sekaligus memakan terlalu banyak layar ponsel. --}}
+        <div class="border-b border-admin-line lg:hidden">
+            <div class="flex h-12 items-center gap-1 pr-2 pl-4">
+                <a href="{{ route('dashboard') }}" class="mr-auto text-[15px] font-semibold tracking-tight text-admin-smoke">
+                    Pasopati <span class="font-medium text-admin-muted">CMS</span>
+                </a>
+                <button type="button" class="admin-icon-btn" title="Cari" aria-label="Cari"
+                        onclick="window.dispatchEvent(new CustomEvent('admin-palet'))">
+                    <x-admin.icon name="search" />
+                </button>
+                <a href="{{ url('/') }}" target="_blank" rel="noopener" class="admin-icon-btn" title="Lihat situs" aria-label="Lihat situs">
+                    <x-admin.icon name="external" />
+                </a>
+                <form action="{{ route('logout') }}" method="POST" class="flex">
+                    @csrf
+                    <button type="submit" class="admin-icon-btn" title="Keluar" aria-label="Keluar">
+                        <x-admin.icon name="logout" />
+                    </button>
+                </form>
+            </div>
+            <nav class="flex gap-1 overflow-x-auto px-2 pb-2" aria-label="Menu CMS" data-nav-datar>
+                @foreach ($menu as $butir)
+                    @foreach ($butir as $item)
+                        <a href="{{ route($item['route']) }}" class="admin-nav-link h-8 shrink-0"
+                           @if (request()->routeIs(...$item['active'])) aria-current="page" @endif>{{ $item['label'] }}</a>
+                    @endforeach
+                @endforeach
+            </nav>
+        </div>
+
+        {{-- Isi halaman. Tanpa pias dan tanpa overflow sendiri: tiap view
+             membawa kop (<x-admin.page-header>) dan kolomnya (.admin-wrap),
+             supaya bilah atasnya bisa membentang selebar halaman. --}}
+        <main class="min-w-0 flex-1">
+            @if($__env->yieldContent('content'))
+                @yield('content')
+            @else
+                {{ $slot }}
+            @endif
+        </main>
     </div>
+
+    {{-- Palet perintah: ⌘K / Ctrl+K, atau tombol "Cari…" di sidebar. Hanya
+         navigasi — melompat ke menu dan ke form "baru" tanpa lewat daftarnya. --}}
+    <dialog class="admin-palette" aria-label="Cari halaman"
+            x-data="{
+                q: '',
+                i: 0,
+                items: @js($palet),
+                get hasil() {
+                    const q = this.q.trim().toLowerCase();
+                    return q ? this.items.filter(x => (x.label + ' ' + x.group).toLowerCase().includes(q)) : this.items;
+                },
+                buka() {
+                    this.q = '';
+                    this.i = 0;
+                    this.$root.showModal();
+                    this.$nextTick(() => this.$refs.q.focus());
+                },
+                pergi(x) { if (x) window.location.href = x.url; },
+            }"
+            @admin-palet.window="buka()"
+            @keydown.window="if (($event.metaKey || $event.ctrlKey) && $event.key.toLowerCase() === 'k') { $event.preventDefault(); $el.open ? $el.close() : buka(); }"
+            @click.self="$el.close()">
+        <div class="flex h-12 items-center gap-2.5 border-b border-admin-line px-3.5">
+            <x-admin.icon name="search" class="text-admin-muted" />
+            <input x-ref="q" x-model="q" type="text" autocomplete="off" placeholder="Cari halaman atau tindakan…" aria-label="Cari halaman atau tindakan"
+                   class="h-full min-w-0 flex-1 bg-transparent text-[14px] outline-none placeholder:text-admin-muted"
+                   @input="i = 0"
+                   @keydown.down.prevent="i = Math.min(i + 1, hasil.length - 1)"
+                   @keydown.up.prevent="i = Math.max(i - 1, 0)"
+                   @keydown.enter.prevent="pergi(hasil[i])">
+            <kbd class="admin-kbd">esc</kbd>
+        </div>
+        <ul class="max-h-[50vh] overflow-y-auto p-1.5" role="listbox">
+            <template x-for="(x, n) in hasil" :key="x.url">
+                <li>
+                    <div x-show="n === 0 || hasil[n - 1].group !== x.group" class="admin-eyebrow px-2.5 pt-2 pb-1" x-text="x.group"></div>
+                    <a :href="x.url" role="option" :aria-selected="n === i ? 'true' : 'false'" @mouseenter="i = n"
+                       class="block rounded px-2.5 py-2 text-[13.5px] text-admin-smoke" x-text="x.label"></a>
+                </li>
+            </template>
+            <li x-show="hasil.length === 0" class="px-2.5 py-6 text-center text-[13px] text-admin-muted">Tidak ada yang cocok.</li>
+        </ul>
+    </dialog>
+
+    <script>
+        // "/" melompat ke kotak cari halaman ini (elemen ber-data-cari), kecuali
+        // sedang mengetik atau ada dialog terbuka. Editor TinyMCE hidup di iframe
+        // sendiri, jadi ketikan di sana tidak pernah sampai ke sini.
+        document.addEventListener('keydown', (e) => {
+            if (e.key !== '/' || e.metaKey || e.ctrlKey || e.altKey) return;
+            if (e.target.closest('input, textarea, select, [contenteditable]')) return;
+            if (document.querySelector('dialog[open]')) return;
+
+            const cari = document.querySelector('[data-cari]');
+            if (!cari) return;
+            e.preventDefault();
+            cari.focus();
+            cari.select();
+        });
+
+        // Di layar sempit menu aktif bisa berada di luar layar; geser supaya
+        // terlihat tanpa menggulirkan halamannya.
+        document.querySelector('[data-nav-datar] [aria-current]')?.scrollIntoView({ block: 'nearest', inline: 'center' });
+    </script>
 
     {{-- TinyMCE dipakai form CMS lewat x-init="initEditor" (mis.
          livewire/pages/page-form.blade.php). Harus dimuat SEBELUM

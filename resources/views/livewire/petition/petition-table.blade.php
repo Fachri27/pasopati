@@ -1,117 +1,122 @@
 <div>
-    <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <x-admin.page-header title="Petisi" description="Petisi publik beserta tanda tangan yang terkumpul.">
+        <a href="{{ route('petition.admin.create') }}" class="admin-btn admin-btn--primary admin-btn--sm">
+            <x-admin.icon name="plus" class="size-3.5" />
+            Tambah petisi
+        </a>
+    </x-admin.page-header>
 
-        {{-- Summary Cards --}}
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="bg-admin-surface rounded-xl shadow p-6">
-                <p class="text-sm text-admin-muted">Petisi Aktif</p>
-                <p class="text-3xl font-bold text-admin-amber">{{ $totalActive }}</p>
+    <div class="admin-wrap admin-body">
+        {{-- Ringkasan. Angka tanda tangan hanya menghitung yang sudah
+             terverifikasi lewat email — sama dengan angka di halaman publik. --}}
+        <dl class="admin-card mb-5 grid divide-y divide-admin-line sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+            <div class="px-5 py-4">
+                <dt class="admin-eyebrow">Petisi aktif</dt>
+                <dd class="admin-num mt-1.5 text-[22px] leading-none font-semibold text-admin-smoke">{{ number_format($totalActive) }}</dd>
             </div>
-            <div class="bg-admin-surface rounded-xl shadow p-6">
-                <p class="text-sm text-admin-muted">Total Tanda Tangan</p>
-                <p class="text-3xl font-bold text-emerald-400">{{ number_format($totalSignaturesAll) }}</p>
+            <div class="px-5 py-4">
+                <dt class="admin-eyebrow">Tanda tangan terverifikasi</dt>
+                <dd class="admin-num mt-1.5 text-[22px] leading-none font-semibold text-admin-smoke">{{ number_format($totalSignaturesAll) }}</dd>
             </div>
-            <div class="bg-admin-surface rounded-xl shadow p-6">
-                <p class="text-sm text-admin-muted">Tanda Tangan Bulan Ini</p>
-                <p class="text-3xl font-bold text-admin-amber">{{ number_format($totalSignaturesThisMonth) }}</p>
+            <div class="px-5 py-4">
+                <dt class="admin-eyebrow">Tanda tangan bulan ini</dt>
+                <dd class="admin-num mt-1.5 text-[22px] leading-none font-semibold text-admin-smoke">{{ number_format($totalSignaturesThisMonth) }}</dd>
             </div>
-        </div>
+        </dl>
 
-        {{-- Header --}}
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-            <h1 class="text-2xl font-bold text-admin-smoke">Petisi</h1>
-            <a href="{{ route('petition.admin.create') }}"
-                class="admin-btn admin-btn--primary">
-                + Tambah Petisi
-            </a>
-        </div>
+        <div class="mb-4 flex flex-wrap items-center gap-2">
+            <x-admin.search wire:model.live.debounce.300ms="search" placeholder="Cari judul atau sasaran…" />
 
-        {{-- Filters --}}
-        <div class="bg-admin-surface rounded-xl shadow p-4 mb-6">
-            <div class="flex flex-col sm:flex-row gap-4">
-                <div class="flex-1">
-                    <input type="text" wire:model.live.debounce.300ms="search" placeholder="Cari petisi..."
-                        class="admin-input">
-                </div>
-                <div>
-                    <select wire:model.live="filterStatus" class="admin-input">
-                        <option value="">Semua Status</option>
-                        <option value="draft">Draft</option>
-                        <option value="active">Active</option>
-                        <option value="closed">Closed</option>
-                        <option value="succeeded">Succeeded</option>
-                    </select>
+            <div class="max-w-full overflow-x-auto">
+                <div class="admin-tabs" role="group" aria-label="Saring status">
+                    @foreach (['' => 'Semua', 'draft' => 'Draft', 'active' => 'Active', 'closed' => 'Closed', 'succeeded' => 'Succeeded'] as $nilai => $label)
+                        <button type="button" wire:click="$set('filterStatus', '{{ $nilai }}')"
+                                aria-pressed="{{ (string) $filterStatus === (string) $nilai ? 'true' : 'false' }}">{{ $label }}</button>
+                    @endforeach
                 </div>
             </div>
         </div>
 
-        {{-- Table --}}
-        <div class="bg-admin-surface rounded-xl shadow overflow-hidden">
-            <table class="admin-table min-w-full border-collapse">
-                <thead>
-                    <tr class="bg-admin-raised text-left text-sm font-medium text-admin-muted">
-                        <th class="px-6 py-3">Judul</th>
-                        <th class="px-6 py-3">Target</th>
-                        <th class="px-6 py-3">Status</th>
-                        <th class="px-6 py-3">Progress</th>
-                        <th class="px-6 py-3">Ttd</th>
-                        <th class="px-6 py-3">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200">
-                    @forelse ($petitions as $petition)
-                        @php
-                            $locale = app()->getLocale();
-                            $title = $petition->translation($locale)?->title ?? $petition->slug;
-                        @endphp
-                        <tr class="hover:bg-admin-raised">
-                            <td class="px-6 py-4 text-sm font-medium text-admin-smoke">{{ $title }}</td>
-                            <td class="px-6 py-4 text-sm text-admin-ash">{{ $petition->target_name }}</td>
-                            <td class="px-6 py-4">
-                                <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full
-                                    @switch($petition->status)
-                                        @case('draft') bg-admin-raised text-admin-ash @break
-                                        @case('active') bg-emerald-500/10 text-emerald-400 @break
-                                        @case('closed') bg-red-500/10 text-red-400 @break
-                                        @case('succeeded') bg-admin-amber/10 text-admin-amber @break
-                                    @endswitch">
-                                    {{ ucfirst($petition->status) }}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-24 bg-admin-raised rounded-full h-2">
-                                        <div class="bg-admin-amber h-2 rounded-full" style="width: {{ $petition->progressPercent() }}%"></div>
-                                    </div>
-                                    <span class="text-xs text-admin-muted">{{ $petition->progressPercent() }}%</span>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 text-sm text-admin-ash">{{ number_format($petition->signatureCount()) }}</td>
-                            <td class="px-6 py-4 text-sm space-x-2">
-                                <a href="{{ route('petition.admin.edit', $petition->id) }}"
-                                    class="text-admin-amber hover:text-admin-amber">Edit</a>
-                                <a href="{{ route('petition.admin.signatures', $petition->id) }}"
-                                    class="text-admin-amber hover:text-admin-amber">Ttd</a>
-                                <a href="{{ route('petition.admin.export-pdf', $petition->id) }}"
-                                    class="text-emerald-400 hover:text-admin-amber">PDF</a>
-                                <button wire:click="delete({{ $petition->id }})"
-                                    wire:confirm="Hapus petisi ini?"
-                                    class="text-red-400 hover:text-red-800">Hapus</button>
-                            </td>
-                        </tr>
-                    @empty
+        <div class="admin-table-frame">
+            <div class="admin-table-scroll">
+                <table class="admin-table">
+                    <thead>
                         <tr>
-                            <td colspan="6" class="px-6 py-10 text-center text-admin-muted">
-                                Belum ada petisi.
-                            </td>
+                            <th>Judul</th>
+                            <th>Ditujukan kepada</th>
+                            <th>Status</th>
+                            <th>Progres</th>
+                            <th class="text-right">Terkumpul</th>
+                            <th class="admin-cell-actions"><span class="sr-only">Aksi</span></th>
                         </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-
-        <div class="mt-4">
-            {{ $petitions->links('vendor.pagination.admin') }}
+                    </thead>
+                    <tbody>
+                        @forelse ($petitions as $petition)
+                            @php
+                                $locale = app()->getLocale();
+                                $title = $petition->translation($locale)?->title ?? $petition->slug;
+                                $progres = $petition->progressPercent();
+                            @endphp
+                            <tr wire:key="petisi-{{ $petition->id }}">
+                                <td class="min-w-[220px] max-w-[360px]">
+                                    <a href="{{ route('petition.admin.edit', $petition->id) }}" class="font-medium hover:underline">{{ $title }}</a>
+                                </td>
+                                <td class="max-w-[220px] text-admin-ash">{{ $petition->target_name }}</td>
+                                <td>
+                                    @switch($petition->status)
+                                        @case('active')
+                                            <span class="admin-cap admin-cap--ok admin-cap--dot">active</span>
+                                            @break
+                                        @case('succeeded')
+                                            <span class="admin-cap admin-cap--ok">succeeded</span>
+                                            @break
+                                        @case('closed')
+                                            <span class="admin-cap admin-cap--warn">closed</span>
+                                            @break
+                                        @default
+                                            <span class="admin-cap admin-cap--quiet">{{ $petition->status }}</span>
+                                    @endswitch
+                                </td>
+                                <td>
+                                    <div class="flex items-center gap-2">
+                                        <div class="h-1.5 w-24 shrink-0 overflow-hidden rounded-full bg-admin-tint-strong" aria-hidden="true">
+                                            <div class="h-full rounded-full bg-admin-smoke" style="width: {{ $progres }}%"></div>
+                                        </div>
+                                        <span class="admin-num text-[12px] text-admin-muted">{{ $progres }}%</span>
+                                    </div>
+                                </td>
+                                <td class="admin-num text-right whitespace-nowrap text-admin-ash">
+                                    {{ number_format($petition->signatureCount()) }}
+                                    <span class="text-admin-muted">/ {{ number_format($petition->goal_count) }}</span>
+                                </td>
+                                <td class="admin-cell-actions">
+                                    <a href="{{ route('petition.admin.signatures', $petition->id) }}" class="admin-btn admin-btn--quiet admin-btn--sm">Tanda tangan</a>
+                                    <a href="{{ route('petition.admin.export-pdf', $petition->id) }}" class="admin-btn admin-btn--quiet admin-btn--sm">PDF</a>
+                                    <a href="{{ route('petition.admin.edit', $petition->id) }}" class="admin-btn admin-btn--quiet admin-btn--sm">Ubah</a>
+                                    <button type="button" wire:click="delete({{ $petition->id }})"
+                                            wire:confirm="Hapus petisi ini beserta semua tanda tangannya? Tindakan ini tidak bisa dibatalkan."
+                                            class="admin-btn admin-btn--quiet-danger admin-btn--sm">Hapus</button>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6" class="p-0">
+                                    <x-admin.empty title="Tidak ada petisi" icon="pen">
+                                        @if ($search !== '' || $filterStatus !== '')
+                                            Tidak ada petisi yang cocok dengan saringan ini.
+                                        @else
+                                            Belum ada petisi yang dibuat.
+                                        @endif
+                                    </x-admin.empty>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+            {{ $petitions->links('vendor.pagination.admin', ['livewire' => true]) }}
         </div>
     </div>
+
+    <x-admin.toast />
 </div>

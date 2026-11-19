@@ -1,89 +1,95 @@
-<div class="flex flex-col justify-center items-center">
-    <div class="bg-admin-surface shadow rounded-lg p-6 w-full">
-        <div class="flex items-center justify-between mb-4">
-            <div>
-                <h2 class="text-lg font-semibold text-admin-smoke">Deforestory — Subscriber</h2>
-                <p class="text-sm text-admin-muted mt-1">
-                    {{ $activeCount }} aktif / {{ $total }} total
-                </p>
+<div>
+    <x-admin.page-header title="Pelanggan Deforestory"
+                         description="Alamat email yang meminta kabar tiap kali laporan baru terbit."
+                         :crumbs="[['Deforestory', route('deforestory.index')]]"
+                         current="Pelanggan"
+                         :back="route('deforestory.index')">
+        <x-slot:aside>
+            <p class="text-[13px] text-admin-muted">
+                <span class="admin-num font-medium text-admin-smoke">{{ $activeCount }}</span> aktif dari
+                <span class="admin-num font-medium text-admin-smoke">{{ $total }}</span> alamat
+            </p>
+        </x-slot:aside>
+    </x-admin.page-header>
+
+    <div class="admin-wrap admin-body">
+        <div class="mb-4 flex flex-wrap items-center gap-2">
+            <x-admin.search wire:model.live.debounce.100ms="search" placeholder="Cari email…" aria-label="Cari email pelanggan" />
+
+            <div class="admin-tabs" role="group" aria-label="Saring status">
+                @foreach (['all' => 'Semua', 'active' => 'Aktif', 'inactive' => 'Nonaktif'] as $nilai => $label)
+                    <button type="button" wire:click="$set('status', '{{ $nilai }}')"
+                            aria-pressed="{{ $status === $nilai ? 'true' : 'false' }}">{{ $label }}</button>
+                @endforeach
             </div>
         </div>
 
-        <div class="flex flex-wrap items-center justify-between mb-4 gap-3">
-            <input type="text" wire:model.live.debounce.100ms="search" placeholder="Cari email..." class="border p-2 rounded">
-            <div class="flex items-center gap-2">
-                <label for="statusFilter" class="admin-label">Filter Status:</label>
-                <select id="statusFilter" wire:model.live.debounce.100ms="status" class="border-admin-line rounded-md text-sm">
-                    <option value="all">Semua</option>
-                    <option value="active">Aktif</option>
-                    <option value="inactive">Nonaktif</option>
-                </select>
+        <div class="admin-table-frame">
+            <div class="admin-table-scroll">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Email</th>
+                            <th>Cakupan</th>
+                            <th>Bahasa</th>
+                            <th>Status</th>
+                            <th>Berlangganan sejak</th>
+                            <th class="admin-cell-actions"><span class="sr-only">Aksi</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($subscribers as $subscriber)
+                            <tr wire:key="pelanggan-{{ $subscriber->id }}">
+                                <td class="font-medium">{{ $subscriber->email }}</td>
+                                <td class="max-w-[260px]">
+                                    @if ($subscriber->type === 'all')
+                                        <span class="text-admin-ash">Semua kasus</span>
+                                    @else
+                                        @php
+                                            // ?-> : kasusnya bisa sudah dihapus sementara
+                                            // langganannya masih tersisa.
+                                            $kasus = $subscriber->case?->translation('id')?->title ?? $subscriber->case?->slug ?? '-';
+                                        @endphp
+                                        <span class="block truncate text-admin-ash" title="{{ $kasus }}">{{ $kasus }}</span>
+                                        <span class="block text-[11.5px] text-admin-muted">satu kasus</span>
+                                    @endif
+                                </td>
+                                <td class="uppercase text-admin-ash">{{ $subscriber->locale }}</td>
+                                <td>
+                                    @if ($subscriber->active)
+                                        <span class="admin-cap admin-cap--ok admin-cap--dot">aktif</span>
+                                    @else
+                                        <span class="admin-cap admin-cap--quiet">nonaktif</span>
+                                    @endif
+                                </td>
+                                <td class="admin-num whitespace-nowrap text-admin-ash">{{ $subscriber->subscribed_at?->format('d M Y H:i') ?? '—' }}</td>
+                                <td class="admin-cell-actions">
+                                    <button type="button" wire:click="toggle({{ $subscriber->id }})" class="admin-btn admin-btn--quiet admin-btn--sm">
+                                        {{ $subscriber->active ? 'Nonaktifkan' : 'Aktifkan' }}
+                                    </button>
+                                    {{-- wire:confirm, bukan onclick="return confirm()": Livewire
+                                         memasang pendengar kliknya sendiri, jadi `return false`
+                                         dari onclick tidak pernah membatalkan penghapusan. --}}
+                                    <button type="button" wire:click="delete({{ $subscriber->id }})"
+                                            wire:confirm="Hapus pelanggan ini? Ia tidak akan menerima kabar laporan baru lagi."
+                                            class="admin-btn admin-btn--quiet-danger admin-btn--sm">Hapus</button>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6" class="p-0">
+                                    <x-admin.empty title="Tidak ada pelanggan" icon="mail">
+                                        Belum ada alamat yang cocok dengan saringan ini.
+                                    </x-admin.empty>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
-        </div>
-
-        <div class="overflow-x-auto">
-            <table class="admin-table min-w-full border-collapse table-fixed">
-                <thead>
-                    <tr class="bg-admin-raised text-left text-sm font-medium text-admin-ash">
-                        <th class="p-3">Email</th>
-                        <th class="p-3">Scope</th>
-                        <th class="p-3">Bahasa</th>
-                        <th class="p-3">Status</th>
-                        <th class="p-3">Tanggal</th>
-                        <th class="p-3">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody class="text-sm text-admin-ash">
-                    @forelse ($subscribers as $subscriber)
-                        <tr>
-                            <td class="p-3">{{ $subscriber->email }}</td>
-                            <td class="p-3">
-                                @if ($subscriber->type === 'all')
-                                    <span class="inline-block px-2 py-0.5 text-xs font-semibold rounded bg-admin-amber/10 text-admin-amber">Semua</span>
-                                @else
-                                    <span class="inline-block px-2 py-0.5 text-xs font-semibold rounded bg-admin-raised text-admin-amber">Kasus</span>
-                                    <span class="block text-xs text-admin-muted mt-1 truncate max-w-[180px]">{{ $subscriber->case->translation('id')?->title ?? $subscriber->case->slug ?? '-' }}</span>
-                                @endif
-                            </td>
-                            <td class="p-3 uppercase">{{ $subscriber->locale }}</td>
-                            <td class="p-3">
-                                @if ($subscriber->active)
-                                    <span class="inline-block px-3 py-1 text-white text-xs font-semibold rounded-full bg-admin-amber">aktif</span>
-                                @else
-                                    <span class="inline-block px-3 py-1 text-white text-xs font-semibold rounded-full bg-admin-raised0">nonaktif</span>
-                                @endif
-                            </td>
-                            <td class="p-3">{{ $subscriber->subscribed_at?->format('d M Y H:i') ?? '-' }}</td>
-                            <td class="p-3">
-                                <button wire:click="toggle({{ $subscriber->id }})" class="bg-admin-ember px-3 py-1 rounded text-white">
-                                    {{ $subscriber->active ? 'Nonaktifkan' : 'Aktifkan' }}
-                                </button>
-                                <button wire:click="delete({{ $subscriber->id }})"
-                                    onclick="return confirm('Hapus subscriber ini?')"
-                                    class="admin-btn admin-btn--danger admin-btn--sm">Hapus</button>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td class="p-3" colspan="6">Data tidak ditemukan</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-
-        <div class="mt-4">
-            {{ $subscribers->links('vendor.pagination.admin') }}
+            {{ $subscribers->links('vendor.pagination.admin', ['livewire' => true]) }}
         </div>
     </div>
 
-    @if (session('success'))
-        <div x-data="{ show: true }" x-show="show" x-transition:enter="transition ease-out duration-500"
-            x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0"
-            x-transition:leave="transition ease-in duration-500" x-transition:leave-start="opacity-100 translate-y-0"
-            x-transition:leave-end="opacity-0 translate-y-2" x-init="setTimeout(() => show = false, 3000)"
-            class="fixed bottom-6 right-6 bg-admin-amber text-white px-6 py-4 shadow-lg">
-            {{ session('success') }}
-        </div>
-    @endif
+    <x-admin.toast />
 </div>

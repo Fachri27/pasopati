@@ -1,56 +1,84 @@
-<div class="flex flex-col justify-center items-center">
-    <div class="bg-admin-surface shadow rounded-lg p-6 overflow">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-semibold text-admin-smoke mb-4">Daftar Halaman</h2>
-            <a href="{{ route('user.create') }}">
-                <button class="admin-btn admin-btn--primary">
-                    Create
-                </button>
-            </a>
-        </div>
-        <div class="flex items-center justify-between mb-4">
-                <input type="text" wire:model.live.debounce.300ms="search" placeholder="Search..." class="border p-2">
-            </div>
+<div>
+    <x-admin.page-header title="Pengguna" description="Akun CMS dan akun komentar pembaca, beserta perannya.">
+        <a href="{{ route('user.create') }}" class="admin-btn admin-btn--primary admin-btn--sm">
+            <x-admin.icon name="plus" class="size-3.5" />
+            Tambah pengguna
+        </a>
+    </x-admin.page-header>
 
-        <table id="userTable" class="admin-table w-full border-collapse">
-            <thead>
-                <tr class="bg-admin-raised text-left text-sm font-medium text-admin-ash">
-                    <th class="p-3">No</th>
-                    <th class="p-3">Name</th>
-                    <th class="p-3">Email</th>
-                    <th class="p-3">Role</th>
-                    <th class="p-3">Action</th>
-                </tr>
-            </thead>
-            @foreach ($users as $index => $data)
-            <tbody>
-                <tr>
-                    <td class="p-3">{{ ($users->currentPage() - 1) * $users->perPage() + $index + 1 }}</td>
-                    <td class="p-3">{{ $data->name }}</td>
-                    <td class="p-3">{{ $data->email }}</td>
-                    <td class="p-3">{{ $data->role }}</td>
-                    <td class="p-3">
-                        <a href="{{ route('user.edit', $data->id) }}"
-                            class="bg-admin-ember px-3 py-1 rounded text-white">Edit</a>
-                        <button wire:click='delete({{ $data->id }})'
-                            class="admin-btn admin-btn--danger admin-btn--sm">Delete</button>
-                    </td>
-                </tr>
-            </tbody>
-            @endforeach
-        </table>
-        <!-- Pagination -->
-        <div class="mt-4">
+    <div class="admin-wrap admin-body">
+        <div class="mb-4 flex flex-wrap items-center gap-2">
+            <x-admin.search wire:model.live.debounce.300ms="search" placeholder="Cari nama…" />
+        </div>
+
+        <div class="admin-table-frame">
+            <div class="admin-table-scroll">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Nama</th>
+                            <th>Email</th>
+                            <th>Peran</th>
+                            <th class="admin-cell-actions"><span class="sr-only">Aksi</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($users as $data)
+                            @php
+                                // Akun komentar yang masuk lewat Google menyimpan
+                                // alamat avatar utuh, bukan path di storage.
+                                $foto = $data->image
+                                    ? (\Illuminate\Support\Str::startsWith($data->image, ['http://', 'https://']) ? $data->image : asset('storage/' . $data->image))
+                                    : null;
+                            @endphp
+                            <tr wire:key="pengguna-{{ $data->id }}">
+                                <td class="min-w-[220px]">
+                                    <div class="flex items-center gap-2.5">
+                                        @if ($foto)
+                                            <img src="{{ $foto }}" alt="" loading="lazy" referrerpolicy="no-referrer"
+                                                 class="size-7 shrink-0 rounded-full object-cover">
+                                        @else
+                                            <span class="grid size-7 shrink-0 place-items-center rounded-full bg-admin-tint-strong text-[11.5px] font-semibold text-admin-smoke">
+                                                {{ strtoupper(mb_substr($data->name, 0, 1)) }}
+                                            </span>
+                                        @endif
+                                        <a href="{{ route('user.edit', $data->id) }}" class="min-w-0 font-medium hover:underline">{{ $data->name }}</a>
+                                        @if ($data->id === auth()->id())
+                                            <span class="admin-cap admin-cap--quiet">Anda</span>
+                                        @endif
+                                    </div>
+                                </td>
+                                <td class="text-admin-ash">{{ $data->email }}</td>
+                                <td>
+                                    <span class="admin-cap {{ $data->role === 'admin' ? '' : 'admin-cap--quiet' }}">{{ $data->role }}</span>
+                                </td>
+                                <td class="admin-cell-actions">
+                                    <a href="{{ route('user.edit', $data->id) }}" class="admin-btn admin-btn--quiet admin-btn--sm">Ubah</a>
+                                    {{-- Akun sendiri tidak diberi tombol hapus:
+                                         menghapusnya langsung mengeluarkan
+                                         admin dari CMS di tengah sesi. --}}
+                                    @if ($data->id !== auth()->id())
+                                        <button type="button" wire:click="delete({{ $data->id }})"
+                                                wire:confirm="Hapus pengguna {{ $data->name }}? Tindakan ini tidak bisa dibatalkan."
+                                                class="admin-btn admin-btn--quiet-danger admin-btn--sm">Hapus</button>
+                                    @endif
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="4" class="p-0">
+                                    <x-admin.empty title="Tidak ada pengguna" icon="user">
+                                        Belum ada pengguna yang cocok dengan pencarian ini.
+                                    </x-admin.empty>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
             {{ $users->links('vendor.pagination.admin') }}
         </div>
     </div>
-    @if (session('success'))
-    <div x-data="{ show: true }" x-show="show" x-transition:enter="transition ease-out duration-500"
-        x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0"
-        x-transition:leave="transition ease-in duration-500" x-transition:leave-start="opacity-100 translate-y-0"
-        x-transition:leave-end="opacity-0 translate-y-2" x-init="setTimeout(() => show = false, 3000)"
-        class="fixed bottom-6 right-6 bg-admin-amber text-white p-10 shadow-lg hover:bg-admin-red/85 focus:outline-none focus:ring-2 focus:ring-admin-amber focus:ring-offset-2">
-        {{ session('success') }}
-    </div>
-    @endif
+
+    <x-admin.toast />
 </div>

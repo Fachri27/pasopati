@@ -1,51 +1,46 @@
 <div x-data="{ lang: 'id' }">
-    <div class="max-w-7xl mx-auto bg-admin-surface py-8 mb-20 px-8 rounded-xl shadow-md">
+    <x-admin.page-header :title="isset($fellowship) ? 'Ubah fellowship' : 'Fellowship baru'"
+                         :crumbs="[['Fellowship', route('fellowship.index')]]"
+                         :back="route('fellowship.index')">
+        <a href="{{ route('fellowship.index') }}" class="admin-btn admin-btn--quiet admin-btn--sm">Batal</a>
+        <button type="submit" form="form-fellowship" wire:loading.attr="disabled" wire:target="save"
+                class="admin-btn admin-btn--primary admin-btn--sm">
+            <span wire:loading.remove wire:target="save">{{ isset($fellowship) ? 'Simpan perubahan' : 'Simpan fellowship' }}</span>
+            <span wire:loading wire:target="save">Menyimpan…</span>
+        </button>
 
-        {{-- ================= BREADCRUMB ================= --}}
-        <nav class="text-sm text-admin-ash mb-6 flex items-center gap-2">
-            <a href="{{ route('fellowship.index') }}" class="text-admin-smoke hover:text-admin-amber font-medium">
-                Page Fellowship
-            </a>
+        <x-slot:aside>
+            {{-- Judul, sub judul, excerpt, isi kategori, dan gambar ditulis per
+                 bahasa; tanggal dan status berlaku untuk keduanya. --}}
+            <div class="admin-tabs" role="group" aria-label="Bahasa isian">
+                <button type="button" @click="lang = 'id'" :aria-pressed="lang === 'id' ? 'true' : 'false'">Indonesia</button>
+                <button type="button" @click="lang = 'en'" :aria-pressed="lang === 'en' ? 'true' : 'false'">English</button>
+            </div>
+        </x-slot:aside>
+    </x-admin.page-header>
 
-            <span class="text-admin-muted">›</span>
+    <div class="admin-wrap admin-body">
+        {{-- Isian dua bahasa tidak tampil bersamaan, jadi galat di bahasa yang
+             sedang tersembunyi tidak akan terlihat di samping isiannya.
+             Ringkasan ini menampilkan semuanya sekaligus. --}}
+        @if ($errors->any())
+            <div class="admin-alert mb-5" role="alert">
+                <p class="font-medium">Fellowship belum tersimpan.</p>
+                <ul class="mt-1 list-disc pl-4">
+                    @foreach ($errors->all() as $galat)
+                        <li>{{ $galat }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
 
-            <span class="text-admin-amber font-semibold">
-                {{ isset($fellowship) ? 'Edit Fellowship' : 'Add Fellowship' }}
-            </span>
-        </nav>
-
-
-        {{-- ================= TITLE ================= --}}
-        <h1 class="text-2xl font-bold mb-8 text-admin-ash">
-            {{ isset($fellowship) ? 'Edit Fellowship' : 'Add Fellowship' }}
-        </h1>
-
-
-        {{-- ================= FORM ================= --}}
-        <form wire:submit.prevent="save">
-
-            <div class="grid grid-cols-12 gap-6">
-
-                {{-- =====================================================
-                | LEFT COLUMN
-                ===================================================== --}}
-                <div class="col-span-12 lg:col-span-4">
-
-                    <div class="admin-card p-5 space-y-5 sticky top-6">
-
-                        {{-- ================= LANGUAGE ================= --}}
-                        <div>
-                            <label class="font-medium">Bahasa</label>
-
-                            <select x-model="lang" class="admin-input admin-select mt-1">
-                                <option value="id">Indonesia</option>
-                                <option value="en">English</option>
-                            </select>
-                        </div>
-
-
-                        {{-- ================= TITLE ID ================= --}}
-                        <div x-show="lang === 'id'" x-data="{
+        <form id="form-fellowship" wire:submit.prevent="save" class="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+            <div class="grid min-w-0 gap-5">
+                <x-admin.card title="Judul">
+                    <div class="grid gap-4">
+                        {{-- Slug hanya pratinjau: yang tersimpan dibuat ulang
+                             di server dari judul Indonesia saat disimpan. --}}
+                        <div x-show="lang === 'id'" class="grid gap-4" x-data="{
                                 title: @js(old('title_id', $title_id ?? '')),
                                 slug: @js(old('slugId', $slugId ?? '')),
                                 makeSlug(text) {
@@ -54,213 +49,148 @@
                                         .replace(/^-+|-+$/g, '');
                                 }
                              }" x-init="if(title && !slug){ slug = makeSlug(title) }">
-
-                            <label class="font-medium">Title (ID)</label>
-                            <input type="text" wire:model="title_id" x-model="title" @input="slug = makeSlug(title)"
-                                class="admin-input mt-1">
-
-                            <label class="text-sm mt-2 block">Slug</label>
-                            <input type="text" x-model="slug" readonly
-                                class="admin-input">
+                            <div>
+                                <label for="fellowship-judul-id" class="admin-label">Judul (Indonesia)</label>
+                                <input id="fellowship-judul-id" type="text" wire:model="title_id" x-model="title" @input="slug = makeSlug(title)"
+                                       class="admin-input" @error('title_id') aria-invalid="true" @enderror>
+                                @error('title_id') <p class="admin-error">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label for="fellowship-slug" class="admin-label">Slug</label>
+                                <input id="fellowship-slug" type="text" x-model="slug" readonly
+                                       class="admin-input font-admin-mono bg-admin-inset text-[13px] text-admin-ash">
+                                <p class="admin-hint">Dibuat otomatis dari judul Indonesia.</p>
+                            </div>
                         </div>
 
-
-                        {{-- ================= TITLE EN ================= --}}
-                        <div x-show="lang === 'en'">
-                            <label class="font-medium">Title (EN)</label>
-
-                            <input type="text" wire:model="title_en" class="admin-input mt-1">
+                        <div x-show="lang === 'en'" x-cloak>
+                            <label for="fellowship-judul-en" class="admin-label">Judul (English)</label>
+                            <input id="fellowship-judul-en" type="text" wire:model="title_en"
+                                   class="admin-input" @error('title_en') aria-invalid="true" @enderror>
+                            @error('title_en') <p class="admin-error">{{ $message }}</p> @enderror
                         </div>
 
-
-                        {{-- ================= SUB JUDUL ================= --}}
                         <div x-show="lang === 'id'">
-                            <label class="font-medium">Sub Judul (ID)</label>
-                            <input type="text" wire:model="sub_judul_id" class="admin-input">
+                            <label for="fellowship-sub-id" class="admin-label">Sub judul (Indonesia)</label>
+                            <input id="fellowship-sub-id" type="text" wire:model="sub_judul_id" class="admin-input">
                         </div>
 
-                        <div x-show="lang === 'en'">
-                            <label class="font-medium">Sub Judul (EN)</label>
-                            <input type="text" wire:model="sub_judul_en" class="admin-input">
+                        <div x-show="lang === 'en'" x-cloak>
+                            <label for="fellowship-sub-en" class="admin-label">Sub judul (English)</label>
+                            <input id="fellowship-sub-en" type="text" wire:model="sub_judul_en" class="admin-input">
                         </div>
+                    </div>
+                </x-admin.card>
 
+                <x-admin.card title="Excerpt" description="Ringkasan pendek yang tampil di daftar fellowship.">
+                    <div x-show="lang === 'id'">
+                        @include('front.partials.fellowship.tinymce-excerpt-id')
+                    </div>
 
-                        {{-- ================= DATE ================= --}}
-                        <div class="grid grid-cols-2 gap-3">
+                    <div x-show="lang === 'en'" x-cloak>
+                        @include('front.partials.fellowship.tinymce-excerpt-en')
+                    </div>
+                </x-admin.card>
 
-                            <div>
-                                <label class="text-sm">Mulai</label>
-                                <input type="date" wire:model="start_date" class="w-full border rounded-lg px-2 py-2">
-                            </div>
+                {{-- flush: partial ini membawa piasnya sendiri. Ia juga memuat
+                     isi untuk dua bahasa sekaligus dan mengikuti sakelar bahasa
+                     di kop halaman. --}}
+                <x-admin.card title="Kategori dan isi" description="Centang kategori untuk menulis isinya. Tiap kategori menjadi satu tab di halaman fellowship." flush>
+                    @include('front.partials.fellowship.tinymce-content-id')
+                </x-admin.card>
+            </div>
 
-                            <div>
-                                <label class="text-sm">Selesai</label>
-                                <input type="date" wire:model="end_date" class="w-full border rounded-lg px-2 py-2">
-                            </div>
-
-                        </div>
-
-
-                        {{-- ================= STATUS ================= --}}
+            {{-- top-[68px]: bilah atas halaman (48px) menempel di atas, jadi
+                 rel samping berhenti tepat di bawahnya. --}}
+            <div class="grid gap-5 lg:sticky lg:top-[68px]">
+                <x-admin.card title="Publikasi">
+                    <div class="grid gap-4">
                         <div>
-                            <label class="font-medium">Status</label>
-
-                            <select wire:model="status" class="admin-input admin-select">
+                            <label for="fellowship-status" class="admin-label">Status</label>
+                            <select id="fellowship-status" wire:model="status" class="admin-input" @error('status') aria-invalid="true" @enderror>
                                 <option value="draft">Draft</option>
                                 <option value="active">Active</option>
                                 <option value="inactive">Inactive</option>
                             </select>
+                            @error('status') <p class="admin-error">{{ $message }}</p> @enderror
                         </div>
-
-
-
-                        {{-- =====================================================
-                        | IMAGES (PER LOCALE)
-                        ===================================================== --}}
-                        <div class="border-t pt-4 space-y-5">
-
-                            <h3 class="font-semibold text-admin-ash">Images</h3>
-
-
-                            {{-- ================= INDONESIA ================= --}}
-                            <div x-show="lang === 'id'" class="space-y-4">
-
-                                {{-- Image --}}
-                                <div>
-                                    <label class="font-medium">Image (Indonesia)</label>
-
-                                    <input type="file" wire:model="image_id"
-                                        class="admin-input mt-1">
-
-                                    <div class="mt-3">
-                                        @if ($image_id)
-                                        <img src="{{ $image_id->temporaryUrl() }}"
-                                            class="w-24 h-24 object-cover rounded-lg border">
-
-                                        @elseif ($old_image_id)
-                                        <img src="{{ asset('storage/'.$old_image_id) }}"
-                                            class="w-24 h-24 object-cover rounded-lg border">
-                                        @endif
-                                    </div>
-                                </div>
-
-
-                                {{-- Cover --}}
-                                <div>
-                                    <label class="font-medium">Image Cover (Indonesia)</label>
-
-                                    <input type="file" wire:model="image_cover_id"
-                                        class="admin-input mt-1">
-
-                                    <div class="mt-3">
-                                        @if ($image_cover_id)
-                                        <img src="{{ $image_cover_id->temporaryUrl() }}"
-                                            class="w-24 h-24 object-cover rounded-lg border">
-
-                                        @elseif ($old_image_cover_id)
-                                        <img src="{{ asset('storage/'.$old_image_cover_id) }}"
-                                            class="w-24 h-24 object-cover rounded-lg border">
-                                        @endif
-                                    </div>
-                                </div>
-
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label for="fellowship-mulai" class="admin-label">Mulai</label>
+                                <input id="fellowship-mulai" type="date" wire:model="start_date"
+                                       class="admin-input" @error('start_date') aria-invalid="true" @enderror>
                             </div>
-
-
-
-                            {{-- ================= ENGLISH ================= --}}
-                            <div x-show="lang === 'en'" class="space-y-4">
-
-                                {{-- Image --}}
-                                <div>
-                                    <label class="font-medium">Image (English)</label>
-
-                                    <input type="file" wire:model="image_en"
-                                        class="admin-input mt-1">
-
-                                    <div class="mt-3">
-                                        @if ($image_en)
-                                        <img src="{{ $image_en->temporaryUrl() }}"
-                                            class="w-24 h-24 object-cover rounded-lg border">
-
-                                        @elseif ($old_image_en)
-                                        <img src="{{ asset('storage/'.$old_image_en) }}"
-                                            class="w-24 h-24 object-cover rounded-lg border">
-                                        @endif
-                                    </div>
-                                </div>
-
-
-                                {{-- Cover --}}
-                                <div>
-                                    <label class="font-medium">Image Cover (English)</label>
-
-                                    <input type="file" wire:model="image_cover_en"
-                                        class="admin-input mt-1">
-
-                                    <div class="mt-3">
-                                        @if ($image_cover_en)
-                                        <img src="{{ $image_cover_en->temporaryUrl() }}"
-                                            class="w-24 h-24 object-cover rounded-lg border">
-
-                                        @elseif ($old_image_cover_en)
-                                        <img src="{{ asset('storage/'.$old_image_cover_en) }}"
-                                            class="w-24 h-24 object-cover rounded-lg border">
-                                        @endif
-                                    </div>
-                                </div>
-
+                            <div>
+                                <label for="fellowship-selesai" class="admin-label">Selesai</label>
+                                <input id="fellowship-selesai" type="date" wire:model="end_date" class="admin-input">
                             </div>
-
-                        </div>
-
-                    </div>
-                </div>
-
-
-
-                {{-- =====================================================
-                | RIGHT COLUMN
-                ===================================================== --}}
-                <div class="col-span-12 lg:col-span-8 space-y-6">
-
-                    {{-- Excerpt --}}
-                    <div class="bg-admin-surface border rounded-xl p-4">
-                        <h3 class="font-semibold mb-3">Excerpt</h3>
-
-                        <div x-show="lang === 'id'">
-                            @include('front.partials.fellowship.tinymce-excerpt-id')
-                        </div>
-
-                        <div x-show="lang === 'en'">
-                            @include('front.partials.fellowship.tinymce-excerpt-en')
+                            @error('start_date') <p class="admin-error col-span-2 mt-0">{{ $message }}</p> @enderror
                         </div>
                     </div>
+                </x-admin.card>
 
-
-                    {{-- Content --}}
-                    <div class="bg-admin-surface border rounded-xl p-4">
-                        <h3 class="font-semibold mb-3">Content</h3>
-
-                        @include('front.partials.fellowship.tinymce-content-id')
+                {{-- Gambar disimpan per bahasa; yang tampil mengikuti sakelar
+                     bahasa di kop halaman. --}}
+                <x-admin.card title="Gambar">
+                    <div x-show="lang === 'id'" class="grid gap-4">
+                        <div>
+                            <label for="fellowship-gambar-id" class="admin-label">Gambar (Indonesia)</label>
+                            @if ($image_id)
+                                <img src="{{ $image_id->temporaryUrl() }}" alt="Pratinjau gambar baru"
+                                     class="mb-2 aspect-[16/9] w-full rounded-md border border-admin-line object-cover">
+                            @elseif ($old_image_id)
+                                <img src="{{ asset('storage/'.$old_image_id) }}" alt="Gambar saat ini"
+                                     class="mb-2 aspect-[16/9] w-full rounded-md border border-admin-line object-cover">
+                            @endif
+                            <input id="fellowship-gambar-id" type="file" wire:model="image_id" accept="image/*" class="admin-input">
+                            @error('image_id') <p class="admin-error">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label for="fellowship-sampul-id" class="admin-label">Gambar sampul (Indonesia)</label>
+                            @if ($image_cover_id)
+                                <img src="{{ $image_cover_id->temporaryUrl() }}" alt="Pratinjau sampul baru"
+                                     class="mb-2 aspect-[16/9] w-full rounded-md border border-admin-line object-cover">
+                            @elseif ($old_image_cover_id)
+                                <img src="{{ asset('storage/'.$old_image_cover_id) }}" alt="Sampul saat ini"
+                                     class="mb-2 aspect-[16/9] w-full rounded-md border border-admin-line object-cover">
+                            @endif
+                            <input id="fellowship-sampul-id" type="file" wire:model="image_cover_id" accept="image/*" class="admin-input">
+                            @error('image_cover_id') <p class="admin-error">{{ $message }}</p> @enderror
+                        </div>
                     </div>
 
-                </div>
+                    <div x-show="lang === 'en'" x-cloak class="grid gap-4">
+                        <div>
+                            <label for="fellowship-gambar-en" class="admin-label">Gambar (English)</label>
+                            @if ($image_en)
+                                <img src="{{ $image_en->temporaryUrl() }}" alt="Pratinjau gambar baru"
+                                     class="mb-2 aspect-[16/9] w-full rounded-md border border-admin-line object-cover">
+                            @elseif ($old_image_en)
+                                <img src="{{ asset('storage/'.$old_image_en) }}" alt="Gambar saat ini"
+                                     class="mb-2 aspect-[16/9] w-full rounded-md border border-admin-line object-cover">
+                            @endif
+                            <input id="fellowship-gambar-en" type="file" wire:model="image_en" accept="image/*" class="admin-input">
+                            @error('image_en') <p class="admin-error">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label for="fellowship-sampul-en" class="admin-label">Gambar sampul (English)</label>
+                            @if ($image_cover_en)
+                                <img src="{{ $image_cover_en->temporaryUrl() }}" alt="Pratinjau sampul baru"
+                                     class="mb-2 aspect-[16/9] w-full rounded-md border border-admin-line object-cover">
+                            @elseif ($old_image_cover_en)
+                                <img src="{{ asset('storage/'.$old_image_cover_en) }}" alt="Sampul saat ini"
+                                     class="mb-2 aspect-[16/9] w-full rounded-md border border-admin-line object-cover">
+                            @endif
+                            <input id="fellowship-sampul-en" type="file" wire:model="image_cover_en" accept="image/*" class="admin-input">
+                            @error('image_cover_en') <p class="admin-error">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
 
-
-
-                {{-- ================= SAVE BUTTON ================= --}}
-                <div class="col-span-12 sticky bottom-0 bg-admin-surface border-t p-4 flex justify-end">
-
-                    <button type="submit" wire:loading.attr="disabled" class="bg-admin-amber hover:bg-admin-amber/85 disabled:opacity-60 text-white px-6 py-2 rounded-lg font-medium">
-
-                        {{ isset($fellowship) ? 'Update' : 'Create' }}
-                    </button>
-
-                </div>
-
+                    <p class="admin-hint" wire:loading wire:target="image_id,image_en,image_cover_id,image_cover_en">Mengunggah…</p>
+                </x-admin.card>
             </div>
-
         </form>
     </div>
+
+    <x-admin.toast />
 </div>

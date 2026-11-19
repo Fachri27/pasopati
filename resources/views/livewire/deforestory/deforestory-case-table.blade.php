@@ -1,233 +1,193 @@
-<div class="w-full">
-    <div class="bg-admin-surface shadow rounded-lg p-6 w-full">
+<div>
+    <x-admin.page-header title="Deforestory"
+                         description="Kartu kasus datang dari API dan tidak dibuat di sini. Yang diisi lewat CMS adalah laporan di dalam tiap kasus — masing-masing punya judul, slug, gambar, dan isi sendiri.">
+        <button wire:click="bukaPanelKunci" type="button" class="admin-btn admin-btn--ghost admin-btn--sm"
+                aria-expanded="{{ $panelKunci ? 'true' : 'false' }}">
+            <x-admin.icon name="lock" class="size-3.5" />
+            Password pratinjau
+            <span class="admin-cap {{ $passwordSudahDiatur ? 'admin-cap--ok' : 'admin-cap--quiet' }}">
+                {{ $passwordSudahDiatur ? 'aktif' : 'kosong' }}
+            </span>
+        </button>
+        <button wire:click="refreshList" wire:loading.attr="disabled" wire:target="refreshList" type="button"
+                class="admin-btn admin-btn--ghost admin-btn--sm">
+            <x-admin.icon name="refresh" class="size-3.5" wire:loading.class="animate-spin" wire:target="refreshList" />
+            <span wire:loading.remove wire:target="refreshList">Muat ulang</span>
+            <span wire:loading wire:target="refreshList">Memuat…</span>
+        </button>
 
-        {{-- ── Kepala halaman ─────────────────────────────────────────── --}}
-        <div class="flex flex-wrap items-start justify-between gap-4 mb-5">
-            <div class="max-w-3xl">
-                <h2 class="text-lg font-semibold text-admin-smoke">Deforestory — Arsip Kasus</h2>
-                <p class="text-xs text-admin-muted mt-1 leading-relaxed">
-                    Kartu kasus datang dari API dan tidak dibuat di sini. Yang diisi lewat CMS adalah
-                    <strong class="text-admin-ash">laporan</strong> di dalam tiap kasus — masing-masing punya judul,
-                    slug, gambar, dan isi sendiri.
-                </p>
-            </div>
+        {{-- Di samping judul, bukan di bilah atas: bertiga dengan dua tombol
+             di atas ia tidak muat di layar sempit. --}}
+        <x-slot:aside>
+            <a href="{{ route('deforestory.subscribers') }}" class="admin-btn admin-btn--ghost admin-btn--sm">
+                <x-admin.icon name="mail" class="size-3.5" />
+                Pelanggan
+            </a>
+        </x-slot:aside>
+    </x-admin.page-header>
 
-            <div class="flex items-center gap-2 shrink-0">
-            <button wire:click="bukaPanelKunci" type="button" class="admin-btn admin-btn--ghost admin-btn--sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                </svg>
-                Password pratinjau
-                <span class="ml-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase {{ $passwordSudahDiatur ? 'badge-active' : 'badge-draft' }}">
-                    {{ $passwordSudahDiatur ? 'aktif' : 'kosong' }}
-                </span>
-            </button>
-            <button wire:click="refreshList" wire:loading.attr="disabled" wire:target="refreshList"
-                    class="admin-btn admin-btn--ghost admin-btn--sm">
-                <svg wire:loading.remove wire:target="refreshList" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                </svg>
-                <svg wire:loading wire:target="refreshList" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
-                </svg>
-                <span wire:loading.remove wire:target="refreshList">Refresh</span>
-                <span wire:loading wire:target="refreshList">Memuat…</span>
-            </button>
-            </div>
-        </div>
-
+    <div class="admin-wrap admin-body">
         {{-- Password pratinjau: satu untuk seluruh Deforestory. Laporan yang
              ditandai "Kunci pratinjau" menuntut password ini sebelum isinya
              terbuka bagi peninjau di luar CMS. --}}
         @if ($panelKunci)
-            <div class="admin-card mb-5 p-5">
-                <h3 class="text-sm font-semibold text-admin-smoke">Password pratinjau Deforestory</h3>
-                <p class="mt-1 text-xs leading-relaxed text-admin-muted max-w-2xl">
-                    Berlaku untuk semua laporan yang dikunci. Bagikan bersama tautan pratinjau kepada
-                    peninjau yang tidak punya akun CMS. Mengganti password akan menutup kembali semua
-                    sesi yang sudah terbuka dengan password lama.
-                </p>
-
-                <div class="mt-4 flex flex-wrap items-start gap-2">
+            <x-admin.card class="mb-5" title="Password pratinjau Deforestory"
+                          description="Berlaku untuk semua laporan yang dikunci. Bagikan bersama tautan pratinjau kepada peninjau yang tidak punya akun CMS. Mengganti password akan menutup kembali semua sesi yang sudah terbuka dengan password lama.">
+                <div class="flex flex-wrap items-start gap-2">
                     <div class="w-full sm:w-80">
-                        <input type="text" wire:model="passwordPratinjau" class="admin-input font-mono"
-                               placeholder="Minimal 6 karakter" aria-label="Password pratinjau">
-                        @error('passwordPratinjau') <p class="mt-1 text-xs font-medium text-red-500">{{ $message }}</p> @enderror
+                        <input type="text" wire:model="passwordPratinjau" class="admin-input font-admin-mono"
+                               placeholder="Minimal 6 karakter" aria-label="Password pratinjau"
+                               @error('passwordPratinjau') aria-invalid="true" @enderror>
+                        @error('passwordPratinjau') <p class="admin-error">{{ $message }}</p> @enderror
                     </div>
-                    <button wire:click="simpanPasswordPratinjau" type="button" class="admin-btn admin-btn--primary admin-btn--sm">Simpan</button>
+                    <button wire:click="simpanPasswordPratinjau" type="button" class="admin-btn admin-btn--primary">Simpan</button>
                     @if ($passwordSudahDiatur)
                         <button wire:click="hapusPasswordPratinjau" type="button"
                                 wire:confirm="Hapus password pratinjau? Laporan yang dikunci tidak akan bisa dibuka siapa pun sampai password baru diatur."
-                                class="admin-btn admin-btn--danger admin-btn--sm">Hapus</button>
+                                class="admin-btn admin-btn--danger">Hapus</button>
                     @endif
                 </div>
-            </div>
-        @endif
-
-        @if (session('success'))
-            <div class="mb-4 p-3 bg-admin-raised border border-admin-line text-admin-amber rounded-lg text-sm">{{ session('success') }}</div>
-        @endif
-
-        @if (session('error'))
-            <div class="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 rounded-lg text-sm">{{ session('error') }}</div>
+            </x-admin.card>
         @endif
 
         {{-- ── Pencarian + sumber data ────────────────────────────────── --}}
-        @php
-            $apiUrl = config('services.deforestory_api.url');
-            $apiHost = $apiUrl ? (parse_url($apiUrl, PHP_URL_HOST) ?: $apiUrl) : null;
-        @endphp
-        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-            <div class="relative w-full sm:w-80">
-                <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-admin-muted pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/>
-                </svg>
-                <input type="text" wire:model.live.debounce.150ms="search"
-                       placeholder="Cari judul atau slug kartu…"
-                       class="admin-input" style="padding-left: 2.25rem"
-                       aria-label="Cari kartu kasus">
-            </div>
+        <div class="mb-4 flex flex-wrap items-center gap-x-3 gap-y-2">
+            <x-admin.search wire:model.live.debounce.150ms="search" placeholder="Cari judul atau slug kartu…" aria-label="Cari kartu kasus" />
 
-            {{-- Kalau DEFORESTORY_API_URL kosong, daftar ini pasti kosong juga.
-                 Menuliskannya sebagai peringatan lebih menolong daripada
-                 "Sumber: API ()" yang tidak memberi tahu apa pun. --}}
-            @if ($apiHost)
-                <span class="inline-flex items-center gap-1.5 text-xs text-admin-muted" title="{{ $apiUrl }}">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                    Sumber: <span class="font-mono text-admin-ash">{{ $apiHost }}</span>
-                </span>
-            @else
-                <span class="inline-flex items-center gap-1.5 text-xs badge-pending px-2.5 py-1 rounded-full font-medium">
-                    DEFORESTORY_API_URL belum diatur
-                </span>
-            @endif
+            {{-- Dulu di sini ada peringatan "DEFORESTORY_API_URL belum diatur".
+                 Kartu sekarang didorong web Deforestory lewat webhook dan dibaca
+                 dari tabel lokal, sedangkan kunci konfigurasi URL itu sudah tidak
+                 ada, jadi peringatannya selalu menyala walau daftarnya terisi. --}}
+            <span class="text-[12.5px] text-admin-muted sm:ml-auto">Sumber: kiriman webhook dari web Deforestory</span>
         </div>
 
         {{-- ── Tabel ──────────────────────────────────────────────────── --}}
-        <div class="overflow-x-auto">
-            <table class="admin-table min-w-full">
-                <thead>
-                    <tr>
-                        <th class="w-[5.5rem]">Gambar</th>
-                        <th>Kartu (API)</th>
-                        <th class="w-64">UUID Simontini</th>
-                        <th class="w-28">Kategori</th>
-                        <th class="w-24">Tahun</th>
-                        <th class="w-32">Laporan</th>
-                        <th class="w-[19rem]">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($cases as $row)
-                        @php
-                            $imgUrl = '';
-                            if (!empty($row['image'])) {
-                                $imgUrl = \Illuminate\Support\Str::startsWith($row['image'], ['http://','https://'])
-                                    ? $row['image'] : asset('storage/' . $row['image']);
-                            }
-                            $laporanUrl = route('deforestory.laporan.index', ['caseSlug' => $row['slug']]);
-                        @endphp
-                        <tr wire:key="card-{{ $row['slug'] }}">
-                            <td>
-                                {{-- Placeholder duduk di belakang gambar, bukan sebagai cabang @else.
-                                     Sebagian kartu API menunjuk berkas yang sudah tidak ada, dan
-                                     tanpa ini yang muncul ikon gambar rusak bawaan peramban. --}}
-                                <div class="relative w-20 h-12 rounded-md border border-admin-line bg-admin-base overflow-hidden">
-                                    <span class="absolute inset-0 flex items-center justify-center text-admin-muted">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                                        </svg>
-                                    </span>
-                                    @if ($imgUrl)
-                                        <img src="{{ $imgUrl }}" alt=""
-                                             onerror="this.style.display='none'"
-                                             class="relative w-full h-full object-cover">
-                                    @endif
-                                </div>
-                            </td>
-
-                            <td>
-                                <span class="block font-medium text-admin-smoke">{{ $row['title'] }}</span>
-                                <span class="mt-0.5 inline-block font-mono text-[11px] text-admin-muted">/{{ $row['slug'] }}</span>
-                            </td>
-
-                            <td>
-                                @if (! empty($row['uuid']))
-                                    <div class="flex items-center gap-2"
-                                         x-data="{ copied:false, copy(){ navigator.clipboard?.writeText('{{ e($row['uuid']) }}'); this.copied=true; setTimeout(()=>this.copied=false,1200) } }">
-                                        <code class="font-mono text-[11px] text-admin-ash truncate" title="{{ $row['uuid'] }}">{{ $row['uuid'] }}</code>
-                                        <button type="button" @click="copy"
-                                                class="shrink-0 text-admin-muted hover:text-admin-amber transition"
-                                                :title="copied ? 'Tersalin' : 'Salin UUID'" aria-label="Salin UUID">
-                                            <svg x-show="!copied" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                                            </svg>
-                                            <svg x-show="copied" x-cloak class="w-4 h-4 text-admin-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 13 4 4L19 7"/>
-                                            </svg>
-                                        </button>
+        <div class="admin-table-frame">
+            <div class="admin-table-scroll">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th class="w-[5.5rem]">Gambar</th>
+                            <th>Kartu (API)</th>
+                            <th>UUID Simontini</th>
+                            <th>Kategori</th>
+                            <th>Tahun</th>
+                            <th>Laporan</th>
+                            <th class="admin-cell-actions"><span class="sr-only">Aksi</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($cases as $row)
+                            @php
+                                $imgUrl = '';
+                                if (!empty($row['image'])) {
+                                    $imgUrl = \Illuminate\Support\Str::startsWith($row['image'], ['http://','https://'])
+                                        ? $row['image'] : asset('storage/' . $row['image']);
+                                }
+                                $laporanUrl = route('deforestory.laporan.index', ['caseSlug' => $row['slug']]);
+                            @endphp
+                            <tr wire:key="card-{{ $row['slug'] }}">
+                                <td>
+                                    {{-- Placeholder duduk di belakang gambar, bukan sebagai cabang @else.
+                                         Sebagian kartu API menunjuk berkas yang sudah tidak ada, dan
+                                         tanpa ini yang muncul ikon gambar rusak bawaan peramban. --}}
+                                    <div class="relative h-12 w-20 overflow-hidden rounded-md border border-admin-line bg-admin-inset">
+                                        <span class="absolute inset-0 grid place-items-center text-admin-muted">
+                                            <x-admin.icon name="image" />
+                                        </span>
+                                        @if ($imgUrl)
+                                            <img src="{{ $imgUrl }}" alt=""
+                                                 onerror="this.style.display='none'"
+                                                 class="relative h-full w-full object-cover">
+                                        @endif
                                     </div>
-                                @else
-                                    <span class="text-admin-muted">—</span>
-                                @endif
-                            </td>
+                                </td>
 
-                            <td>
-                                @if ($row['category'])
-                                    <span class="inline-block px-2 py-0.5 rounded-full bg-admin-base text-[11px] font-medium text-admin-ash">{{ $row['category'] }}</span>
-                                @else
-                                    <span class="text-admin-muted">—</span>
-                                @endif
-                            </td>
+                                <td class="min-w-[220px]">
+                                    <a href="{{ $laporanUrl }}" class="block font-medium hover:underline">{{ $row['title'] }}</a>
+                                    <span class="mt-0.5 inline-block font-admin-mono text-[11.5px] text-admin-muted">/{{ $row['slug'] }}</span>
+                                </td>
 
-                            <td class="font-mono text-xs text-admin-ash whitespace-nowrap">{{ $row['year'] ?: '—' }}</td>
+                                <td>
+                                    @if (! empty($row['uuid']))
+                                        <div class="flex items-center gap-1"
+                                             x-data="{ copied:false, copy(){ navigator.clipboard?.writeText('{{ e($row['uuid']) }}'); this.copied=true; setTimeout(()=>this.copied=false,1200) } }">
+                                            <code class="max-w-[11rem] truncate font-admin-mono text-[11.5px] text-admin-ash" title="{{ $row['uuid'] }}">{{ $row['uuid'] }}</code>
+                                            <button type="button" @click="copy" class="admin-icon-btn size-6 shrink-0"
+                                                    :title="copied ? 'Tersalin' : 'Salin UUID'" aria-label="Salin UUID">
+                                                <x-admin.icon name="copy" class="size-3.5" x-show="!copied" />
+                                                <x-admin.icon name="check" class="size-3.5 text-admin-green" x-show="copied" x-cloak />
+                                            </button>
+                                        </div>
+                                    @else
+                                        <span class="text-admin-muted">—</span>
+                                    @endif
+                                </td>
 
-                            <td>
-                                @if ($row['laporan_count'] > 0)
-                                    <span class="inline-block px-2.5 py-1 text-xs font-semibold rounded-full badge-active">{{ $row['laporan_count'] }} laporan</span>
-                                @else
-                                    <span class="inline-block px-2.5 py-1 text-xs font-semibold rounded-full badge-draft">Belum ada</span>
-                                @endif
-                            </td>
+                                <td>
+                                    @if ($row['category'])
+                                        <span class="admin-cap admin-cap--quiet">{{ $row['category'] }}</span>
+                                    @else
+                                        <span class="text-admin-muted">—</span>
+                                    @endif
+                                </td>
 
-                            <td>
-                                {{-- Anchor DIBERI kelas tombol, bukan membungkus <button>:
-                                     tombol di dalam tautan itu sarang interaktif yang tidak sah,
-                                     dan itu pula yang membuat barisnya membungkus tak beraturan. --}}
-                                <div class="flex flex-wrap items-center gap-2">
-                                    <a href="{{ $laporanUrl }}" class="admin-btn admin-btn--primary admin-btn--sm">Kelola laporan</a>
+                                <td class="admin-num whitespace-nowrap text-admin-ash">{{ $row['year'] ?: '—' }}</td>
+
+                                <td>
+                                    @if ($row['laporan_count'] > 0)
+                                        <span class="admin-cap admin-cap--ok">{{ $row['laporan_count'] }} laporan</span>
+                                    @else
+                                        <span class="admin-cap admin-cap--quiet">Belum ada</span>
+                                    @endif
+                                </td>
+
+                                <td class="admin-cell-actions">
+                                    {{-- Anchor DIBERI kelas tombol, bukan membungkus <button>:
+                                         tombol di dalam tautan itu sarang interaktif yang tidak sah. --}}
+                                    <a href="{{ $laporanUrl }}" class="admin-btn admin-btn--ghost admin-btn--sm">Kelola laporan</a>
                                     <a href="{{ route('deforestory.case.preview', ['caseSlug' => $row['slug'], 'locale' => 'id']) }}"
                                        target="_blank" rel="noopener"
-                                       class="admin-btn admin-btn--ghost admin-btn--sm"
-                                       title="Lihat arsip termasuk laporan yang masih draft">Preview</a>
-                                    <button wire:click="deleteCard('{{ $row['slug'] }}')"
+                                       class="admin-btn admin-btn--quiet admin-btn--sm"
+                                       title="Lihat arsip termasuk laporan yang masih draft">Pratinjau</a>
+                                    <button wire:click="deleteCard('{{ $row['slug'] }}')" type="button"
                                             wire:confirm="{{ $row['laporan_total'] > 0
                                                 ? 'Kartu ini punya ' . $row['laporan_total'] . ' laporan. Hapus kartu beserta semua konten detailnya?'
                                                 : 'Hapus kartu ini?' }}"
-                                            class="admin-btn admin-btn--danger admin-btn--sm">Hapus</button>
-                                </div>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="7" class="py-14 text-center">
-                                <svg class="w-10 h-10 mx-auto text-admin-muted mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.3" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-4l-2 3h-4l-2-3H4"/>
-                                </svg>
-                                <p class="text-sm font-medium text-admin-ash">Tidak ada kartu dari API</p>
-                                <p class="mt-1 text-xs text-admin-muted">
-                                    Periksa <code class="font-mono">DEFORESTORY_API_URL</code>, lalu tekan Refresh.
-                                </p>
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+                                            class="admin-btn admin-btn--quiet-danger admin-btn--sm">Hapus</button>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="7" class="p-0">
+                                    @if ($search)
+                                        <x-admin.empty title="Tidak ada kartu yang cocok" icon="search">
+                                            Coba kata kunci lain, atau kosongkan pencarian.
+                                        </x-admin.empty>
+                                    @else
+                                        <x-admin.empty title="Belum ada kartu kasus">
+                                            Kartu muncul di sini setelah web Deforestory mengirimkannya ke CMS.
+                                        </x-admin.empty>
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
 
-        <div class="mt-4">
-            {{ $cases->links('vendor.pagination.admin') }}
+            {{-- Tanpa ['livewire' => true], dan itu disengaja: komponen ini
+                 memotong halamannya sendiri dari ?page= di URL (datanya array
+                 dari API), bukan dari keadaan paginasi Livewire. Tombol
+                 gotoPage() tidak akan memindahkan apa pun; yang bekerja adalah
+                 tautan biasa yang memuat ulang halaman.
+
+                 withPath: setelah komponen dirender ulang (mis. sehabis
+                 mengetik di kotak cari), request()->url() menunjuk
+                 /livewire/update, dan tanpa ini tautan halamannya ikut ke sana. --}}
+            {{ $cases->withPath(route('deforestory.index'))->links('vendor.pagination.admin') }}
         </div>
     </div>
+
+    <x-admin.toast />
 </div>

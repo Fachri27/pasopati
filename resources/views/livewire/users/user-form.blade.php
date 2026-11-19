@@ -1,113 +1,109 @@
 <div>
-    <section id="hero" class="flex flex-col justify-center items-center">
-        <div class="max-w-md mx-auto">
-            <h1 class="text-2xl font-bold mb-6 text-admin-ash">
-                {{ $userId ? 'Edit Profile' : 'Add User' }}
-            </h1>
+    @php
+        // Halaman ubah juga bisa dibuka editor, sedangkan daftar pengguna
+        // hanya untuk admin. Remah, tombol kembali, dan Batal karena itu
+        // mengarah ke daftar hanya bila pemakainya memang bisa membukanya.
+        $bisaKeDaftar = auth()->user()->role === 'admin';
+        $kembali = $bisaKeDaftar ? route('user.index') : route('dashboard');
+        $judul = ! $userId ? 'Pengguna baru' : ((int) $userId === auth()->id() ? 'Profil saya' : 'Ubah pengguna');
 
-            <form wire:submit.prevent="save">
-                <div class="flex items-center space-x-2">
-                    <div class="mb-3 w-1/2">
-                        <input type="text" wire:model.defer="name" placeholder="Name" class="w-full border rounded p-2">
-                        @error('name') <p class="text-red-400 text-sm">{{ $message }}</p> @enderror
+        // Akun komentar yang masuk lewat Google menyimpan alamat avatar utuh,
+        // bukan path di storage.
+        $fotoLama = $existing_image
+            ? (\Illuminate\Support\Str::startsWith($existing_image, ['http://', 'https://']) ? $existing_image : asset('storage/' . $existing_image))
+            : null;
+    @endphp
+
+    <x-admin.page-header :title="$judul"
+                         :crumbs="$bisaKeDaftar ? [['Pengguna', route('user.index')]] : []"
+                         :back="$kembali"
+                         narrow>
+        <a href="{{ $kembali }}" class="admin-btn admin-btn--quiet admin-btn--sm">Batal</a>
+        <button type="submit" form="form-pengguna" wire:loading.attr="disabled" wire:target="save"
+                class="admin-btn admin-btn--primary admin-btn--sm">
+            <span wire:loading.remove wire:target="save">{{ $userId ? 'Simpan perubahan' : 'Simpan pengguna' }}</span>
+            <span wire:loading wire:target="save">Menyimpan…</span>
+        </button>
+    </x-admin.page-header>
+
+    <div class="admin-wrap admin-wrap--narrow admin-body">
+        <form id="form-pengguna" wire:submit.prevent="save" class="grid gap-5">
+            <x-admin.card title="Akun">
+                <div class="grid gap-4 sm:grid-cols-2">
+                    <div>
+                        <label for="pengguna-nama" class="admin-label">Nama</label>
+                        <input id="pengguna-nama" type="text" wire:model.defer="name" autocomplete="name"
+                               class="admin-input" @error('name') aria-invalid="true" @enderror>
+                        @error('name') <p class="admin-error">{{ $message }}</p> @enderror
                     </div>
-
-                    <div class="mb-3 w-1/2">
-                        <input type="email" wire:model.defer="email" placeholder="Email"
-                            class="w-full border rounded p-2">
-                        @error('email') <p class="text-red-400 text-sm">{{ $message }}</p> @enderror
+                    <div>
+                        <label for="pengguna-email" class="admin-label">Email</label>
+                        <input id="pengguna-email" type="email" wire:model.defer="email" autocomplete="email"
+                               class="admin-input" @error('email') aria-invalid="true" @enderror>
+                        @error('email') <p class="admin-error">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label for="pengguna-peran" class="admin-label">Peran</label>
+                        <select id="pengguna-peran" wire:model="role" required
+                                class="admin-input sm:max-w-xs" @error('role') aria-invalid="true" @enderror>
+                            <option value="">Pilih peran</option>
+                            @foreach (['admin', 'editor'] as $r)
+                                <option value="{{ $r }}">{{ ucfirst($r) }}</option>
+                            @endforeach
+                        </select>
+                        <p class="admin-hint">Admin bisa mengelola pengguna; editor hanya mengelola konten.</p>
+                        {{-- Pilihan peran hanya admin dan editor, jadi akun
+                             komentar tampil tanpa peran terpilih. Tanpa
+                             keterangan ini form tampak rusak. --}}
+                        @if ($userId && ! in_array($role, ['admin', 'editor'], true))
+                            <p class="admin-hint">Akun ini berperan {{ $role ?: 'kosong' }} (akun komentar pembaca). Menyimpan form ini akan memberinya akses CMS sesuai peran yang dipilih.</p>
+                        @endif
+                        @error('role') <p class="admin-error">{{ $message }}</p> @enderror
                     </div>
                 </div>
+            </x-admin.card>
 
-                <div class="mb-3">
-                    <input type="password" wire:model.defer="password" placeholder="Password"
-                        class="w-full border rounded p-2">
-                    @error('password') <p class="text-red-400 text-sm">{{ $message }}</p> @enderror
+            <x-admin.card title="Password"
+                          :description="$userId ? 'Kosongkan keduanya bila password tidak diganti.' : 'Paling sedikit 6 karakter.'">
+                <div class="grid gap-4 sm:grid-cols-2">
+                    <div>
+                        <label for="pengguna-password" class="admin-label">{{ $userId ? 'Password baru' : 'Password' }}</label>
+                        <input id="pengguna-password" type="password" wire:model.defer="password" autocomplete="new-password"
+                               class="admin-input" @error('password') aria-invalid="true" @enderror>
+                        @error('password') <p class="admin-error">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label for="pengguna-password-ulang" class="admin-label">Ulangi password</label>
+                        <input id="pengguna-password-ulang" type="password" wire:model.defer="password_confirmation" autocomplete="new-password"
+                               class="admin-input">
+                    </div>
                 </div>
+            </x-admin.card>
 
-                <div class="mb-3">
-                    <input type="password" wire:model.defer="password_confirmation" placeholder="Confirm Password"
-                        class="w-full border rounded p-2">
-                </div>
-
-                {{-- <div class="w-full max-w-lg mb-3">
-                    <input type="file" wire:model="image" class="w-full">
-                    @error('image') <p class="text-red-400 text-sm">{{ $message }}</p> @enderror
-
+            <x-admin.card title="Foto profil" description="Tampil di sidebar CMS. Tanpa foto, yang tampil huruf depan nama.">
+                <div class="flex items-center gap-4">
                     @if ($image)
-                    <div class="mt-3">
-                        <img src="{{ $image->temporaryUrl() }}" alt="Preview"
-                            class="w-16 h-16 rounded-full object-cover border">
-                    </div>
-                    @elseif ($existing_image)
-                    <div class="mt-3">
-                        <img src="{{ asset('storage/' . $existing_image) }}" alt="Avatar"
-                            class="w-16 h-16 rounded-full object-cover border">
-                    </div>
+                        <img src="{{ $image->temporaryUrl() }}" alt="Pratinjau foto baru"
+                             class="size-14 shrink-0 rounded-full border border-admin-line object-cover">
+                    @elseif ($fotoLama)
+                        <img src="{{ $fotoLama }}" alt="Foto saat ini" referrerpolicy="no-referrer"
+                             class="size-14 shrink-0 rounded-full border border-admin-line object-cover">
+                    @else
+                        <span class="grid size-14 shrink-0 place-items-center rounded-full bg-admin-tint-strong text-admin-muted">
+                            <x-admin.icon name="user" class="size-5" />
+                        </span>
                     @endif
-                </div> --}}
-
-                <div class="w-full max-w-lg mb-3"
-                    x-data="{ fileName: '{{ $image ? basename($image) : 'No File Selected' }}' }">
-
-                    <div class="relative group">
-                        <input type="file" name="image" id="image" wire:model="image"
-                            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                            @change="fileName = $event.target.files.length ? $event.target.files[0].name : 'No File Selected'">
-
-                        <div class="flex items-center justify-between w-full border border-admin-line rounded-xl bg-admin-surface p-3 transition-all duration-200 ease-in-out focus-within:border-admin-amber focus-within:ring-2 focus-within:ring-indigo-400/50 group-hover:shadow-md">
-                            <div class="flex items-center gap-2">
-                                <div class="bg-admin-raised p-2 rounded-lg text-admin-muted">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/>
-                                    </svg>
-                                </div>
-                                <span x-text="fileName" class="text-admin-muted text-sm truncate w-44"></span>
-                            </div>
-
-                            <div class="text-admin-muted">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
-                                </svg>
-                            </div>
-                            @if ($image)
-                            <div class="mt-3">
-                                <img src="{{ $image->temporaryUrl() }}" alt="Preview"
-                                    class="w-16 h-16 rounded-full object-cover border">
-                            </div>
-                            @elseif ($existing_image)
-                            <div class="mt-3">
-                                <img src="{{ asset('storage/' . $existing_image) }}" alt="Avatar"
-                                    class="w-16 h-16 rounded-full object-cover border">
-                            </div>
-                            @endif
-                        </div>
+                    <div class="min-w-0 flex-1">
+                        <input type="file" name="image" id="image" wire:model="image" accept="image/png,image/jpeg"
+                               aria-label="Foto profil" class="admin-input" @error('image') aria-invalid="true" @enderror>
+                        <p class="admin-hint" wire:loading.remove wire:target="image">JPG atau PNG, paling besar 2 MB.</p>
+                        <p class="admin-hint" wire:loading wire:target="image">Mengunggah…</p>
+                        @error('image') <p class="admin-error">{{ $message }}</p> @enderror
                     </div>
-
-                    @if(isset($user) && $user->image)
-                    <div class="mt-3">
-                        <img src="{{ asset('storage/' . $user->image) }}" alt="Avatar"
-                            class="w-16 h-16 rounded-full object-cover border">
-                    </div>
-                    @endif
                 </div>
+            </x-admin.card>
+        </form>
+    </div>
 
-                <div class="mb-3">
-                    <select wire:model="role"
-                        class="w-full border px-3 py-2 rounded-lg focus:ring focus:border-admin-amber" required>
-                        <option value="">Pilih Role</option>
-                        @foreach(['admin','editor'] as $r)
-                        <option value="{{ $r }}">{{ ucfirst($r) }}</option>
-                        @endforeach
-                    </select>
-                    @error('role') <p class="text-red-400 text-sm">{{ $message }}</p> @enderror
-                </div>
-
-                <button type="submit" class="bg-admin-amber text-white px-4 py-2 rounded w-full">
-                    {{ $userId ? 'Update User' : 'Add User' }}
-                </button>
-            </form>
-        </div>
-
-    </section>
+    <x-admin.toast />
 </div>

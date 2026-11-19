@@ -1,724 +1,516 @@
-<div>
-    <div class="my-6" x-data="{ lang: 'id' }">
-        <div class="max-w-7xl mx-auto bg-admin-surface py-8 mb-20 px-8 rounded-xl shadow-md"
-            x-data="{ page_type: @entangle('page_type') }">
+<div x-data="{ lang: 'id' }">
+    <x-admin.page-header :title="$page ? 'Ubah artikel' : 'Artikel baru'"
+                         :crumbs="[['Artikel', route('pages.index')]]"
+                         :back="route('pages.index')">
+        @if ($page)
+            {{-- Pratinjau membaca versi yang TERSIMPAN, bukan isian yang
+                 sedang diketik — simpan dulu kalau ingin melihat perubahan. --}}
+            <a href="{{ route('page.preview', ['locale' => app()->getLocale(), 'page_type' => $page->page_type, 'slug' => $page->slug]) }}"
+               target="_blank" rel="noopener" class="admin-btn admin-btn--quiet admin-btn--sm"
+               title="Membuka versi yang terakhir disimpan">
+                <x-admin.icon name="external" class="size-3.5" />
+                Pratinjau
+            </a>
+        @endif
+        <a href="{{ route('pages.index') }}" class="admin-btn admin-btn--quiet admin-btn--sm">Batal</a>
+        <button type="submit" form="form-artikel" wire:loading.attr="disabled" wire:target="save"
+                class="admin-btn admin-btn--primary admin-btn--sm">
+            <span wire:loading.remove wire:target="save">{{ $page ? 'Simpan perubahan' : 'Simpan artikel' }}</span>
+            <span wire:loading wire:target="save">Menyimpan…</span>
+        </button>
 
-            {{-- Breadcrumb --}}
-            <nav class="text-sm text-admin-ash mb-6 flex items-center gap-2">
-                <a href="{{ route('pages.index') }}" class="text-admin-smoke hover:text-admin-amber font-medium">
-                    Page Artikel
-                </a>
-                <span class="text-admin-muted">›</span>
-                <span class="text-admin-amber font-semibold">
-                    {{ $page ? 'Edit Page' : 'Tambah Artikel' }}
-                </span>
-            </nav>
+        <x-slot:aside>
+            {{-- Judul, ringkasan, isi, blok, dan berkas impor ditulis per
+                 bahasa; isian lain berlaku untuk keduanya. --}}
+            <div class="admin-tabs" role="group" aria-label="Bahasa isian">
+                <button type="button" @click="lang = 'id'" :aria-pressed="lang === 'id' ? 'true' : 'false'">Indonesia</button>
+                <button type="button" @click="lang = 'en'" :aria-pressed="lang === 'en' ? 'true' : 'false'">English</button>
+            </div>
+        </x-slot:aside>
+    </x-admin.page-header>
 
-            <h1 class="text-2xl font-bold mb-8 text-admin-ash">
-                {{ $page ? 'Edit Page' : 'Add Page' }}
-            </h1>
+    <div class="admin-wrap admin-body" x-data="{ page_type: @entangle('page_type') }">
+        {{-- Isian dua bahasa tidak tampil bersamaan, jadi galat di bahasa yang
+             sedang tersembunyi tidak akan terlihat di samping isiannya.
+             Ringkasan ini menampilkan semuanya sekaligus. --}}
+        @if ($errors->any())
+            <div class="admin-alert mb-5" role="alert">
+                <p class="font-medium">Artikel belum tersimpan.</p>
+                <ul class="mt-1 list-disc pl-4">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
 
-            <form wire:submit.prevent="save">
-                @if ($errors->any())
-                    <div class="bg-red-500/10 border border-red-400 text-red-400 px-4 py-3 rounded mb-6">
-                        <ul class="list-disc pl-5">
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
+        <form id="form-artikel" wire:submit.prevent="save" class="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+
+            {{-- ================= KOLOM UTAMA ================= --}}
+            <div class="grid min-w-0 gap-5">
+
+                <x-admin.card title="Judul">
+                    {{-- Judul & slug Indonesia --}}
+                    <div x-show="lang === 'id'" x-data="{
+                        title: @js(old('title_id', $title_id ?? '')),
+                        slug: @js(old('slugId', $slugId ?? '')),
+                        makeSlug(text) {
+                            return text.toLowerCase()
+                                .replace(/[^a-z0-9]+/g, '-')
+                                .replace(/^-+|-+$/g, '');
+                        }
+                     }" x-init="if(title && !slug){ slug = makeSlug(title) }" class="grid gap-4">
+                        <div>
+                            <label for="artikel-judul-id" class="admin-label">Judul (Indonesia)</label>
+                            <input id="artikel-judul-id" type="text" wire:model="title_id" x-model="title" @input="slug = makeSlug(title)"
+                                   class="admin-input" @error('title_id') aria-invalid="true" @enderror>
+                            @error('title_id') <p class="admin-error">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label for="artikel-slug-id" class="admin-label">Slug</label>
+                            <input id="artikel-slug-id" type="text" x-model="slug" readonly
+                                   class="admin-input font-admin-mono bg-admin-inset text-[13px] text-admin-ash">
+                            <p class="admin-hint">Dibuat otomatis dari judul.</p>
+                        </div>
                     </div>
-                @endif
-                <div class="grid grid-cols-12 gap-6">
 
-                    {{-- ================= LEFT COLUMN ================= --}}
-                    <div class="col-span-12 lg:col-span-4">
-                        <div class="admin-card p-5 space-y-4 sticky top-6">
+                    {{-- Judul & slug English --}}
+                    <div x-show="lang === 'en'" x-cloak x-data="{
+                        title: @js(old('title_en', $title_en ?? '')),
+                        slug: @js(old('slugEn', $slugEn ?? '')),
+                        makeSlug(text) {
+                            return text.toLowerCase()
+                                .replace(/[^a-z0-9]+/g, '-')
+                                .replace(/^-+|-+$/g, '');
+                        }
+                     }" x-init="if(title && !slug){ slug = makeSlug(title) }" class="grid gap-4">
+                        <div>
+                            <label for="artikel-judul-en" class="admin-label">Judul (English)</label>
+                            <input id="artikel-judul-en" type="text" wire:model="title_en" x-model="title" @input="slug = makeSlug(title)"
+                                   class="admin-input" @error('title_en') aria-invalid="true" @enderror>
+                            @error('title_en') <p class="admin-error">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label for="artikel-slug-en" class="admin-label">Slug</label>
+                            <input id="artikel-slug-en" type="text" x-model="slug" readonly
+                                   class="admin-input font-admin-mono bg-admin-inset text-[13px] text-admin-ash">
+                            <p class="admin-hint">Dibuat otomatis dari judul.</p>
+                        </div>
+                    </div>
+                </x-admin.card>
 
-                            {{-- Language --}}
+                <x-admin.card title="Ringkasan" description="Excerpt: pengantar singkat yang tampil di daftar artikel.">
+                    <div x-show="lang === 'id'">
+                        {{-- excerpt_editor_id --}}
+                        @includeWhen(true, 'front.partials.tinymce-excerpt-id')
+                    </div>
+
+                    <div x-show="lang === 'en'">
+                        {{-- excerpt_editor_en --}}
+                        @includeWhen(true, 'front.partials.tinymce-excerpt-en')
+                    </div>
+                </x-admin.card>
+
+                <x-admin.card title="Konten paragraf"
+                              description="Isi artikel biasa. Untuk blok khusus (info acara, agenda, dll.) pakai bagian Blok konten terstruktur di bawah.">
+                    <div x-show="lang === 'id'">
+                        @includeWhen(true, 'front.partials.tinymce-content-id')
+                    </div>
+
+                    <div x-show="lang === 'en'">
+                        @includeWhen(true, 'front.partials.tinymce-content-en')
+                    </div>
+                </x-admin.card>
+
+                {{-- Blok konten: hanya untuk Expose. Markup blok Indonesia dan
+                     English sama persis kecuali kode bahasanya, jadi keduanya
+                     dirender dari satu perulangan supaya tidak pernah berbeda. --}}
+                @php
+                    $namaBlok = [
+                        'paragraph' => 'Paragraf',
+                        'image' => 'Gambar',
+                        'event_info_box' => 'Info acara',
+                        'agenda_day' => 'Agenda',
+                        'speaker_bio' => 'Pembicara',
+                        'quote' => 'Kutipan',
+                    ];
+                    $isianKecil = 'admin-input h-8 min-h-8 py-0 text-[13px]';
+                @endphp
+
+                <div x-show="page_type === 'expose'">
+                    <x-admin.card title="Blok konten terstruktur"
+                                  description="Blok khusus seperti info acara, agenda, bio pembicara, kutipan, atau gambar.">
+                        @foreach (['id' => $content_blocks_id, 'en' => $content_blocks_en] as $loc => $blocks)
+                            <div x-show="lang === '{{ $loc }}'" @if ($loc !== 'id') x-cloak @endif class="grid gap-4">
+                                @foreach ($blocks as $index => $block)
+                                    <div class="rounded-md border border-admin-line bg-admin-inset" wire:key="block_{{ $loc }}_{{ $index }}_{{ $blocksVersion }}">
+                                        <div class="flex items-center gap-2 border-b border-admin-line py-1.5 pr-1.5 pl-3">
+                                            <span class="admin-num text-[12px] text-admin-muted">{{ $index + 1 }}</span>
+                                            <span class="admin-cap admin-cap--quiet">{{ $namaBlok[$block['type']] ?? $block['type'] }}</span>
+                                            <div class="ml-auto flex items-center gap-0.5">
+                                                <button type="button" wire:click="moveBlockUp('{{ $loc }}', {{ $index }})" class="admin-icon-btn size-7"
+                                                        title="Naikkan blok" aria-label="Naikkan blok {{ $index + 1 }}" {{ $loop->first ? 'disabled' : '' }}>
+                                                    <x-admin.icon name="up" class="size-3.5" />
+                                                </button>
+                                                <button type="button" wire:click="moveBlockDown('{{ $loc }}', {{ $index }})" class="admin-icon-btn size-7"
+                                                        title="Turunkan blok" aria-label="Turunkan blok {{ $index + 1 }}" {{ $loop->last ? 'disabled' : '' }}>
+                                                    <x-admin.icon name="down" class="size-3.5" />
+                                                </button>
+                                                <button type="button" wire:click="removeBlock('{{ $loc }}', {{ $index }})"
+                                                        wire:confirm="Buang blok ini beserta isinya?"
+                                                        class="admin-icon-btn size-7 hover:text-admin-ember"
+                                                        title="Buang blok" aria-label="Buang blok {{ $index + 1 }}">
+                                                    <x-admin.icon name="trash" class="size-3.5" />
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div class="p-3">
+                                            @switch($block['type'])
+                                                @case('paragraph')
+                                                    @php $editorIdx = $loop->index; @endphp
+                                                    <div x-data="{
+                                                        html: $wire.$entangle('content_blocks_{{ $loc }}.{{ $editorIdx }}.data.html'),
+                                                        initEditor() {
+                                                            let id = 'paragraph_editor_{{ $loc }}_{{ $editorIdx }}';
+                                                            if (tinymce.get(id)) tinymce.get(id).remove();
+                                                            let self = this;
+                                                            tinymce.init({
+                                                                target: document.getElementById(id),
+                                                                plugins: 'advlist link lists code',
+                                                                toolbar: 'bold italic underline | bullist numlist | link | undo redo | code',
+                                                                menubar: false,
+                                                                statusbar: false,
+                                                                // Bawaan TinyMCE 400px; satu artikel bisa berisi
+                                                                // banyak blok paragraf, jadi dibuat lebih pendek
+                                                                // supaya daftar bloknya tidak terlalu panjang.
+                                                                height: 240,
+                                                                skin: true,
+                                                                content_css: true,
+                                                                license_key: 'gpl',
+                                                                promotion: false,
+                                                                branding: false,
+                                                                valid_elements: '*[*]',
+                                                                entity_encoding: 'raw',
+                                                                setup(editor) {
+                                                                    editor.on('init', () => {
+                                                                        editor.setContent(self.html || '');
+                                                                    });
+                                                                    editor.on('change keyup', () => {
+                                                                        self.html = editor.getContent();
+                                                                    });
+                                                                }
+                                                            });
+                                                        }
+                                                    }" x-init="initEditor" wire:ignore>
+                                                        <textarea id="paragraph_editor_{{ $loc }}_{{ $editorIdx }}" rows="5" class="admin-input font-admin-mono text-[13px]"></textarea>
+                                                    </div>
+                                                    @break
+                                                @case('image')
+                                                    <div class="grid gap-3" x-data="{
+                                                        previewUrl: @js(
+                                                            (isset($block['data']['src']) && $block['data']['src'] instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile)
+                                                                ? $block['data']['src']->temporaryUrl()
+                                                                : (!empty($block['data']['src']) ? asset('storage/' . $block['data']['src']) : '')
+                                                        )
+                                                    }">
+                                                        <div>
+                                                            <label class="admin-label">Unggah gambar</label>
+                                                            <input type="file" accept="image/*"
+                                                                   x-on:change="
+                                                                       let file = $event.target.files[0];
+                                                                       if (file) {
+                                                                           previewUrl = URL.createObjectURL(file);
+                                                                           $wire.upload('content_blocks_{{ $loc }}.{{ $index }}.data.src', file, () => {}, () => {}, (event) => {});
+                                                                       }"
+                                                                   class="admin-input">
+                                                        </div>
+                                                        <template x-if="previewUrl">
+                                                            <div>
+                                                                <img :src="previewUrl" alt="Pratinjau gambar blok"
+                                                                     class="h-28 rounded-md border border-admin-line"
+                                                                     :class="{
+                                                                         'mx-auto': $wire.content_blocks_{{ $loc }}[{{ $index }}].data.alignment === 'center',
+                                                                         'ml-0 mr-auto': $wire.content_blocks_{{ $loc }}[{{ $index }}].data.alignment === 'left',
+                                                                         'ml-auto mr-0': $wire.content_blocks_{{ $loc }}[{{ $index }}].data.alignment === 'right',
+                                                                         'w-full': $wire.content_blocks_{{ $loc }}[{{ $index }}].data.alignment === 'full',
+                                                                         'object-cover': $wire.content_blocks_{{ $loc }}[{{ $index }}].data.alignment !== 'full'
+                                                                     }">
+                                                            </div>
+                                                        </template>
+                                                        <div class="grid gap-3 sm:grid-cols-2">
+                                                            <div>
+                                                                <label class="admin-label">Perataan</label>
+                                                                <select wire:model="content_blocks_{{ $loc }}.{{ $index }}.data.alignment" class="admin-input">
+                                                                    <option value="center">Tengah</option>
+                                                                    <option value="left">Kiri (mengambang)</option>
+                                                                    <option value="right">Kanan (mengambang)</option>
+                                                                    <option value="full">Selebar kolom</option>
+                                                                </select>
+                                                            </div>
+                                                            <div class="sm:col-span-2">
+                                                                <label class="admin-label">Keterangan gambar</label>
+                                                                <input type="text" wire:model="content_blocks_{{ $loc }}.{{ $index }}.data.caption" class="admin-input">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    @break
+                                                @case('event_info_box')
+                                                    <div class="grid gap-3 sm:grid-cols-2">
+                                                        <div>
+                                                            <label class="admin-label">Format</label>
+                                                            <input type="text" wire:model="content_blocks_{{ $loc }}.{{ $index }}.data.format" placeholder="Online / Offline / Hybrid" class="admin-input">
+                                                        </div>
+                                                        <div>
+                                                            <label class="admin-label">Tanggal</label>
+                                                            <input type="date" wire:model="content_blocks_{{ $loc }}.{{ $index }}.data.date" class="admin-input">
+                                                        </div>
+                                                        <div>
+                                                            <label class="admin-label">Waktu</label>
+                                                            <input type="text" wire:model="content_blocks_{{ $loc }}.{{ $index }}.data.time" placeholder="13:00 - 16:00 WIB" class="admin-input">
+                                                        </div>
+                                                        <div>
+                                                            <label class="admin-label">Tempat</label>
+                                                            <input type="text" wire:model="content_blocks_{{ $loc }}.{{ $index }}.data.venue" class="admin-input">
+                                                        </div>
+                                                        <div class="sm:col-span-2">
+                                                            <label class="admin-label">Link registrasi</label>
+                                                            @foreach (($block['data']['registration_links'] ?? []) as $linkIndex => $link)
+                                                                <div class="mb-1.5 flex items-center gap-2" wire:key="reglink_{{ $loc }}_{{ $index }}_{{ $linkIndex }}">
+                                                                    <input type="text" wire:model="content_blocks_{{ $loc }}.{{ $index }}.data.registration_links.{{ $linkIndex }}.day" placeholder="Hari 1" aria-label="Hari" class="{{ $isianKecil }} w-1/3">
+                                                                    <input type="url" wire:model="content_blocks_{{ $loc }}.{{ $index }}.data.registration_links.{{ $linkIndex }}.url" placeholder="https://..." aria-label="URL registrasi" class="{{ $isianKecil }} min-w-0 flex-1">
+                                                                    <button type="button" wire:click="removeRegLink('{{ $loc }}', {{ $index }}, {{ $linkIndex }})"
+                                                                            class="admin-icon-btn size-7 shrink-0" title="Buang link" aria-label="Buang link {{ $linkIndex + 1 }}">
+                                                                        <x-admin.icon name="close" class="size-3.5" />
+                                                                    </button>
+                                                                </div>
+                                                            @endforeach
+                                                            <button type="button" wire:click="addRegLink('{{ $loc }}', {{ $index }})" class="admin-btn admin-btn--quiet admin-btn--sm -ml-2">
+                                                                <x-admin.icon name="plus" class="size-3.5" />
+                                                                Tambah link
+                                                            </button>
+                                                        </div>
+                                                        <div class="sm:col-span-2">
+                                                            <label class="admin-label">Catatan</label>
+                                                            <textarea wire:model="content_blocks_{{ $loc }}.{{ $index }}.data.notes" rows="2" class="admin-input"></textarea>
+                                                        </div>
+                                                    </div>
+                                                    @break
+                                                @case('agenda_day')
+                                                    <div class="sm:w-56">
+                                                        <label class="admin-label">Hari/tanggal</label>
+                                                        <input type="date" wire:model="content_blocks_{{ $loc }}.{{ $index }}.data.day" class="admin-input">
+                                                    </div>
+                                                    <p class="admin-label mt-3">Sesi</p>
+                                                    @foreach (($block['data']['sessions'] ?? []) as $sessionIndex => $session)
+                                                        <div class="mb-3 grid gap-1.5 border-l-2 border-admin-line-strong pl-3" wire:key="session_{{ $loc }}_{{ $index }}_{{ $sessionIndex }}">
+                                                            <div class="grid grid-cols-4 gap-1.5">
+                                                                <input type="text" wire:model="content_blocks_{{ $loc }}.{{ $index }}.data.sessions.{{ $sessionIndex }}.time" placeholder="Waktu" aria-label="Waktu sesi" class="{{ $isianKecil }}">
+                                                                <input type="text" wire:model="content_blocks_{{ $loc }}.{{ $index }}.data.sessions.{{ $sessionIndex }}.title" placeholder="Judul sesi" aria-label="Judul sesi" class="{{ $isianKecil }} col-span-3">
+                                                            </div>
+                                                            <textarea wire:model="content_blocks_{{ $loc }}.{{ $index }}.data.sessions.{{ $sessionIndex }}.description" placeholder="Deskripsi" aria-label="Deskripsi sesi" rows="2" class="admin-input text-[13px]"></textarea>
+                                                            <div class="grid gap-1.5 sm:grid-cols-3">
+                                                                <input type="text" wire:model="content_blocks_{{ $loc }}.{{ $index }}.data.sessions.{{ $sessionIndex }}.moderator" placeholder="Moderator" aria-label="Moderator" class="{{ $isianKecil }}">
+                                                                <input type="text" wire:model="content_blocks_{{ $loc }}.{{ $index }}.data.sessions.{{ $sessionIndex }}.commentator" placeholder="Komentator" aria-label="Komentator" class="{{ $isianKecil }}">
+                                                                <input type="text" wire:model="content_blocks_{{ $loc }}.{{ $index }}.data.sessions.{{ $sessionIndex }}.speakers" placeholder="Pembicara (pisahkan koma)" aria-label="Pembicara" class="{{ $isianKecil }}">
+                                                            </div>
+                                                            <div>
+                                                                <button type="button" wire:click="removeSession('{{ $loc }}', {{ $index }}, {{ $sessionIndex }})"
+                                                                        wire:confirm="Buang sesi ini beserta isinya?"
+                                                                        class="admin-btn admin-btn--quiet-danger admin-btn--sm -ml-2">Buang sesi</button>
+                                                            </div>
+                                                        </div>
+                                                    @endforeach
+                                                    <button type="button" wire:click="addSession('{{ $loc }}', {{ $index }})" class="admin-btn admin-btn--quiet admin-btn--sm -ml-2">
+                                                        <x-admin.icon name="plus" class="size-3.5" />
+                                                        Tambah sesi
+                                                    </button>
+                                                    @break
+                                                @case('speaker_bio')
+                                                    <div class="grid gap-3 sm:grid-cols-2" x-data="{
+                                                        photoUrl: @js(
+                                                            (isset($block['data']['photo']) && $block['data']['photo'] instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile)
+                                                                ? $block['data']['photo']->temporaryUrl()
+                                                                : (!empty($block['data']['photo']) ? asset('storage/' . $block['data']['photo']) : '')
+                                                        )
+                                                    }">
+                                                        <div>
+                                                            <label class="admin-label">Nama</label>
+                                                            <input type="text" wire:model="content_blocks_{{ $loc }}.{{ $index }}.data.name" class="admin-input">
+                                                        </div>
+                                                        <div>
+                                                            <label class="admin-label">Jabatan</label>
+                                                            <input type="text" wire:model="content_blocks_{{ $loc }}.{{ $index }}.data.title" class="admin-input">
+                                                        </div>
+                                                        <div class="sm:col-span-2">
+                                                            <label class="admin-label">Unggah foto</label>
+                                                            <div class="flex items-center gap-3">
+                                                                <template x-if="photoUrl">
+                                                                    <img :src="photoUrl" alt="Pratinjau foto pembicara" class="size-12 shrink-0 rounded-full border border-admin-line object-cover">
+                                                                </template>
+                                                                <input type="file" accept="image/*"
+                                                                       x-on:change="
+                                                                           let file = $event.target.files[0];
+                                                                           if (file) {
+                                                                               photoUrl = URL.createObjectURL(file);
+                                                                               $wire.upload('content_blocks_{{ $loc }}.{{ $index }}.data.photo', file, () => {}, () => {}, (event) => {});
+                                                                           }"
+                                                                       class="admin-input min-w-0 flex-1">
+                                                            </div>
+                                                        </div>
+                                                        <div class="sm:col-span-2">
+                                                            <label class="admin-label">Bio</label>
+                                                            <textarea wire:model="content_blocks_{{ $loc }}.{{ $index }}.data.bio" rows="3" class="admin-input"></textarea>
+                                                        </div>
+                                                    </div>
+                                                    @break
+                                                @case('quote')
+                                                    <div class="grid gap-3">
+                                                        <div>
+                                                            <label class="admin-label">Teks kutipan</label>
+                                                            <textarea wire:model="content_blocks_{{ $loc }}.{{ $index }}.data.text" rows="3" class="admin-input"></textarea>
+                                                        </div>
+                                                        <div>
+                                                            <label class="admin-label">Sumber</label>
+                                                            <input type="text" wire:model="content_blocks_{{ $loc }}.{{ $index }}.data.source" class="admin-input">
+                                                        </div>
+                                                    </div>
+                                                    @break
+                                            @endswitch
+
+                                            {{-- Jarak atas/bawah blok di halaman publik; kosong = bawaan tema. --}}
+                                            <div class="mt-3 flex flex-wrap gap-3 border-t border-admin-line pt-3">
+                                                <div>
+                                                    <label class="admin-label text-[12.5px] font-normal text-admin-muted">Jarak atas (px)</label>
+                                                    <input type="number" wire:model="content_blocks_{{ $loc }}.{{ $index }}.data.mt" placeholder="auto" class="{{ $isianKecil }} admin-num w-24">
+                                                </div>
+                                                <div>
+                                                    <label class="admin-label text-[12.5px] font-normal text-admin-muted">Jarak bawah (px)</label>
+                                                    <input type="number" wire:model="content_blocks_{{ $loc }}.{{ $index }}.data.mb" placeholder="auto" class="{{ $isianKecil }} admin-num w-24">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+
+                                @if (count($blocks) === 0)
+                                    <p class="text-[13px] text-admin-muted">Belum ada blok. Tambahkan dari tombol di bawah.</p>
+                                @endif
+
+                                <div class="flex flex-wrap gap-1.5">
+                                    @foreach ($namaBlok as $jenis => $nama)
+                                        <button type="button" wire:click="addBlock('{{ $loc }}', '{{ $jenis }}')" class="admin-btn admin-btn--ghost admin-btn--sm">
+                                            <x-admin.icon name="plus" class="size-3.5" />
+                                            {{ $nama }}
+                                        </button>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endforeach
+                    </x-admin.card>
+                </div>
+            </div>
+
+            {{-- ================= REL SAMPING ================= --}}
+            {{-- top-[68px]: bilah atas halaman (48px) menempel di atas, jadi
+                 kartu samping berhenti tepat di bawahnya. --}}
+            <div class="grid gap-5 lg:sticky lg:top-[68px]">
+                <x-admin.card title="Publikasi">
+                    <div class="grid gap-4">
+                        <div>
+                            <label for="artikel-status" class="admin-label">Status</label>
+                            <select id="artikel-status" wire:model="status" class="admin-input">
+                                <option value="draft">Draft</option>
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                            </select>
+                            @error('status') <p class="admin-error">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label for="artikel-terbit" class="admin-label">Tanggal terbit</label>
+                            <input id="artikel-terbit" type="date" wire:model="published_at" class="admin-input">
+                            @error('published_at') <p class="admin-error">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class="font-medium">Bahasa</label>
-                                <select x-model="lang" class="admin-input admin-select mt-1">
-                                    <option value="id">Indonesia</option>
-                                    <option value="en">English</option>
+                                <label for="artikel-jenis" class="admin-label">Jenis</label>
+                                <select id="artikel-jenis" wire:model="page_type" class="admin-input">
+                                    <option value="expose">Expose</option>
+                                    <option value="ngopini">Ngopini</option>
                                 </select>
                             </div>
-
-                            {{-- Title & Slug ID --}}
-                            <div x-show="lang === 'id'" x-data="{
-                                title: @js(old('title_id', $title_id ?? '')),
-                                slug: @js(old('slugId', $slugId ?? '')),
-                                makeSlug(text) {
-                                    return text.toLowerCase()
-                                        .replace(/[^a-z0-9]+/g, '-')
-                                        .replace(/^-+|-+$/g, '');
-                                }
-                             }" x-init="if(title && !slug){ slug = makeSlug(title) }">
-
-                                <label class="font-medium">Title (ID)</label>
-                                <input type="text" wire:model="title_id" x-model="title" @input="slug = makeSlug(title)"
-                                    class="admin-input mt-1">
-                                @error('title_id') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
-
-                                <label class="text-sm mt-2 block">Slug</label>
-                                <input type="text" x-model="slug" readonly
-                                    class="admin-input">
-                            </div>
-
-                            {{-- Title EN --}}
-                            <div x-show="lang === 'en'" x-data="{
-                                title: @js(old('title_en', $title_en ?? '')),
-                                slug: @js(old('slugEn', $slugEn ?? '')),
-                                makeSlug(text) {
-                                    return text.toLowerCase()
-                                        .replace(/[^a-z0-9]+/g, '-')
-                                        .replace(/^-+|-+$/g, '');
-                                }
-                             }" x-init="if(title && !slug){ slug = makeSlug(title) }">
-                                <label class="font-medium">Title (EN)</label>
-                                <input type="text" wire:model="title_en" x-model="title" @input="slug = makeSlug(title)"
-                                    class="admin-input mt-1">
-                                @error('title_en') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
-
-                                <label class="text-sm mt-2 block">Slug</label>
-                                <input type="text" x-model="slug" readonly
-                                    class="admin-input">
-                            </div>
-
-                            {{-- Publish + Page Type --}}
-                            <div class="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label class="text-sm">Publish</label>
-                                    <input type="date" wire:model="published_at"
-                                        class="w-full border rounded-lg px-2 py-2">
-                                </div>
-
-                                <div>
-                                    <label class="text-sm">Page Type</label>
-                                    <select wire:model="page_type" class="w-full border rounded-lg px-2 py-2">
-                                        <option value="expose">Expose</option>
-                                        <option value="ngopini">Ngopini</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            {{-- Source --}}
                             <div>
-                                <label class="font-medium">Source Type</label>
-                                <select wire:model="source_type" class="admin-input admin-select">
-                                    <option value="manual">Manual</option>
-                                    <option value="docx">DOCX / DOC</option>
-                                    <option value="pdf">PDF (ekstrak teks)</option>
-                                </select>
-                            </div>
-
-                            {{-- Upload --}}
-                            <div x-show="lang === 'id'">
-                                <label class="text-sm">Upload File (ID)</label>
-                                <input type="file" wire:model="file_import_id"
-                                    class="w-full border rounded-lg px-2 py-2">
-                                @error('file_import_id') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
-                            </div>
-
-                            <div x-show="lang === 'en'">
-                                <label class="text-sm">Upload File (EN)</label>
-                                <input type="file" wire:model="file_import_en"
-                                    class="w-full border rounded-lg px-2 py-2">
-                                @error('file_import_en') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
-                            </div>
-
-                            {{-- Featured Image --}}
-                            <div>
-                                <label class="font-medium">Featured Image</label>
-                                <input type="file" wire:model="featured_image"
-                                    class="w-full border rounded-lg px-2 py-2 mt-1">
-
-                                <div class="mt-3">
-                                    @if ($featured_image)
-                                        <img src="{{ $featured_image->temporaryUrl() }}"
-                                            class="w-20 h-20 rounded-lg object-cover border">
-                                    @elseif ($old_featured_image)
-                                        <img src="{{ asset('storage/' . $old_featured_image) }}"
-                                            class="w-20 h-20 rounded-lg object-cover border">
-                                    @endif
-                                </div>
-                            </div>
-
-                            {{-- Status --}}
-                            <div>
-                                <label class="font-medium">Status</label>
-                                <select wire:model="status" class="admin-input admin-select">
-                                    <option value="draft">Draft</option>
-                                    <option value="active">Active</option>
-                                    <option value="inactive">Inactive</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label for="" class="font-medium">Type</label>
-                                <select wire:model="type"
-                                    class="w-full border px-3 py-2 rounded-lg focus:ring focus:border-admin-amber">
+                                <label for="artikel-tampilan" class="admin-label">Tampilan</label>
+                                <select id="artikel-tampilan" wire:model="type" class="admin-input">
                                     <option value="parallax">Parallax</option>
                                     <option value="default">Default</option>
                                 </select>
                             </div>
+                        </div>
 
+                        {{-- Topik Expose (boleh lebih dari satu) --}}
+                        <div x-show="page_type === 'expose'">
+                            <p class="admin-label">Topik Expose</p>
+                            <div class="flex flex-wrap gap-1.5">
+                                <template x-for="item in ['deforestasi','kebakaran','pulp','mining']">
+                                    <label class="cursor-pointer rounded-full border px-2.5 py-1 text-[12.5px] font-medium has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-admin-focus"
+                                           :class="$wire.expose_type.includes(item) ? 'border-admin-smoke bg-admin-smoke text-admin-on-accent' : 'border-admin-line-strong bg-admin-surface text-admin-ash hover:bg-admin-tint'">
 
-                            {{-- Expose Type (MULTIPLE) --}}
-                            <div x-show="page_type === 'expose'">
-                                <label class="font-medium mb-2 block">Expose Type</label>
+                                        <input type="checkbox" class="sr-only" wire:model="expose_type"
+                                            :value="item">
 
-                                <div class="flex flex-wrap gap-2">
-                                    <template x-for="item in ['deforestasi','kebakaran','pulp','mining']">
-                                        <label class="px-3 py-1 border rounded-full cursor-pointer text-sm" :class="$wire.expose_type.includes(item) ? 'bg-admin-amber text-white' : 'bg-admin-surface text-admin-ash'">
-
-                                            <input type="checkbox" class="hidden" wire:model="expose_type"
-                                                :value="item">
-
-                                            <span x-text="item.replace('_',' ')"></span>
-                                        </label>
-                                    </template>
-                                </div>
+                                        <span x-text="item.replace('_',' ')"></span>
+                                    </label>
+                                </template>
                             </div>
-
-
+                            @error('expose_type') <p class="admin-error">{{ $message }}</p> @enderror
                         </div>
                     </div>
+                </x-admin.card>
 
-                    {{-- ================= RIGHT COLUMN ================= --}}
-                    <div class="col-span-12 lg:col-span-8 space-y-6">
+                <x-admin.card title="Gambar utama">
+                    @if ($featured_image)
+                        <img src="{{ $featured_image->temporaryUrl() }}" alt="Pratinjau gambar utama baru"
+                             class="mb-3 aspect-[16/9] w-full rounded-md border border-admin-line object-cover">
+                    @elseif ($old_featured_image)
+                        <img src="{{ asset('storage/' . $old_featured_image) }}" alt="Gambar utama saat ini"
+                             class="mb-3 aspect-[16/9] w-full rounded-md border border-admin-line object-cover">
+                    @endif
+                    <input type="file" wire:model="featured_image" accept="image/png,image/jpeg" aria-label="Gambar utama" class="admin-input">
+                    <p class="admin-hint" wire:loading.remove wire:target="featured_image">JPG atau PNG, paling besar 5 MB.</p>
+                    <p class="admin-hint" wire:loading wire:target="featured_image">Mengunggah…</p>
+                    @error('featured_image') <p class="admin-error">{{ $message }}</p> @enderror
+                </x-admin.card>
 
-                        {{-- Excerpt --}}
-                        <div class="bg-admin-surface border rounded-xl p-4">
-                            <h3 class="font-semibold mb-3">Excerpt</h3>
-
-                            <div x-show="lang === 'id'">
-                                {{-- excerpt_editor_id --}}
-                                @includeWhen(true, 'front.partials.tinymce-excerpt-id')
-                            </div>
-
-                            <div x-show="lang === 'en'">
-                                {{-- excerpt_editor_en --}}
-                                @includeWhen(true, 'front.partials.tinymce-excerpt-en')
-                            </div>
+                <x-admin.card title="Impor dokumen" description="Isi artikel bisa diambil dari berkas saat disimpan.">
+                    <div class="grid gap-4">
+                        <div>
+                            <label for="artikel-sumber" class="admin-label">Sumber isi</label>
+                            <select id="artikel-sumber" wire:model="source_type" class="admin-input">
+                                <option value="manual">Manual</option>
+                                <option value="docx">DOCX / DOC</option>
+                                <option value="pdf">PDF (ekstrak teks)</option>
+                            </select>
                         </div>
 
-                        {{-- Content Paragraph --}}
-                        <div class="bg-admin-surface border rounded-xl p-4">
-                            <h3 class="font-semibold mb-3">Konten Paragraf</h3>
-                            <p class="text-xs text-admin-muted mb-2">Gunakan editor ini untuk konten paragraf biasa. Untuk blok khusus (info acara, agenda, dll.) gunakan bagian "Blok Konten Terstruktur" di bawah.</p>
-
-                            <div x-show="lang === 'id'">
-                                @includeWhen(true, 'front.partials.tinymce-content-id')
-                            </div>
-
-                            <div x-show="lang === 'en'">
-                                @includeWhen(true, 'front.partials.tinymce-content-en')
-                            </div>
+                        <div x-show="lang === 'id'">
+                            <label for="artikel-berkas-id" class="admin-label">Berkas (Indonesia)</label>
+                            <input id="artikel-berkas-id" type="file" wire:model="file_import_id" class="admin-input">
+                            @error('file_import_id') <p class="admin-error">{{ $message }}</p> @enderror
                         </div>
 
-                        {{-- Content Blocks --}}
-                        <div x-show="page_type === 'expose'" class="bg-admin-surface border rounded-xl p-4">
-                            <h3 class="font-semibold mb-3">Blok Konten Terstruktur</h3>
-                            <p class="text-xs text-admin-muted mb-3">Tambahkan blok khusus seperti info acara, agenda, bio pembicara, quote, atau gambar.</p>
-
-                            {{-- ID Blocks --}}
-                            <div x-show="lang === 'id'" class="space-y-4">
-                                @foreach ($content_blocks_id as $index => $block)
-                                    <div class="border rounded-lg p-4 bg-admin-raised" wire:key="block_id_{{ $index }}_{{ $blocksVersion }}">
-                                        <div class="flex items-center justify-between mb-3">
-                                            <span class="inline-block px-3 py-1 text-xs font-semibold rounded-full
-                                                {{ $block['type'] === 'paragraph' ? 'bg-admin-amber/10 text-admin-amber' : '' }}
-                                                {{ $block['type'] === 'image' ? 'bg-violet-500/10 text-violet-400' : '' }}
-                                                {{ $block['type'] === 'event_info_box' ? 'bg-red-500/10 text-red-400' : '' }}
-                                                {{ $block['type'] === 'agenda_day' ? 'bg-emerald-500/10 text-emerald-400' : '' }}
-                                                {{ $block['type'] === 'speaker_bio' ? 'bg-admin-amber/10 text-admin-amber' : '' }}
-                                                {{ $block['type'] === 'quote' ? 'bg-admin-raised text-admin-ash' : '' }}">
-                                                {{ $block['type'] }}
-                                            </span>
-                                            <div class="flex gap-1">
-                                                <button type="button" wire:click="moveBlockUp('id', {{ $index }})" class="px-2 py-1 text-sm border rounded hover:bg-admin-raised" {{ $loop->first ? 'disabled' : '' }}>↑</button>
-                                                <button type="button" wire:click="moveBlockDown('id', {{ $index }})" class="px-2 py-1 text-sm border rounded hover:bg-admin-raised" {{ $loop->last ? 'disabled' : '' }}>↓</button>
-                                                <button type="button" wire:click="removeBlock('id', {{ $index }})" class="px-2 py-1 text-sm border rounded text-red-400 hover:bg-red-50">×</button>
-                                            </div>
-                                        </div>
-
-                                        @switch($block['type'])
-                                            @case('paragraph')
-                                                @php $editorIdx = $loop->index; @endphp
-                                                <div x-data="{
-                                                    html: $wire.$entangle('content_blocks_id.{{ $editorIdx }}.data.html'),
-                                                    initEditor() {
-                                                        let id = 'paragraph_editor_id_{{ $editorIdx }}';
-                                                        if (tinymce.get(id)) tinymce.get(id).remove();
-                                                        let self = this;
-                                                        tinymce.init({
-                                                            target: document.getElementById(id),
-                                                            plugins: 'advlist link lists code',
-                                                            toolbar: 'bold italic underline | bullist numlist | link | undo redo | code',
-                                                            menubar: false,
-                                                            statusbar: false,
-                                                            skin: true,
-                                                            content_css: true,
-                                                            license_key: 'gpl',
-                                                            promotion: false,
-                                                            branding: false,
-                                                            valid_elements: '*[*]',
-                                                            entity_encoding: 'raw',
-                                                            setup(editor) {
-                                                                editor.on('init', () => {
-                                                                    editor.setContent(self.html || '');
-                                                                });
-                                                                editor.on('change keyup', () => {
-                                                                    self.html = editor.getContent();
-                                                                });
-                                                            }
-                                                        });
-                                                    }
-                                                }" x-init="initEditor" wire:ignore>
-                                                    <textarea id="paragraph_editor_id_{{ $editorIdx }}" rows="5" class="admin-input font-mono text-sm"></textarea>
-                                                </div>
-                                                @break
-                                            @case('image')
-                                                <div class="space-y-3" x-data="{
-                                                    previewUrl: @js(
-                                                        (isset($block['data']['src']) && $block['data']['src'] instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile)
-                                                            ? $block['data']['src']->temporaryUrl()
-                                                            : (!empty($block['data']['src']) ? asset('storage/' . $block['data']['src']) : '')
-                                                    )
-                                                }">
-                                                    <div>
-                                                        <label class="text-xs font-medium">Upload Gambar</label>
-                                                        <input type="file" accept="image/*"
-                                                               x-on:change="
-                                                                   let file = $event.target.files[0];
-                                                                   if (file) {
-                                                                       previewUrl = URL.createObjectURL(file);
-                                                                       $wire.upload('content_blocks_id.{{ $index }}.data.src', file, () => {}, () => {}, (event) => {});
-                                                                   }"
-                                                               class="w-full border rounded-lg px-2 py-1.5 text-sm">
-                                                    </div>
-                                                    <template x-if="previewUrl">
-                                                        <div>
-                                                            <img :src="previewUrl"
-                                                                 class="h-28 rounded border"
-                                                                 :class="{
-                                                                     'mx-auto': $wire.content_blocks_id[{{ $index }}].data.alignment === 'center',
-                                                                     'ml-0 mr-auto': $wire.content_blocks_id[{{ $index }}].data.alignment === 'left',
-                                                                     'ml-auto mr-0': $wire.content_blocks_id[{{ $index }}].data.alignment === 'right',
-                                                                     'w-full': $wire.content_blocks_id[{{ $index }}].data.alignment === 'full',
-                                                                     'object-cover': $wire.content_blocks_id[{{ $index }}].data.alignment !== 'full'
-                                                                 }">
-                                                        </div>
-                                                    </template>
-                                                    <div class="grid grid-cols-2 gap-3">
-                                                        <div>
-                                                            <label class="text-xs font-medium">Alignment</label>
-                                                            <select wire:model="content_blocks_id.{{ $index }}.data.alignment" class="admin-input admin-select">
-                                                                <option value="center">Center</option>
-                                                                <option value="left">Left (float)</option>
-                                                                <option value="right">Right (float)</option>
-                                                                <option value="full">Full Width</option>
-                                                            </select>
-                                                        </div>
-                                                        <div class="col-span-2">
-                                                            <label class="text-xs font-medium">Caption</label>
-                                                            <input type="text" wire:model="content_blocks_id.{{ $index }}.data.caption" class="admin-input">
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                @break
-                                            @case('event_info_box')
-                                                <div class="grid grid-cols-2 gap-3">
-                                                    <div>
-                                                        <label class="text-xs font-medium">Format</label>
-                                                        <input type="text" wire:model="content_blocks_id.{{ $index }}.data.format" placeholder="Online / Offline / Hybrid" class="admin-input">
-                                                    </div>
-                                                    <div>
-                                                        <label class="text-xs font-medium">Tanggal</label>
-                                                        <input type="date" wire:model="content_blocks_id.{{ $index }}.data.date" class="admin-input">
-                                                    </div>
-                                                    <div>
-                                                        <label class="text-xs font-medium">Waktu</label>
-                                                        <input type="text" wire:model="content_blocks_id.{{ $index }}.data.time" placeholder="13:00 - 16:00 WIB" class="admin-input">
-                                                    </div>
-                                                    <div>
-                                                        <label class="text-xs font-medium">Tempat</label>
-                                                        <input type="text" wire:model="content_blocks_id.{{ $index }}.data.venue" class="admin-input">
-                                                    </div>
-                                                    <div class="col-span-2">
-                                                        <label class="text-xs font-medium">Link Registrasi</label>
-                                                        @foreach (($block['data']['registration_links'] ?? []) as $linkIndex => $link)
-                                                            <div class="flex gap-2 mb-1" wire:key="reglink_id_{{ $index }}_{{ $linkIndex }}">
-                                                                <input type="text" wire:model="content_blocks_id.{{ $index }}.data.registration_links.{{ $linkIndex }}.day" placeholder="Hari 1" class="w-1/3 border rounded px-2 py-1 text-sm">
-                                                                <input type="url" wire:model="content_blocks_id.{{ $index }}.data.registration_links.{{ $linkIndex }}.url" placeholder="https://..." class="flex-1 border rounded px-2 py-1 text-sm">
-                                                                <button type="button" wire:click="removeRegLink('id', {{ $index }}, {{ $linkIndex }})" class="text-red-400 text-sm px-2">×</button>
-                                                            </div>
-                                                        @endforeach
-                                                        <button type="button" wire:click="addRegLink('id', {{ $index }})" class="text-sm text-admin-amber hover:underline">+ Tambah Link</button>
-                                                    </div>
-                                                    <div class="col-span-2">
-                                                        <label class="text-xs font-medium">Catatan</label>
-                                                        <textarea wire:model="content_blocks_id.{{ $index }}.data.notes" rows="2" class="admin-input"></textarea>
-                                                    </div>
-                                                </div>
-                                                @break
-                                            @case('agenda_day')
-                                                <div>
-                                                    <label class="text-xs font-medium">Hari/Tanggal</label>
-                                                    <input type="date" wire:model="content_blocks_id.{{ $index }}.data.day" class="admin-input mb-3">
-                                                </div>
-                                                <label class="text-xs font-medium mb-1 block">Sesi</label>
-                                                @foreach (($block['data']['sessions'] ?? []) as $sessionIndex => $session)
-                                                    <div class="border-l-2 border-admin-amber pl-3 mb-3" wire:key="session_id_{{ $index }}_{{ $sessionIndex }}">
-                                                        <div class="grid grid-cols-4 gap-2 mb-1">
-                                                            <input type="text" wire:model="content_blocks_id.{{ $index }}.data.sessions.{{ $sessionIndex }}.time" placeholder="Waktu" class="border rounded px-2 py-1 text-sm">
-                                                            <input type="text" wire:model="content_blocks_id.{{ $index }}.data.sessions.{{ $sessionIndex }}.title" placeholder="Judul Sesi" class="col-span-3 border rounded px-2 py-1 text-sm">
-                                                        </div>
-                                                        <textarea wire:model="content_blocks_id.{{ $index }}.data.sessions.{{ $sessionIndex }}.description" placeholder="Deskripsi" rows="2" class="w-full border rounded px-2 py-1 text-sm mb-1"></textarea>
-                                                        <div class="grid grid-cols-3 gap-2 text-sm">
-                                                            <input type="text" wire:model="content_blocks_id.{{ $index }}.data.sessions.{{ $sessionIndex }}.moderator" placeholder="Moderator" class="border rounded px-2 py-1">
-                                                            <input type="text" wire:model="content_blocks_id.{{ $index }}.data.sessions.{{ $sessionIndex }}.commentator" placeholder="Komentator" class="border rounded px-2 py-1">
-                                                            <input type="text" wire:model="content_blocks_id.{{ $index }}.data.sessions.{{ $sessionIndex }}.speakers" placeholder="Pembicara (pisahkan koma)" class="border rounded px-2 py-1">
-                                                        </div>
-                                                        <button type="button" wire:click="removeSession('id', {{ $index }}, {{ $sessionIndex }})" class="text-xs text-red-400 hover:underline mt-1">Hapus sesi</button>
-                                                    </div>
-                                                @endforeach
-                                                <button type="button" wire:click="addSession('id', {{ $index }})" class="text-sm text-admin-amber hover:underline">+ Tambah Sesi</button>
-                                                @break
-                                            @case('speaker_bio')
-                                                <div class="grid grid-cols-2 gap-3" x-data="{
-                                                    photoUrl: @js(
-                                                        (isset($block['data']['photo']) && $block['data']['photo'] instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile)
-                                                            ? $block['data']['photo']->temporaryUrl()
-                                                            : (!empty($block['data']['photo']) ? asset('storage/' . $block['data']['photo']) : '')
-                                                    )
-                                                }">
-                                                    <div>
-                                                        <label class="text-xs font-medium">Nama</label>
-                                                        <input type="text" wire:model="content_blocks_id.{{ $index }}.data.name" class="admin-input">
-                                                    </div>
-                                                    <div>
-                                                        <label class="text-xs font-medium">Jabatan</label>
-                                                        <input type="text" wire:model="content_blocks_id.{{ $index }}.data.title" class="admin-input">
-                                                    </div>
-                                                    <div>
-                                                        <label class="text-xs font-medium">Upload Foto</label>
-                                                        <input type="file" accept="image/*"
-                                                               x-on:change="
-                                                                   let file = $event.target.files[0];
-                                                                   if (file) {
-                                                                       photoUrl = URL.createObjectURL(file);
-                                                                       $wire.upload('content_blocks_id.{{ $index }}.data.photo', file, () => {}, () => {}, (event) => {});
-                                                                   }"
-                                                               class="w-full border rounded-lg px-2 py-1.5 text-sm">
-                                                        <template x-if="photoUrl">
-                                                            <img :src="photoUrl" class="mt-1 h-16 w-16 rounded-full object-cover border">
-                                                        </template>
-                                                    </div>
-                                                    <div class="col-span-2">
-                                                        <label class="text-xs font-medium">Bio</label>
-                                                        <textarea wire:model="content_blocks_id.{{ $index }}.data.bio" rows="3" class="admin-input"></textarea>
-                                                    </div>
-                                                </div>
-                                                @break
-                                            @case('quote')
-                                                <div>
-                                                    <label class="text-xs font-medium">Teks Kutipan</label>
-                                                    <textarea wire:model="content_blocks_id.{{ $index }}.data.text" rows="3" class="admin-input"></textarea>
-                                                </div>
-                                                <div class="mt-2">
-                                                    <label class="text-xs font-medium">Sumber</label>
-                                                    <input type="text" wire:model="content_blocks_id.{{ $index }}.data.source" class="admin-input">
-                                                </div>
-                                                @break
-                                        @endswitch
-                                        <div class="flex gap-3 mt-3 pt-3 border-t border-admin-line">
-                                            <div>
-                                                <label class="text-xs font-medium text-admin-muted">Margin Top (px)</label>
-                                                <input type="number" wire:model="content_blocks_id.{{ $index }}.data.mt" placeholder="auto" class="w-24 border rounded px-2 py-1 text-sm">
-                                            </div>
-                                            <div>
-                                                <label class="text-xs font-medium text-admin-muted">Margin Bottom (px)</label>
-                                                <input type="number" wire:model="content_blocks_id.{{ $index }}.data.mb" placeholder="auto" class="w-24 border rounded px-2 py-1 text-sm">
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endforeach
-
-                                <div class="flex flex-wrap gap-2 pt-2">
-                                    <button type="button" wire:click="addBlock('id', 'paragraph')" class="px-3 py-1.5 text-sm border border-admin-line text-admin-amber rounded-lg hover:bg-admin-raised">+ Paragraph</button>
-                                    <button type="button" wire:click="addBlock('id', 'image')" class="px-3 py-1.5 text-sm border border-purple-300 text-violet-400 rounded-lg hover:bg-purple-50">+ Image</button>
-                                    <button type="button" wire:click="addBlock('id', 'event_info_box')" class="px-3 py-1.5 text-sm border border-red-300 text-red-400 rounded-lg hover:bg-red-50">+ Info Acara</button>
-                                    <button type="button" wire:click="addBlock('id', 'agenda_day')" class="px-3 py-1.5 text-sm border border-admin-line text-emerald-400 rounded-lg hover:bg-admin-raised">+ Agenda</button>
-                                    <button type="button" wire:click="addBlock('id', 'speaker_bio')" class="px-3 py-1.5 text-sm border border-admin-line text-admin-amber rounded-lg hover:bg-admin-raised">+ Pembicara</button>
-                                    <button type="button" wire:click="addBlock('id', 'quote')" class="px-3 py-1.5 text-sm border border-admin-line text-admin-ash rounded-lg hover:bg-admin-raised">+ Quote</button>
-                                </div>
-                            </div>
-
-                            {{-- EN Blocks --}}
-                            <div x-show="lang === 'en'" class="space-y-4">
-                                @foreach ($content_blocks_en as $index => $block)
-                                    <div class="border rounded-lg p-4 bg-admin-raised" wire:key="block_en_{{ $index }}_{{ $blocksVersion }}">
-                                        <div class="flex items-center justify-between mb-3">
-                                            <span class="inline-block px-3 py-1 text-xs font-semibold rounded-full
-                                                {{ $block['type'] === 'paragraph' ? 'bg-admin-amber/10 text-admin-amber' : '' }}
-                                                {{ $block['type'] === 'image' ? 'bg-violet-500/10 text-violet-400' : '' }}
-                                                {{ $block['type'] === 'event_info_box' ? 'bg-red-500/10 text-red-400' : '' }}
-                                                {{ $block['type'] === 'agenda_day' ? 'bg-emerald-500/10 text-emerald-400' : '' }}
-                                                {{ $block['type'] === 'speaker_bio' ? 'bg-admin-amber/10 text-admin-amber' : '' }}
-                                                {{ $block['type'] === 'quote' ? 'bg-admin-raised text-admin-ash' : '' }}">
-                                                {{ $block['type'] }}
-                                            </span>
-                                            <div class="flex gap-1">
-                                                <button type="button" wire:click="moveBlockUp('en', {{ $index }})" class="px-2 py-1 text-sm border rounded hover:bg-admin-raised" {{ $loop->first ? 'disabled' : '' }}>↑</button>
-                                                <button type="button" wire:click="moveBlockDown('en', {{ $index }})" class="px-2 py-1 text-sm border rounded hover:bg-admin-raised" {{ $loop->last ? 'disabled' : '' }}>↓</button>
-                                                <button type="button" wire:click="removeBlock('en', {{ $index }})" class="px-2 py-1 text-sm border rounded text-red-400 hover:bg-red-50">×</button>
-                                            </div>
-                                        </div>
-
-                                        @switch($block['type'])
-                                            @case('paragraph')
-                                                @php $editorIdx = $loop->index; @endphp
-                                                <div x-data="{
-                                                    html: $wire.$entangle('content_blocks_en.{{ $editorIdx }}.data.html'),
-                                                    initEditor() {
-                                                        let id = 'paragraph_editor_en_{{ $editorIdx }}';
-                                                        if (tinymce.get(id)) tinymce.get(id).remove();
-                                                        let self = this;
-                                                        tinymce.init({
-                                                            target: document.getElementById(id),
-                                                            plugins: 'advlist link lists code',
-                                                            toolbar: 'bold italic underline | bullist numlist | link | undo redo | code',
-                                                            menubar: false,
-                                                            statusbar: false,
-                                                            skin: true,
-                                                            content_css: true,
-                                                            license_key: 'gpl',
-                                                            promotion: false,
-                                                            branding: false,
-                                                            valid_elements: '*[*]',
-                                                            entity_encoding: 'raw',
-                                                            setup(editor) {
-                                                                editor.on('init', () => {
-                                                                    editor.setContent(self.html || '');
-                                                                });
-                                                                editor.on('change keyup', () => {
-                                                                    self.html = editor.getContent();
-                                                                });
-                                                            }
-                                                        });
-                                                    }
-                                                }" x-init="initEditor" wire:ignore>
-                                                    <textarea id="paragraph_editor_en_{{ $editorIdx }}" rows="5" class="admin-input font-mono text-sm"></textarea>
-                                                </div>
-                                                @break
-                                            @case('image')
-                                                <div class="space-y-3" x-data="{
-                                                    previewUrl: @js(
-                                                        (isset($block['data']['src']) && $block['data']['src'] instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile)
-                                                            ? $block['data']['src']->temporaryUrl()
-                                                            : (!empty($block['data']['src']) ? asset('storage/' . $block['data']['src']) : '')
-                                                    )
-                                                }">
-                                                    <div>
-                                                        <label class="text-xs font-medium">Upload Image</label>
-                                                        <input type="file" accept="image/*"
-                                                               x-on:change="
-                                                                   let file = $event.target.files[0];
-                                                                   if (file) {
-                                                                       previewUrl = URL.createObjectURL(file);
-                                                                       $wire.upload('content_blocks_en.{{ $index }}.data.src', file, () => {}, () => {}, (event) => {});
-                                                                   }"
-                                                               class="w-full border rounded-lg px-2 py-1.5 text-sm">
-                                                    </div>
-                                                    <template x-if="previewUrl">
-                                                        <div>
-                                                            <img :src="previewUrl"
-                                                                 class="h-28 rounded border"
-                                                                 :class="{
-                                                                     'mx-auto': $wire.content_blocks_en[{{ $index }}].data.alignment === 'center',
-                                                                     'ml-0 mr-auto': $wire.content_blocks_en[{{ $index }}].data.alignment === 'left',
-                                                                     'ml-auto mr-0': $wire.content_blocks_en[{{ $index }}].data.alignment === 'right',
-                                                                     'w-full': $wire.content_blocks_en[{{ $index }}].data.alignment === 'full',
-                                                                     'object-cover': $wire.content_blocks_en[{{ $index }}].data.alignment !== 'full'
-                                                                 }">
-                                                        </div>
-                                                    </template>
-                                                    <div class="grid grid-cols-2 gap-3">
-                                                        <div>
-                                                            <label class="text-xs font-medium">Alignment</label>
-                                                            <select wire:model="content_blocks_en.{{ $index }}.data.alignment" class="admin-input admin-select">
-                                                                <option value="center">Center</option>
-                                                                <option value="left">Left (float)</option>
-                                                                <option value="right">Right (float)</option>
-                                                                <option value="full">Full Width</option>
-                                                            </select>
-                                                        </div>
-                                                        <div class="col-span-2">
-                                                            <label class="text-xs font-medium">Caption</label>
-                                                            <input type="text" wire:model="content_blocks_en.{{ $index }}.data.caption" class="admin-input">
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                @break
-                                            @case('event_info_box')
-                                                <div class="grid grid-cols-2 gap-3">
-                                                    <div>
-                                                        <label class="text-xs font-medium">Format</label>
-                                                        <input type="text" wire:model="content_blocks_en.{{ $index }}.data.format" placeholder="Online / Offline / Hybrid" class="admin-input">
-                                                    </div>
-                                                    <div>
-                                                        <label class="text-xs font-medium">Date</label>
-                                                        <input type="date" wire:model="content_blocks_en.{{ $index }}.data.date" class="admin-input">
-                                                    </div>
-                                                    <div>
-                                                        <label class="text-xs font-medium">Time</label>
-                                                        <input type="text" wire:model="content_blocks_en.{{ $index }}.data.time" placeholder="13:00 - 16:00 WIB" class="admin-input">
-                                                    </div>
-                                                    <div>
-                                                        <label class="text-xs font-medium">Venue</label>
-                                                        <input type="text" wire:model="content_blocks_en.{{ $index }}.data.venue" class="admin-input">
-                                                    </div>
-                                                    <div class="col-span-2">
-                                                        <label class="text-xs font-medium">Registration Links</label>
-                                                        @foreach (($block['data']['registration_links'] ?? []) as $linkIndex => $link)
-                                                            <div class="flex gap-2 mb-1" wire:key="reglink_en_{{ $index }}_{{ $linkIndex }}">
-                                                                <input type="text" wire:model="content_blocks_en.{{ $index }}.data.registration_links.{{ $linkIndex }}.day" placeholder="Day 1" class="w-1/3 border rounded px-2 py-1 text-sm">
-                                                                <input type="url" wire:model="content_blocks_en.{{ $index }}.data.registration_links.{{ $linkIndex }}.url" placeholder="https://..." class="flex-1 border rounded px-2 py-1 text-sm">
-                                                                <button type="button" wire:click="removeRegLink('en', {{ $index }}, {{ $linkIndex }})" class="text-red-400 text-sm px-2">×</button>
-                                                            </div>
-                                                        @endforeach
-                                                        <button type="button" wire:click="addRegLink('en', {{ $index }})" class="text-sm text-admin-amber hover:underline">+ Add Link</button>
-                                                    </div>
-                                                    <div class="col-span-2">
-                                                        <label class="text-xs font-medium">Notes</label>
-                                                        <textarea wire:model="content_blocks_en.{{ $index }}.data.notes" rows="2" class="admin-input"></textarea>
-                                                    </div>
-                                                </div>
-                                                @break
-                                            @case('agenda_day')
-                                                <div>
-                                                    <label class="text-xs font-medium">Day/Date</label>
-                                                    <input type="date" wire:model="content_blocks_en.{{ $index }}.data.day" class="admin-input mb-3">
-                                                </div>
-                                                <label class="text-xs font-medium mb-1 block">Sessions</label>
-                                                @foreach (($block['data']['sessions'] ?? []) as $sessionIndex => $session)
-                                                    <div class="border-l-2 border-admin-amber pl-3 mb-3" wire:key="session_en_{{ $index }}_{{ $sessionIndex }}">
-                                                        <div class="grid grid-cols-4 gap-2 mb-1">
-                                                            <input type="text" wire:model="content_blocks_en.{{ $index }}.data.sessions.{{ $sessionIndex }}.time" placeholder="Time" class="border rounded px-2 py-1 text-sm">
-                                                            <input type="text" wire:model="content_blocks_en.{{ $index }}.data.sessions.{{ $sessionIndex }}.title" placeholder="Session Title" class="col-span-3 border rounded px-2 py-1 text-sm">
-                                                        </div>
-                                                        <textarea wire:model="content_blocks_en.{{ $index }}.data.sessions.{{ $sessionIndex }}.description" placeholder="Description" rows="2" class="w-full border rounded px-2 py-1 text-sm mb-1"></textarea>
-                                                        <div class="grid grid-cols-3 gap-2 text-sm">
-                                                            <input type="text" wire:model="content_blocks_en.{{ $index }}.data.sessions.{{ $sessionIndex }}.moderator" placeholder="Moderator" class="border rounded px-2 py-1">
-                                                            <input type="text" wire:model="content_blocks_en.{{ $index }}.data.sessions.{{ $sessionIndex }}.commentator" placeholder="Commentator" class="border rounded px-2 py-1">
-                                                            <input type="text" wire:model="content_blocks_en.{{ $index }}.data.sessions.{{ $sessionIndex }}.speakers" placeholder="Speakers (comma separated)" class="border rounded px-2 py-1">
-                                                        </div>
-                                                        <button type="button" wire:click="removeSession('en', {{ $index }}, {{ $sessionIndex }})" class="text-xs text-red-400 hover:underline mt-1">Remove session</button>
-                                                    </div>
-                                                @endforeach
-                                                <button type="button" wire:click="addSession('en', {{ $index }})" class="text-sm text-admin-amber hover:underline">+ Add Session</button>
-                                                @break
-                                            @case('speaker_bio')
-                                                <div class="grid grid-cols-2 gap-3" x-data="{
-                                                    photoUrl: @js(
-                                                        (isset($block['data']['photo']) && $block['data']['photo'] instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile)
-                                                            ? $block['data']['photo']->temporaryUrl()
-                                                            : (!empty($block['data']['photo']) ? asset('storage/' . $block['data']['photo']) : '')
-                                                    )
-                                                }">
-                                                    <div>
-                                                        <label class="text-xs font-medium">Name</label>
-                                                        <input type="text" wire:model="content_blocks_en.{{ $index }}.data.name" class="admin-input">
-                                                    </div>
-                                                    <div>
-                                                        <label class="text-xs font-medium">Title</label>
-                                                        <input type="text" wire:model="content_blocks_en.{{ $index }}.data.title" class="admin-input">
-                                                    </div>
-                                                    <div>
-                                                        <label class="text-xs font-medium">Upload Photo</label>
-                                                        <input type="file" accept="image/*"
-                                                               x-on:change="
-                                                                   let file = $event.target.files[0];
-                                                                   if (file) {
-                                                                       photoUrl = URL.createObjectURL(file);
-                                                                       $wire.upload('content_blocks_en.{{ $index }}.data.photo', file, () => {}, () => {}, (event) => {});
-                                                                   }"
-                                                               class="w-full border rounded-lg px-2 py-1.5 text-sm">
-                                                        <template x-if="photoUrl">
-                                                            <img :src="photoUrl" class="mt-1 h-16 w-16 rounded-full object-cover border">
-                                                        </template>
-                                                    </div>
-                                                    <div class="col-span-2">
-                                                        <label class="text-xs font-medium">Bio</label>
-                                                        <textarea wire:model="content_blocks_en.{{ $index }}.data.bio" rows="3" class="admin-input"></textarea>
-                                                    </div>
-                                                </div>
-                                                @break
-                                            @case('quote')
-                                                <div>
-                                                    <label class="text-xs font-medium">Quote Text</label>
-                                                    <textarea wire:model="content_blocks_en.{{ $index }}.data.text" rows="3" class="admin-input"></textarea>
-                                                </div>
-                                                <div class="mt-2">
-                                                    <label class="text-xs font-medium">Source</label>
-                                                    <input type="text" wire:model="content_blocks_en.{{ $index }}.data.source" class="admin-input">
-                                                </div>
-                                                @break
-                                        @endswitch
-                                        <div class="flex gap-3 mt-3 pt-3 border-t border-admin-line">
-                                            <div>
-                                                <label class="text-xs font-medium text-admin-muted">Margin Top (px)</label>
-                                                <input type="number" wire:model="content_blocks_en.{{ $index }}.data.mt" placeholder="auto" class="w-24 border rounded px-2 py-1 text-sm">
-                                            </div>
-                                            <div>
-                                                <label class="text-xs font-medium text-admin-muted">Margin Bottom (px)</label>
-                                                <input type="number" wire:model="content_blocks_en.{{ $index }}.data.mb" placeholder="auto" class="w-24 border rounded px-2 py-1 text-sm">
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endforeach
-
-                                <div class="flex flex-wrap gap-2 pt-2">
-                                    <button type="button" wire:click="addBlock('en', 'paragraph')" class="px-3 py-1.5 text-sm border border-admin-line text-admin-amber rounded-lg hover:bg-admin-raised">+ Paragraph</button>
-                                    <button type="button" wire:click="addBlock('en', 'image')" class="px-3 py-1.5 text-sm border border-purple-300 text-violet-400 rounded-lg hover:bg-purple-50">+ Image</button>
-                                    <button type="button" wire:click="addBlock('en', 'event_info_box')" class="px-3 py-1.5 text-sm border border-red-300 text-red-400 rounded-lg hover:bg-red-50">+ Event Info</button>
-                                    <button type="button" wire:click="addBlock('en', 'agenda_day')" class="px-3 py-1.5 text-sm border border-admin-line text-emerald-400 rounded-lg hover:bg-admin-raised">+ Agenda</button>
-                                    <button type="button" wire:click="addBlock('en', 'speaker_bio')" class="px-3 py-1.5 text-sm border border-admin-line text-admin-amber rounded-lg hover:bg-admin-raised">+ Speaker</button>
-                                    <button type="button" wire:click="addBlock('en', 'quote')" class="px-3 py-1.5 text-sm border border-admin-line text-admin-ash rounded-lg hover:bg-admin-raised">+ Quote</button>
-                                </div>
-                            </div>
+                        <div x-show="lang === 'en'" x-cloak>
+                            <label for="artikel-berkas-en" class="admin-label">Berkas (English)</label>
+                            <input id="artikel-berkas-en" type="file" wire:model="file_import_en" class="admin-input">
+                            @error('file_import_en') <p class="admin-error">{{ $message }}</p> @enderror
                         </div>
                     </div>
-
-                    {{-- SAVE --}}
-                    <div class="col-span-12 sticky bottom-0 bg-admin-surface border-t p-4 flex justify-end">
-                        <button type="submit" wire:loading.attr="disabled" class="relative bg-admin-amber hover:bg-admin-amber/85 disabled:opacity-60 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-medium flex items-center gap-2">
-
-                            {{-- Spinner --}}
-                            <svg wire:loading wire:target="save" class="animate-spin h-5 w-5 text-white"
-                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                    stroke-width="4" />
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                            </svg>
-
-                            {{-- Text --}}
-                            <span wire:loading.remove wire:target="save">
-                                {{ $page ? 'Update' : 'Create' }}
-                            </span>
-
-                            <span wire:loading wire:target="save">
-                                Saving...
-                            </span>
-                        </button>
-
-                    </div>
-
-                </div>
-            </form>
-        </div>
+                </x-admin.card>
+            </div>
+        </form>
     </div>
 
-    {{-- @include('front.components.floating') --}}
+    <x-admin.toast />
 </div>

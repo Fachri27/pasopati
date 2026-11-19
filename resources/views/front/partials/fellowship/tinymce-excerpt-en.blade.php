@@ -21,6 +21,9 @@
                 ],
                 block_formats:'Paragraph=p; Heading 1=h1; Heading 2=h2; Heading 3=h3; Heading 4=h4; Heading 5=h5; Heading 6=h6',
                 toolbar_sticky:true,
+                // Bilah atas halaman CMS (48px) menempel di puncak layar;
+                // tanpa offset ini toolbar yang menempel tersembunyi di baliknya.
+                toolbar_sticky_offset: 48,
                 promotion:false,
                 branding:false,
                 statusbar:true,

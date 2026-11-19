@@ -115,23 +115,23 @@
                         <div>
                             <input type="text" name="name" placeholder="{{ $locale === 'id' ? 'Nama Lengkap*' : 'Full Name*' }}"
                                 value="{{ old('name') }}" required
-                                class="admin-input @error('name') border-red-500 @enderror">
+                                class="petition-input @error('name') border-red-500 @enderror">
                             @error('name') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                         </div>
                         <div>
                             <input type="email" name="email" placeholder="Email*"
                                 value="{{ old('email') }}" required
-                                class="admin-input @error('email') border-red-500 @enderror">
+                                class="petition-input @error('email') border-red-500 @enderror">
                             @error('email') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                         </div>
                         <div>
                             <input type="text" name="city" placeholder="{{ $locale === 'id' ? 'Kota (opsional)' : 'City (optional)' }}"
                                 value="{{ old('city') }}"
-                                class="admin-input">
+                                class="petition-input">
                         </div>
                         <div>
                             <textarea name="comment" rows="2" placeholder="{{ $locale === 'id' ? 'Komentar (opsional)' : 'Comment (optional)' }}"
-                                class="admin-input">{{ old('comment') }}</textarea>
+                                class="petition-input">{{ old('comment') }}</textarea>
                         </div>
                         <div class="flex items-start gap-2">
                             <input type="checkbox" name="consent" id="consent" required

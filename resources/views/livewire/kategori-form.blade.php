@@ -1,42 +1,39 @@
 <div>
-    <div x-data="{lang:'id'}" class="">
-        <div class="max-w-4xl mx-auto bg-admin-surface p-6 rounded-lg shadow-md">
-            <h1 class="text-2xl font-bold mb-6 text-admin-ash">
-                {{ $isEdit ? 'Edit Kategori' : 'Tambah Kategori' }}
-            </h1>
+    <x-admin.page-header :title="$isEdit ? 'Ubah kategori' : 'Kategori baru'"
+                         :crumbs="[['Kategori', route('kategori.index')]]"
+                         :back="route('kategori.index')"
+                         narrow>
+        <a href="{{ route('kategori.index') }}" class="admin-btn admin-btn--quiet admin-btn--sm">Batal</a>
+        <button type="submit" form="form-kategori" wire:loading.attr="disabled" wire:target="save"
+                class="admin-btn admin-btn--primary admin-btn--sm">
+            <span wire:loading.remove wire:target="save">{{ $isEdit ? 'Simpan perubahan' : 'Simpan kategori' }}</span>
+            <span wire:loading wire:target="save">Menyimpan…</span>
+        </button>
+    </x-admin.page-header>
 
-            <div class="mb-6">
-                <label class="font-medium text-admin-ash">Pilih Bahasa</label>
-                <select x-model="lang" class="border pr-8 py-2 rounded-lg ml-3">
-                    <option value="id">Indonesia</option>
-                    <option value="en">English</option>
-                </select>
-            </div>
-
-            <form wire:submit.prevent="save" class="space-y-6">
-                {{-- Kategori Name (ID) --}}
-                <div x-show="lang === 'id'">
-                    <label class="block font-medium mb-1">Kategori Name (ID)</label>
-                    <input type="text" wire:model="kategori_name_id"
-                        class="w-full border px-3 py-2 rounded-lg">
-                    @error('kategori_name_id') <p class="text-red-400 text-sm">{{ $message }}</p> @enderror
+    <div class="admin-wrap admin-wrap--narrow admin-body">
+        {{-- Dua nama tampil berdampingan, tanpa sakelar bahasa: keduanya wajib
+             diisi, dan dengan sakelar galat di bahasa yang sedang tersembunyi
+             tidak terlihat sehingga form tampak menolak disimpan tanpa sebab. --}}
+        <form id="form-kategori" wire:submit.prevent="save">
+            <x-admin.card title="Nama kategori" description="Nama tampil sesuai bahasa yang dipilih pembaca di situs.">
+                <div class="grid gap-4 sm:grid-cols-2">
+                    <div>
+                        <label for="kategori-nama-id" class="admin-label">Nama (Indonesia)</label>
+                        <input id="kategori-nama-id" type="text" wire:model="kategori_name_id" maxlength="100"
+                               class="admin-input" @error('kategori_name_id') aria-invalid="true" @enderror>
+                        @error('kategori_name_id') <p class="admin-error">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label for="kategori-nama-en" class="admin-label">Nama (English)</label>
+                        <input id="kategori-nama-en" type="text" wire:model="kategori_name_en" maxlength="100"
+                               class="admin-input" @error('kategori_name_en') aria-invalid="true" @enderror>
+                        @error('kategori_name_en') <p class="admin-error">{{ $message }}</p> @enderror
+                    </div>
                 </div>
-
-                {{-- Kategori Name (EN) --}}
-                <div x-show="lang === 'en'">
-                    <label class="block font-medium mb-1">Kategori Name (EN)</label>
-                    <input type="text" wire:model="kategori_name_en"
-                        class="w-full border px-3 py-2 rounded-lg">
-                    @error('kategori_name_en') <p class="text-red-400 text-sm">{{ $message }}</p> @enderror
-                </div>
-
-                <div>
-                    <button type="submit"
-                        class="admin-btn admin-btn--primary">
-                        {{ $isEdit ? 'Update' : 'Create' }}
-                    </button>
-                </div>
-            </form>
-        </div>
+            </x-admin.card>
+        </form>
     </div>
+
+    <x-admin.toast />
 </div>

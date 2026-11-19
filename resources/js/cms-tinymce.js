@@ -673,6 +673,9 @@ const initializeTinyMceEditors = () => {
                 ? 'undo redo | fontsize | bold italic underline | alignleft aligncenter alignright | link removeformat | code'
                 : 'undo redo | blocks fontsize | addImage addLightbox addBeforeAfter addDataVisualization addVideo addBorderMerah addStopper | bold italic underline strikethrough forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image media table | code codesample removeformat | fullscreen preview',
             toolbar_sticky: true,
+            // Bilah atas halaman CMS (.admin-topbar, 48px) menempel di puncak
+            // layar; tanpa offset ini toolbar yang menempel tersembunyi di baliknya.
+            toolbar_sticky_offset: 48,
             promotion: false,
             branding: false,
             statusbar: true,

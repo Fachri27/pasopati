@@ -160,20 +160,18 @@ function initForm() {
 
         if (!items.length) {
             resultsEl.innerHTML =
-                '<div class="px-3 py-2 text-sm text-admin-muted">Tidak ditemukan.</div>';
+                '<div class="px-3 py-2 text-[13.5px] text-admin-muted">Tidak ditemukan.</div>';
             resultsEl.classList.remove('hidden');
             return;
         }
 
         items.forEach((item) => {
             const div = document.createElement('div');
-            /* Warna mengikuti tema admin yang gelap. Sebelumnya text-gray-800 di
-               atas hover:bg-blue-50 — pasangan untuk latar putih, padahal wadahnya
-               tidak punya bg sendiri sehingga tembus ke latar gelap CMS: teks
-               gelap di atas gelap, dan yang terbaca hanya baris yang sedang
-               di-hover. */
+            /* Warnanya lewat token CMS, bukan abu-abu tertulis langsung: wadah
+               hasil (#location-results) memakai bg-admin-surface, jadi teks dan
+               sorotan hover-nya harus ikut permukaan yang sama. */
             div.className =
-                'px-3 py-2 text-sm text-admin-smoke hover:bg-admin-line cursor-pointer border-b border-admin-line last:border-b-0';
+                'px-3 py-2 text-[13.5px] text-admin-smoke hover:bg-admin-tint cursor-pointer border-b border-admin-line last:border-b-0';
             div.textContent = item.name;
             div.addEventListener('click', () => selectLocation(item));
             resultsEl.appendChild(div);
@@ -198,7 +196,7 @@ function initForm() {
             renderResults(await response.json());
         } catch (err) {
             resultsEl.innerHTML =
-                '<div class="px-3 py-2 text-sm text-red-400">Layanan pencarian lokasi tidak tersedia.</div>';
+                '<div class="px-3 py-2 text-[13.5px] text-admin-ember">Layanan pencarian lokasi tidak tersedia.</div>';
             resultsEl.classList.remove('hidden');
         }
     }, 300);

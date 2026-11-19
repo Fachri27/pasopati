@@ -3,242 +3,191 @@
 @section('title', 'Dashboard — Pasopati CMS')
 
 @section('content')
-<div class="max-w-7xl mx-auto">
+@php
+    $adalahAdmin = auth()->user()->role === 'admin';
 
-    {{-- Page header --}}
-    <div class="mb-8">
-        <h1 class="font-admin-display font-bold text-2xl text-admin-smoke tracking-tight">Dashboard</h1>
-        <p class="text-sm text-admin-muted mt-1">Ringkasan aktivitas sistem monitoring karhutla.</p>
-    </div>
+    // Satu baris angka, bukan deretan kartu berikon: enam hitungan ini dibaca
+    // berdampingan, jadi yang dibutuhkan adalah kolom yang sejajar. `url`
+    // kosong berarti selnya bukan tautan — Komentar belum punya halaman
+    // moderasi di CMS, dan daftar Pengguna hanya terbuka untuk admin.
+    $angka = [
+        [
+            'label' => 'Artikel',
+            'nilai' => number_format($totalArticles),
+            'ket' => $activeArticles.' aktif · '.$draftArticles.' draft',
+            'url' => route('pages.index'),
+        ],
+        [
+            'label' => 'Fellowship',
+            'nilai' => number_format($totalFellowships),
+            'ket' => $activeFellowships.' aktif · '.$upcomingFellowships.' mendatang',
+            'url' => route('fellowship.index'),
+        ],
+        [
+            'label' => 'Petisi',
+            'nilai' => number_format($totalPetitions),
+            'ket' => $activePetitions.' aktif · rata-rata '.$avgProgress.'% dari target',
+            'url' => route('petition.admin.index'),
+        ],
+        [
+            'label' => 'Tanda tangan',
+            'nilai' => number_format($totalSignatures),
+            'ket' => number_format($pendingSignatures).' menunggu verifikasi',
+            'url' => route('petition.admin.index'),
+        ],
+        [
+            'label' => 'Komentar',
+            'nilai' => number_format($totalComments),
+            'ket' => $pendingComments > 0 ? number_format($pendingComments).' perlu moderasi' : 'Semua terverifikasi',
+            'perhatian' => $pendingComments > 0,
+            'url' => null,
+        ],
+        [
+            'label' => 'Pengguna',
+            'nilai' => number_format($totalUsers),
+            'ket' => 'Admin & editor',
+            'url' => $adalahAdmin ? route('user.index') : null,
+        ],
+    ];
 
-    {{-- Stats Cards --}}
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    $capStatus = [
+        'active' => 'admin-cap--ok admin-cap--dot',
+        'succeeded' => 'admin-cap--ok',
+        'closed' => 'admin-cap--warn',
+    ];
+@endphp
 
-        {{-- Artikel --}}
-        <div class="admin-stat-card bg-admin-surface border border-admin-line rounded-xl p-5">
-            <div class="flex items-center justify-between mb-3">
-                <p class="text-xs font-semibold text-admin-muted uppercase tracking-wider">Artikel</p>
-                <div class="w-9 h-9 rounded-lg bg-admin-amber/10 flex items-center justify-center">
-                    <svg class="w-5 h-5 text-admin-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/></svg>
-                </div>
-            </div>
-            <p class="font-admin-display font-bold text-3xl text-admin-smoke">{{ $totalArticles }}</p>
-            <div class="flex gap-3 text-xs mt-2">
-                <span class="badge-active px-1.5 py-0.5 rounded">{{ $activeArticles }} aktif</span>
-                <span class="badge-draft px-1.5 py-0.5 rounded">{{ $draftArticles }} draft</span>
-            </div>
+<div>
+    <x-admin.page-header title="Dashboard" description="Ringkasan isi dan aktivitas situs Pasopati." />
+
+    <div class="admin-wrap admin-body">
+        {{-- gap-px di atas alas sewarna garis: sekat antarsel tetap garis
+             rambut berapa pun kolomnya (2, 3, atau 6), tanpa aturan border
+             per titik-henti. --}}
+        <div class="grid grid-cols-2 gap-px overflow-hidden rounded-[10px] border border-admin-line bg-admin-line shadow-(--admin-shadow) sm:grid-cols-3 xl:grid-cols-6">
+            @foreach ($angka as $sel)
+                <{{ $sel['url'] ? 'a' : 'div' }} @if ($sel['url']) href="{{ $sel['url'] }}" @endif
+                    class="block bg-admin-surface px-4 py-3.5 {{ $sel['url'] ? 'hover:bg-admin-inset' : '' }}">
+                    <p class="admin-eyebrow">{{ $sel['label'] }}</p>
+                    <p class="admin-num mt-1.5 text-[26px] leading-none font-semibold tracking-tight text-admin-smoke">{{ $sel['nilai'] }}</p>
+                    <p class="mt-2 text-[12.5px] leading-snug {{ ($sel['perhatian'] ?? false) ? 'font-medium text-admin-ember' : 'text-admin-muted' }}">{{ $sel['ket'] }}</p>
+                </{{ $sel['url'] ? 'a' : 'div' }}>
+            @endforeach
         </div>
 
-        {{-- Fellowship --}}
-        <div class="admin-stat-card bg-admin-surface border border-admin-line rounded-xl p-5">
-            <div class="flex items-center justify-between mb-3">
-                <p class="text-xs font-semibold text-admin-muted uppercase tracking-wider">Fellowship</p>
-                <div class="w-9 h-9 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                    <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                </div>
-            </div>
-            <p class="font-admin-display font-bold text-3xl text-admin-smoke">{{ $totalFellowships }}</p>
-            <div class="flex gap-3 text-xs mt-2">
-                <span class="badge-active px-1.5 py-0.5 rounded">{{ $activeFellowships }} aktif</span>
-                <span class="badge-info px-1.5 py-0.5 rounded">{{ $upcomingFellowships }} mendatang</span>
-            </div>
+        <div class="mt-4 flex flex-wrap items-center gap-2">
+            <p class="admin-eyebrow mr-1">Aksi Cepat</p>
+            <a href="{{ route('pages.create') }}" class="admin-btn admin-btn--ghost admin-btn--sm">
+                <x-admin.icon name="plus" class="size-3.5" /> Artikel Baru
+            </a>
+            <a href="{{ route('fellowship.create') }}" class="admin-btn admin-btn--ghost admin-btn--sm">
+                <x-admin.icon name="plus" class="size-3.5" /> Fellowship Baru
+            </a>
+            <a href="{{ route('petition.admin.create') }}" class="admin-btn admin-btn--ghost admin-btn--sm">
+                <x-admin.icon name="plus" class="size-3.5" /> Petisi Baru
+            </a>
+            <a href="{{ route('kategori.create') }}" class="admin-btn admin-btn--ghost admin-btn--sm">
+                <x-admin.icon name="plus" class="size-3.5" /> Kategori Baru
+            </a>
         </div>
 
-        {{-- Petisi --}}
-        <div class="admin-stat-card bg-admin-surface border border-admin-line rounded-xl p-5">
-            <div class="flex items-center justify-between mb-3">
-                <p class="text-xs font-semibold text-admin-muted uppercase tracking-wider">Petisi</p>
-                <div class="w-9 h-9 rounded-lg bg-violet-500/10 flex items-center justify-center">
-                    <svg class="w-5 h-5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                </div>
-            </div>
-            <p class="font-admin-display font-bold text-3xl text-admin-smoke">{{ $totalPetitions }}</p>
-            <div class="flex gap-3 text-xs mt-2">
-                <span class="badge-active px-1.5 py-0.5 rounded">{{ $activePetitions }} aktif</span>
-                <span class="text-admin-muted">{{ number_format($totalSignatures) }} ttd</span>
-            </div>
-        </div>
+        <div class="mt-6 grid items-start gap-5 lg:grid-cols-2">
+            <x-admin.card title="Artikel terbaru" flush>
+                <x-slot:actions>
+                    <a href="{{ route('pages.index') }}" class="admin-btn admin-btn--quiet admin-btn--sm">Lihat semua</a>
+                </x-slot:actions>
 
-        {{-- Komentar --}}
-        <div class="admin-stat-card bg-admin-surface border border-admin-line rounded-xl p-5">
-            <div class="flex items-center justify-between mb-3">
-                <p class="text-xs font-semibold text-admin-muted uppercase tracking-wider">Komentar</p>
-                <div class="w-9 h-9 rounded-lg bg-admin-red/10 flex items-center justify-center">
-                    <svg class="w-5 h-5 text-admin-red" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-                </div>
-            </div>
-            <p class="font-admin-display font-bold text-3xl text-admin-smoke">{{ $totalComments }}</p>
-            <div class="text-xs mt-2">
+                <ul class="divide-y divide-admin-line">
+                    @forelse ($recentArticles as $article)
+                        <li>
+                            <a href="{{ route('pages.edit', $article['id']) }}" class="flex items-center gap-3 px-5 py-2.5 hover:bg-admin-inset max-sm:px-4">
+                                <span class="min-w-0 flex-1">
+                                    <span class="block truncate text-[13.5px] font-medium text-admin-smoke">{{ $article['title'] }}</span>
+                                    <span class="block text-[12.5px] text-admin-muted">{{ $article['created_at']->diffForHumans() }}</span>
+                                </span>
+                                <span class="admin-cap {{ $capStatus[$article['status']] ?? 'admin-cap--quiet' }}">{{ $article['status'] }}</span>
+                            </a>
+                        </li>
+                    @empty
+                        <li class="px-5 py-4 text-[13px] text-admin-muted max-sm:px-4">Belum ada artikel.</li>
+                    @endforelse
+                </ul>
+            </x-admin.card>
+
+            <x-admin.card title="Petisi terbaru" flush>
+                <x-slot:actions>
+                    <a href="{{ route('petition.admin.index') }}" class="admin-btn admin-btn--quiet admin-btn--sm">Lihat semua</a>
+                </x-slot:actions>
+
+                <ul class="divide-y divide-admin-line">
+                    @forelse ($recentPetitions as $petition)
+                        <li>
+                            <a href="{{ route('petition.admin.edit', $petition['id']) }}" class="flex items-center gap-3 px-5 py-2.5 hover:bg-admin-inset max-sm:px-4">
+                                <span class="min-w-0 flex-1">
+                                    <span class="block truncate text-[13.5px] font-medium text-admin-smoke">{{ $petition['title'] }}</span>
+                                    <span class="block text-[12.5px] text-admin-muted">
+                                        <span class="admin-num">{{ number_format($petition['signatures']) }}</span> ttd · {{ $petition['created_at']->diffForHumans() }}
+                                    </span>
+                                </span>
+                                <span class="admin-cap {{ $capStatus[$petition['status']] ?? 'admin-cap--quiet' }}">{{ $petition['status'] }}</span>
+                            </a>
+                        </li>
+                    @empty
+                        <li class="px-5 py-4 text-[13px] text-admin-muted max-sm:px-4">Belum ada petisi.</li>
+                    @endforelse
+                </ul>
+            </x-admin.card>
+
+            <x-admin.card title="Komentar menunggu moderasi" flush>
                 @if ($pendingComments > 0)
-                    <span class="badge-closed px-1.5 py-0.5 rounded">{{ $pendingComments }} perlu moderasi</span>
-                @else
-                    <span class="badge-active px-1.5 py-0.5 rounded">Semua terverifikasi</span>
+                    <x-slot:actions>
+                        <span class="admin-cap admin-cap--warn">{{ number_format($pendingComments) }}</span>
+                    </x-slot:actions>
                 @endif
-            </div>
-        </div>
-    </div>
 
-    {{-- Second row --}}
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+                <ul class="divide-y divide-admin-line">
+                    @forelse ($recentComments as $comment)
+                        <li class="px-5 py-2.5 max-sm:px-4">
+                            <p class="text-[13.5px] font-medium text-admin-smoke">{{ $comment['name'] }}</p>
+                            <p class="truncate text-[13px] text-admin-ash">{{ $comment['body'] }}</p>
+                            <p class="mt-0.5 truncate text-[12.5px] text-admin-muted">
+                                Pada: {{ $comment['page_title'] }} · {{ $comment['created_at']->diffForHumans() }}
+                            </p>
+                        </li>
+                    @empty
+                        <li class="px-5 py-4 text-[13px] text-admin-muted max-sm:px-4">Tidak ada komentar yang perlu dimoderasi.</li>
+                    @endforelse
+                </ul>
+            </x-admin.card>
 
-        <div class="bg-admin-surface border border-admin-line rounded-xl p-5">
-            <p class="text-xs font-semibold text-admin-muted uppercase tracking-wider mb-2">Tanda Tangan Petisi</p>
-            <p class="font-admin-display font-bold text-3xl text-admin-smoke">{{ number_format($totalSignatures) }}</p>
-            <p class="text-xs text-admin-muted mt-2">
-                <span class="text-admin-amber font-semibold">{{ number_format($pendingSignatures) }}</span> menunggu verifikasi
-            </p>
-        </div>
-
-        <div class="bg-admin-surface border border-admin-line rounded-xl p-5">
-            <p class="text-xs font-semibold text-admin-muted uppercase tracking-wider mb-2">Pengguna</p>
-            <p class="font-admin-display font-bold text-3xl text-admin-smoke">{{ $totalUsers }}</p>
-            <p class="text-xs text-admin-muted mt-2">Admin & Editor</p>
-        </div>
-
-        <div class="bg-admin-surface border border-admin-line rounded-xl p-5">
-            <p class="text-xs font-semibold text-admin-muted uppercase tracking-wider mb-2">Progress Petisi Aktif</p>
-            <p class="font-admin-display font-bold text-3xl text-admin-smoke">{{ $avgProgress }}%</p>
-            <div class="w-full bg-admin-line rounded-full h-1.5 mt-3">
-                <div class="bg-admin-amber h-1.5 rounded-full transition-all" style="width: {{ $avgProgress }}%"></div>
-            </div>
-        </div>
-    </div>
-
-    {{-- Recent lists --}}
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
-
-        {{-- Recent Articles --}}
-        <div class="bg-admin-surface border border-admin-line rounded-xl">
-            <div class="px-5 py-4 border-b border-admin-line flex justify-between items-center">
-                <h3 class="font-admin-display font-semibold text-admin-smoke">Artikel Terbaru</h3>
-                <a href="{{ route('pages.index') }}" class="text-xs font-medium text-admin-amber hover:text-admin-smoke transition">Lihat semua</a>
-            </div>
-            <div class="divide-y divide-admin-line">
-                @forelse ($recentArticles as $article)
-                    <div class="px-5 py-3 flex items-center justify-between">
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-medium text-admin-smoke truncate">{{ $article['title'] }}</p>
-                            <p class="text-xs text-admin-muted">{{ $article['created_at']->diffForHumans() }}</p>
-                        </div>
-                        <span class="ml-3 px-2 py-0.5 text-[11px] font-semibold rounded
-                            @switch($article['status'])
-                                @case('active') badge-active @break
-                                @case('draft') badge-draft @break
-                                @default text-admin-muted
-                            @endswitch">
-                            {{ ucfirst($article['status']) }}
-                        </span>
-                    </div>
-                @empty
-                    <p class="px-5 py-4 text-sm text-admin-muted">Belum ada artikel.</p>
-                @endforelse
-            </div>
-        </div>
-
-        {{-- Recent Petitions --}}
-        <div class="bg-admin-surface border border-admin-line rounded-xl">
-            <div class="px-5 py-4 border-b border-admin-line flex justify-between items-center">
-                <h3 class="font-admin-display font-semibold text-admin-smoke">Petisi Terbaru</h3>
-                <a href="{{ route('petition.admin.index') }}" class="text-xs font-medium text-admin-amber hover:text-admin-smoke transition">Lihat semua</a>
-            </div>
-            <div class="divide-y divide-admin-line">
-                @forelse ($recentPetitions as $petition)
-                    <div class="px-5 py-3 flex items-center justify-between">
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-medium text-admin-smoke truncate">{{ $petition['title'] }}</p>
-                            <p class="text-xs text-admin-muted">{{ number_format($petition['signatures']) }} ttd &middot; {{ $petition['created_at']->diffForHumans() }}</p>
-                        </div>
-                        <span class="ml-3 px-2 py-0.5 text-[11px] font-semibold rounded
-                            @switch($petition['status'])
-                                @case('active') badge-active @break
-                                @case('draft') badge-draft @break
-                                @case('closed') badge-closed @break
-                                @case('succeeded') badge-info @break
-                                @default text-admin-muted
-                            @endswitch">
-                            {{ ucfirst($petition['status']) }}
-                        </span>
-                    </div>
-                @empty
-                    <p class="px-5 py-4 text-sm text-admin-muted">Belum ada petisi.</p>
-                @endforelse
-            </div>
-        </div>
-    </div>
-
-    {{-- Bottom row --}}
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
-
-        {{-- Pending Comments --}}
-        <div class="bg-admin-surface border border-admin-line rounded-xl">
-            <div class="px-5 py-4 border-b border-admin-line flex justify-between items-center">
-                <h3 class="font-admin-display font-semibold text-admin-smoke">
-                    Komentar Menunggu Moderasi
-                    @if ($pendingComments > 0)
-                        <span class="ml-2 badge-closed px-2 py-0.5 text-[11px] rounded-full">{{ $pendingComments }}</span>
-                    @endif
-                </h3>
-            </div>
-            <div class="divide-y divide-admin-line">
-                @forelse ($recentComments as $comment)
-                    <div class="px-5 py-3">
-                        <p class="text-sm font-medium text-admin-smoke">{{ $comment['name'] }}</p>
-                        <p class="text-xs text-admin-ash truncate">{{ $comment['body'] }}</p>
-                        <p class="text-xs text-admin-muted mt-1">
-                            Pada: {{ $comment['page_title'] }} &middot; {{ $comment['created_at']->diffForHumans() }}
-                        </p>
-                    </div>
-                @empty
-                    <p class="px-5 py-4 text-sm text-admin-muted">Tidak ada komentar yang perlu dimoderasi.</p>
-                @endforelse
-            </div>
-        </div>
-
-        {{-- Top Petitions --}}
-        <div class="bg-admin-surface border border-admin-line rounded-xl">
-            <div class="px-5 py-4 border-b border-admin-line">
-                <h3 class="font-admin-display font-semibold text-admin-smoke">Petisi dengan Tanda Tangan Terbanyak</h3>
-            </div>
-            <div class="divide-y divide-admin-line">
-                @forelse ($topPetitions as $petition)
-                    <div class="px-5 py-3">
-                        <div class="flex items-center justify-between mb-1.5">
-                            <p class="text-sm font-medium text-admin-smoke truncate flex-1">{{ $petition['title'] }}</p>
-                            <span class="text-sm font-bold text-violet-400 ml-2 font-admin-display">{{ number_format($petition['signatures']) }}</span>
-                        </div>
-                        @if ($petition['goal'] > 0)
-                            @php $pct = min(100, round(($petition['signatures'] / $petition['goal']) * 100)); @endphp
-                            <div class="w-full bg-admin-line rounded-full h-1.5">
-                                <div class="bg-violet-500 h-1.5 rounded-full" style="width: {{ $pct }}%"></div>
+            <x-admin.card title="Petisi dengan tanda tangan terbanyak" flush>
+                <ul class="divide-y divide-admin-line">
+                    @forelse ($topPetitions as $petition)
+                        <li class="px-5 py-2.5 max-sm:px-4">
+                            <div class="flex items-baseline justify-between gap-3">
+                                <p class="min-w-0 flex-1 truncate text-[13.5px] font-medium text-admin-smoke">{{ $petition['title'] }}</p>
+                                <span class="admin-num text-[13.5px] font-semibold text-admin-smoke">{{ number_format($petition['signatures']) }}</span>
                             </div>
-                            <p class="text-[11px] text-admin-muted mt-1">{{ $pct }}% dari {{ number_format($petition['goal']) }}</p>
-                        @endif
-                    </div>
-                @empty
-                    <p class="px-5 py-4 text-sm text-admin-muted">Belum ada data.</p>
-                @endforelse
-            </div>
+                            @if ($petition['goal'] > 0)
+                                @php $pct = min(100, round(($petition['signatures'] / $petition['goal']) * 100)); @endphp
+                                <div class="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-admin-tint-strong"
+                                     role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ $pct }}"
+                                     aria-label="Capaian {{ $petition['title'] }}">
+                                    <div class="h-full rounded-full bg-admin-smoke" style="width: {{ $pct }}%"></div>
+                                </div>
+                                <p class="mt-1 text-[12px] text-admin-muted">
+                                    <span class="admin-num">{{ $pct }}%</span> dari <span class="admin-num">{{ number_format($petition['goal']) }}</span>
+                                </p>
+                            @endif
+                        </li>
+                    @empty
+                        <li class="px-5 py-4 text-[13px] text-admin-muted max-sm:px-4">Belum ada data.</li>
+                    @endforelse
+                </ul>
+            </x-admin.card>
         </div>
     </div>
 
-    {{-- Quick Actions --}}
-    <div class="bg-admin-surface border border-admin-line rounded-xl p-5 mb-8">
-        <h3 class="font-admin-display font-semibold text-admin-smoke mb-4">Aksi Cepat</h3>
-        <div class="flex flex-wrap gap-3">
-            <a href="{{ route('pages.create') }}" class="px-4 py-2 rounded-lg bg-admin-amber/10 text-admin-amber text-sm font-medium hover:bg-admin-amber/20 transition">
-                + Artikel Baru
-            </a>
-            <a href="{{ route('fellowship.create') }}" class="px-4 py-2 rounded-lg bg-emerald-500/10 text-emerald-400 text-sm font-medium hover:bg-emerald-500/20 transition">
-                + Fellowship Baru
-            </a>
-            <a href="{{ route('petition.admin.create') }}" class="px-4 py-2 rounded-lg bg-violet-500/10 text-violet-400 text-sm font-medium hover:bg-violet-500/20 transition">
-                + Petisi Baru
-            </a>
-            <a href="{{ route('kategori.create') }}" class="px-4 py-2 rounded-lg bg-admin-amber/10 text-admin-amber text-sm font-medium hover:bg-admin-amber/20 transition">
-                + Kategori Baru
-            </a>
-        </div>
-    </div>
-
+    <x-admin.toast />
 </div>
 @endsection

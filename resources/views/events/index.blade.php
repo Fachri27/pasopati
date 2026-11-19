@@ -1,141 +1,141 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
-    <div class="bg-admin-surface shadow rounded-lg p-6">
-        <div class="flex items-center justify-between mb-6">
-            <h2 class="text-2xl font-bold text-admin-smoke">Event / Kejadian</h2>
-            <a href="{{ route('events.create') }}"
-               class="bg-admin-amber hover:bg-admin-amber/85 text-white px-5 py-2 rounded-lg font-medium">
-                + Tambah Event
-            </a>
-        </div>
+    @php
+        // Saringan tersimpan di query string (form GET), jadi "ada saringan"
+        // cukup dibaca dari sana — dipakai untuk tombol Reset dan untuk
+        // membedakan dua keadaan kosong di bawah.
+        $tersaring = request()->filled('search') || request()->filled('date_from')
+            || request()->filled('date_to') || request()->filled('orientation');
+    @endphp
 
-        @if (session('success'))
-            <div class="mb-4 px-4 py-3 rounded-lg bg-emerald-500/10 text-admin-amber border border-admin-line">
-                {{ session('success') }}
-            </div>
-        @endif
+    <x-admin.page-header title="Kejadian" description="Titik kejadian yang tampil di peta dan korsel halaman Fire.">
+        <a href="{{ route('events.create') }}" class="admin-btn admin-btn--primary admin-btn--sm">
+            <x-admin.icon name="plus" class="size-3.5" />
+            Tambah kejadian
+        </a>
+    </x-admin.page-header>
 
-        {{-- Filter & Search --}}
-        <form method="GET" action="{{ route('events.index') }}"
-              class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-6">
-            <div>
-                <label class="block text-sm font-medium text-admin-ash mb-1">Cari Title / Lokasi</label>
-                <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari event..."
-                       class="admin-input">
+    <div class="admin-wrap admin-body">
+        <form method="GET" action="{{ route('events.index') }}" class="mb-4 flex flex-wrap items-center gap-2">
+            <x-admin.search name="search" :value="request('search')" placeholder="Cari judul atau lokasi…" />
+
+            <div class="flex w-full items-center gap-1.5 sm:w-auto">
+                <input type="date" name="date_from" value="{{ request('date_from') }}" aria-label="Tanggal kejadian, dari"
+                       class="admin-input admin-num h-8 min-h-8 w-full py-0 text-[13px] sm:w-[9.5rem]">
+                <span class="text-admin-muted" aria-hidden="true">–</span>
+                <input type="date" name="date_to" value="{{ request('date_to') }}" aria-label="Tanggal kejadian, sampai"
+                       class="admin-input admin-num h-8 min-h-8 w-full py-0 text-[13px] sm:w-[9.5rem]">
             </div>
-            <div>
-                <label class="block text-sm font-medium text-admin-ash mb-1">Dari Tanggal</label>
-                <input type="date" name="date_from" value="{{ request('date_from') }}"
-                       class="admin-input">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-admin-ash mb-1">Sampai Tanggal</label>
-                <input type="date" name="date_to" value="{{ request('date_to') }}"
-                       class="admin-input">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-admin-ash mb-1">Orientation</label>
-                <select name="orientation" class="admin-input admin-select">
-                    <option value="">Semua</option>
-                    <option value="landscape" @selected(request('orientation') === 'landscape')>Landscape</option>
-                    <option value="horizontal" @selected(request('orientation') === 'horizontal')>Horizontal</option>
-                </select>
-            </div>
-            <div class="flex items-end gap-2">
-                <button type="submit"
-                        class="admin-btn admin-btn--ghost">Filter</button>
-                <a href="{{ route('events.index') }}"
-                   class="bg-admin-raised hover:bg-admin-line text-admin-smoke px-4 py-2 rounded-lg">Reset</a>
-            </div>
+
+            <select name="orientation" aria-label="Saring orientasi"
+                    class="admin-input h-8 min-h-8 w-full py-0 text-[13px] sm:w-44">
+                <option value="">Semua orientasi</option>
+                <option value="landscape" @selected(request('orientation') === 'landscape')>Landscape</option>
+                <option value="horizontal" @selected(request('orientation') === 'horizontal')>Horizontal</option>
+            </select>
+
+            <button type="submit" class="admin-btn admin-btn--ghost admin-btn--sm">Terapkan</button>
+            @if ($tersaring)
+                <a href="{{ route('events.index') }}" class="admin-btn admin-btn--quiet admin-btn--sm">Reset</a>
+            @endif
         </form>
 
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-admin-raised">
-                    <tr class="text-left text-xs font-semibold text-admin-ash uppercase tracking-wider">
-                        <th class="px-4 py-3">Thumbnail</th>
-                        <th class="px-4 py-3">Title (ID)</th>
-                        <th class="px-4 py-3">Title (EN)</th>
-                        <th class="px-4 py-3">Tanggal Kejadian</th>
-                        <th class="px-4 py-3">Lokasi</th>
-                        <th class="px-4 py-3">Orientation</th>
-                        <th class="px-4 py-3">Dibuat</th>
-                        <th class="px-4 py-3">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-admin-surface divide-y divide-gray-100 text-sm text-admin-ash">
-                    @forelse ($events as $event)
-                        <tr class="hover:bg-admin-raised">
-                            <td class="px-4 py-3">
-                                @php $media = $event->media_items; @endphp
-                                @if (count($media))
-                                    <div class="flex items-center gap-2 overflow-x-auto max-w-[200px] pb-1">
-                                        @foreach (array_slice($media, 0, 3) as $item)
-                                            @if ($item['type'] === 'video')
-                                                <div class="relative shrink-0 w-16 h-10 rounded border border-admin-line bg-black overflow-hidden">
-                                                    <video src="{{ $item['url'] }}" preload="metadata" class="w-full h-full object-cover"></video>
-                                                    <span class="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-white bg-black/40">▶</span>
-                                                </div>
-                                            @else
-                                                <img src="{{ $item['url'] }}" alt="{{ $event->title_id }}" class="shrink-0 w-16 h-10 object-cover rounded border border-admin-line">
+        <div class="admin-table-frame">
+            <div class="admin-table-scroll">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Media</th>
+                            <th>Judul</th>
+                            <th>Tanggal kejadian</th>
+                            <th>Lokasi</th>
+                            <th>Orientasi</th>
+                            <th>Dibuat</th>
+                            <th class="admin-cell-actions"><span class="sr-only">Aksi</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($events as $event)
+                            @php $media = $event->media_items; @endphp
+                            <tr>
+                                <td>
+                                    @if (count($media))
+                                        <div class="flex items-center gap-1.5">
+                                            @foreach (array_slice($media, 0, 2) as $item)
+                                                @if ($item['type'] === 'video')
+                                                    <div class="relative h-9 w-14 shrink-0 overflow-hidden rounded border border-admin-line bg-black">
+                                                        <video src="{{ $item['url'] }}" preload="metadata" class="size-full object-cover"></video>
+                                                        <span class="absolute inset-0 grid place-items-center bg-black/40 text-white">
+                                                            <x-admin.icon name="video" class="size-3.5" />
+                                                        </span>
+                                                    </div>
+                                                @else
+                                                    <img src="{{ $item['url'] }}" alt="" loading="lazy"
+                                                         class="h-9 w-14 shrink-0 rounded border border-admin-line object-cover">
+                                                @endif
+                                            @endforeach
+                                            @if (count($media) > 2)
+                                                <span class="admin-num shrink-0 text-[12px] text-admin-muted">+{{ count($media) - 2 }}</span>
                                             @endif
-                                        @endforeach
-                                        @if (count($media) > 3)
-                                            <span class="shrink-0 text-[10px] text-admin-muted bg-admin-raised px-1.5 py-0.5 rounded">+{{ count($media) - 3 }}</span>
+                                        </div>
+                                    @else
+                                        <div class="grid h-9 w-14 place-items-center rounded border border-dashed border-admin-line-strong text-admin-muted" title="Tanpa media">
+                                            <x-admin.icon name="image" class="size-3.5" />
+                                        </div>
+                                    @endif
+                                </td>
+                                <td class="min-w-[240px] max-w-[380px]">
+                                    {{-- Judul kejadian sering berupa satu kalimat panjang.
+                                         Dipotong di sini supaya tinggi baris tetap seragam;
+                                         judul utuhnya ada di halaman Lihat dan di title. --}}
+                                    <div class="flex items-start gap-2">
+                                        <a href="{{ route('events.show', $event) }}" title="{{ $event->title_id }}"
+                                           class="line-clamp-2 font-medium hover:underline">{{ $event->title_id }}</a>
+                                        @if ($event->has_video || collect($media)->contains('type', 'video'))
+                                            <span class="admin-cap admin-cap--quiet shrink-0">video</span>
                                         @endif
                                     </div>
-                                @else
-                                    <div class="w-24 h-16 rounded border border-dashed border-admin-line bg-admin-raised flex items-center justify-center text-admin-muted text-xs">Tanpa gambar</div>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3 font-medium text-admin-smoke">
-                                {{ $event->title_id }}
-                                @if ($event->has_video || collect($media)->contains('type', 'video'))
-                                    <span class="ml-1 inline-block px-1.5 py-0.5 text-[10px] font-bold rounded bg-red-500/10 text-red-400"
-                                          title="Ada video">VIDEO</span>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3">{{ $event->title_en }}</td>
-                            <td class="px-4 py-3 whitespace-nowrap">{{ $event->event_date->format('d M Y') }}</td>
-                            <td class="px-4 py-3 max-w-xs truncate">{{ $event->location }}</td>
-                            <td class="px-4 py-3">
-                                @if ($event->orientation === \App\Enums\EventOrientation::Landscape)
-                                    <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-admin-amber/10 text-admin-amber">Landscape</span>
-                                @else
-                                    <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-violet-500/10 text-purple-800">Horizontal</span>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3 whitespace-nowrap">{{ $event->created_at->format('d M Y') }}</td>
-                            <td class="px-4 py-3 whitespace-nowrap space-x-1">
-                                <a href="{{ route('events.show', $event) }}"
-                                   class="admin-btn admin-btn--ghost admin-btn--sm">Detail</a>
-                                <a href="{{ route('events.edit', $event) }}"
-                                   class="inline-block bg-admin-ember hover:bg-admin-ember/85 text-white px-3 py-1 rounded text-xs">Edit</a>
-                                <form action="{{ route('events.destroy', $event) }}" method="POST" class="inline"
-                                      onsubmit="return confirm('Yakin ingin menghapus event ini? Gambar juga akan dihapus.');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit"
-                                            class="bg-admin-red hover:bg-admin-red/85 text-white px-3 py-1 rounded text-xs">Delete</button>
-                                </form>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="8" class="px-4 py-10 text-center text-admin-muted">
-                                Belum ada event. <a href="{{ route('events.create') }}" class="text-admin-amber underline">Buat event pertama</a>.
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-
-        <div class="mt-6">
-            {{ $events->links() }}
+                                    <p class="mt-0.5 line-clamp-1 text-[12.5px] text-admin-muted">{{ $event->title_en }}</p>
+                                </td>
+                                <td class="admin-num whitespace-nowrap text-admin-ash">{{ $event->event_date->format('d M Y') }}</td>
+                                <td class="max-w-[220px] truncate text-admin-ash" title="{{ $event->location }}">{{ $event->location }}</td>
+                                <td class="text-admin-ash">
+                                    {{ $event->orientation === \App\Enums\EventOrientation::Landscape ? 'Landscape' : 'Horizontal' }}
+                                </td>
+                                <td class="admin-num whitespace-nowrap text-admin-ash">{{ $event->created_at->format('d M Y') }}</td>
+                                <td class="admin-cell-actions">
+                                    <a href="{{ route('events.show', $event) }}" class="admin-btn admin-btn--quiet admin-btn--sm">Lihat</a>
+                                    <a href="{{ route('events.edit', $event) }}" class="admin-btn admin-btn--quiet admin-btn--sm">Ubah</a>
+                                    <form action="{{ route('events.destroy', $event) }}" method="POST" class="inline"
+                                          onsubmit="return confirm('Hapus kejadian ini? Gambar dan videonya ikut terhapus, dan tindakan ini tidak bisa dibatalkan.');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="admin-btn admin-btn--quiet-danger admin-btn--sm">Hapus</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="7" class="p-0">
+                                    @if ($tersaring)
+                                        <x-admin.empty title="Tidak ada kejadian yang cocok" icon="pin">
+                                            Ubah saringannya, atau <a href="{{ route('events.index') }}" class="underline">tampilkan semua</a>.
+                                        </x-admin.empty>
+                                    @else
+                                        <x-admin.empty title="Belum ada kejadian" icon="pin">
+                                            <a href="{{ route('events.create') }}" class="underline">Tambah kejadian pertama</a>.
+                                        </x-admin.empty>
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+            {{ $events->links('vendor.pagination.admin') }}
         </div>
     </div>
-</div>
+
+    <x-admin.toast />
 @endsection

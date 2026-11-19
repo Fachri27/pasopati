@@ -1,117 +1,82 @@
 {{--
-    Paginasi untuk CMS.
+    Paginasi untuk CMS: "1–20 dari 57" di kiri, panah dan nomor halaman di
+    kanan. Ia sendiri yang menjadi kaki tabel (.admin-table-foot), jadi cukup
+    diletakkan di dalam .admin-table-frame, setelah penggulirnya:
 
-    Salinan vendor/pagination/custom.blade.php dengan warna yang ditukar ke
-    token admin. Dipisah, bukan ditimpa: berkas aslinya dipakai halaman publik
-    Pasopati yang beralas putih dengan aksen hijau #2B5343 — menggelapkannya di
-    tempat akan merusak halaman publik, sedangkan menimpanya dari CSS admin
-    berarti melawan utility Tailwind dengan !important.
+        {{ $pages->links('vendor.pagination.admin') }}
 
-    Kalau yang asli diubah strukturnya, berkas ini perlu ikut disesuaikan.
+    Kalau hanya ada satu halaman, tidak ada yang dirender — termasuk garis
+    kakinya.
+
+    Komponen Livewire yang memakai WithPagination harus menyebutkannya:
+
+        {{ $items->links('vendor.pagination.admin', ['livewire' => true]) }}
+
+    Tanpa itu tautannya <a href> biasa, yang memuat ulang halaman dan
+    membuang keadaan komponen yang tidak tercatat di URL (saringan, pilihan).
+    Dengan itu tombolnya memanggil gotoPage() milik Livewire.
+
+    Terpisah dari vendor/pagination/custom.blade.php, yang dipakai halaman
+    publik Pasopati dengan aksen hijau mereknya.
 --}}
+@php
+    $lw = $livewire ?? false;
+    $nama = $paginator->getPageName();
+@endphp
 @if ($paginator->hasPages())
-    <nav role="navigation" aria-label="{{ __('Pagination Navigation') }}" class="flex items-center justify-between">
-        <div class="flex justify-between flex-1 sm:hidden">
-            @if ($paginator->onFirstPage())
-                <span class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-admin-muted bg-admin-surface border border-admin-line cursor-default rounded-lg">
-                    {!! __('pagination.previous') !!}
-                </span>
-            @else
-                <a href="{{ $paginator->previousPageUrl() }}" class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-admin-amber bg-admin-surface border border-admin-line rounded-lg hover:bg-admin-raised hover:text-admin-smoke focus:z-10 focus:outline-none focus:ring-2 focus:ring-admin-amber/30 transition ease-in-out duration-150">
-                    {!! __('pagination.previous') !!}
-                </a>
+    <nav role="navigation" aria-label="{{ __('Pagination Navigation') }}"
+         class="admin-table-foot flex min-h-11 flex-wrap items-center gap-2 px-4 py-2 text-[12.5px] text-admin-muted">
+        <p class="mr-auto">
+            @if ($paginator->firstItem())
+                <span class="admin-num font-medium text-admin-ash">{{ $paginator->firstItem() }}–{{ $paginator->lastItem() }}</span>
+                dari
             @endif
+            <span class="admin-num font-medium text-admin-ash">{{ $paginator->total() }}</span>
+        </p>
 
-            @if ($paginator->hasMorePages())
-                <a href="{{ $paginator->nextPageUrl() }}" class="relative inline-flex items-center px-4 py-2 ml-3 text-sm font-medium text-admin-amber bg-admin-surface border border-admin-line rounded-lg hover:bg-admin-raised hover:text-admin-smoke focus:z-10 focus:outline-none focus:ring-2 focus:ring-admin-amber/30 transition ease-in-out duration-150">
-                    {!! __('pagination.next') !!}
-                </a>
-            @else
-                <span class="relative inline-flex items-center px-4 py-2 ml-3 text-sm font-medium text-admin-muted bg-admin-surface border border-admin-line cursor-default rounded-lg">
-                    {!! __('pagination.next') !!}
-                </span>
-            @endif
-        </div>
+        @if ($paginator->onFirstPage())
+            <span class="admin-icon-btn size-7" aria-disabled="true" aria-label="{{ __('pagination.previous') }}">
+                <x-admin.icon name="left" class="size-3.5" />
+            </span>
+        @else
+            <{{ $lw ? 'button type=button' : 'a' }} @if ($lw) wire:click="previousPage('{{ $nama }}')" @else href="{{ $paginator->previousPageUrl() }}" @endif
+               rel="prev" class="admin-icon-btn size-7" aria-label="{{ __('pagination.previous') }}">
+                <x-admin.icon name="left" class="size-3.5" />
+            </{{ $lw ? 'button' : 'a' }}>
+        @endif
 
-        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-            <div>
-                <p class="text-sm text-admin-ash leading-5">
-                    {!! __('Showing') !!}
-                    @if ($paginator->firstItem())
-                        <span class="font-semibold text-admin-amber">{{ $paginator->firstItem() }}</span>
-                        {!! __('to') !!}
-                        <span class="font-semibold text-admin-amber">{{ $paginator->lastItem() }}</span>
-                    @else
-                        {{ $paginator->count() }}
-                    @endif
-                    {!! __('of') !!}
-                    <span class="font-semibold text-admin-amber">{{ $paginator->total() }}</span>
-                    {!! __('results') !!}
-                </p>
-            </div>
+        <span class="hidden items-center gap-0.5 sm:flex">
+            @foreach ($elements as $element)
+                {{-- Pemisah "…" --}}
+                @if (is_string($element))
+                    <span class="px-1" aria-hidden="true">{{ $element }}</span>
+                @endif
 
-            <div>
-                <span class="relative z-0 inline-flex rtl:flex-row-reverse rounded-lg shadow-sm">
-                    {{-- Previous Page Link --}}
-                    @if ($paginator->onFirstPage())
-                        <span aria-disabled="true" aria-label="{{ __('pagination.previous') }}">
-                            <span class="relative inline-flex items-center px-2 py-2 text-sm font-medium text-admin-muted bg-admin-surface border border-admin-line cursor-default rounded-l-lg leading-5" aria-hidden="true">
-                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                </svg>
-                            </span>
-                        </span>
-                    @else
-                        <a href="{{ $paginator->previousPageUrl() }}" rel="prev" class="relative inline-flex items-center px-2 py-2 text-sm font-medium text-admin-amber bg-admin-surface border border-admin-line rounded-l-lg leading-5 hover:bg-admin-raised hover:text-admin-smoke focus:z-10 focus:outline-none focus:ring-2 focus:ring-admin-amber/30 transition ease-in-out duration-150" aria-label="{{ __('pagination.previous') }}">
-                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
-                            </svg>
-                        </a>
-                    @endif
-
-                    {{-- Pagination Elements --}}
-                    @foreach ($elements as $element)
-                        {{-- "Three Dots" Separator --}}
-                        @if (is_string($element))
-                            <span aria-disabled="true">
-                                <span class="relative inline-flex items-center px-4 py-2 -ml-px text-sm font-medium text-admin-muted bg-admin-surface border border-admin-line cursor-default leading-5">{{ $element }}</span>
-                            </span>
-                        @endif
-
-                        {{-- Array Of Links --}}
-                        @if (is_array($element))
-                            @foreach ($element as $page => $url)
-                                @if ($page == $paginator->currentPage())
-                                    <span aria-current="page">
-                                        <span class="relative inline-flex items-center px-4 py-2 -ml-px text-sm font-bold text-white bg-admin-amber border border-admin-amber leading-5">{{ $page }}</span>
-                                    </span>
-                                @else
-                                    <a href="{{ $url }}" class="relative inline-flex items-center px-4 py-2 -ml-px text-sm font-medium text-admin-ash bg-admin-surface border border-admin-line leading-5 hover:bg-admin-raised hover:text-admin-smoke focus:z-10 focus:outline-none focus:ring-2 focus:ring-admin-amber/30 transition ease-in-out duration-150" aria-label="{{ __('Go to page :page', ['page' => $page]) }}">
-                                        {{ $page }}
-                                    </a>
-                                @endif
-                            @endforeach
+                @if (is_array($element))
+                    @foreach ($element as $page => $url)
+                        @if ($page == $paginator->currentPage())
+                            <span aria-current="page" class="admin-num grid h-7 min-w-7 place-items-center rounded bg-admin-tint-strong px-1.5 font-semibold text-admin-smoke">{{ $page }}</span>
+                        @else
+                            <{{ $lw ? 'button type=button' : 'a' }} @if ($lw) wire:click="gotoPage({{ $page }}, '{{ $nama }}')" wire:key="hal-{{ $nama }}-{{ $page }}" @else href="{{ $url }}" @endif
+                               class="admin-num grid h-7 min-w-7 cursor-pointer place-items-center rounded px-1.5 hover:bg-admin-tint hover:text-admin-smoke" aria-label="{{ __('Go to page :page', ['page' => $page]) }}">{{ $page }}</{{ $lw ? 'button' : 'a' }}>
                         @endif
                     @endforeach
+                @endif
+            @endforeach
+        </span>
 
-                    {{-- Next Page Link --}}
-                    @if ($paginator->hasMorePages())
-                        <a href="{{ $paginator->nextPageUrl() }}" rel="next" class="relative inline-flex items-center px-2 py-2 -ml-px text-sm font-medium text-admin-amber bg-admin-surface border border-admin-line rounded-r-lg leading-5 hover:bg-admin-raised hover:text-admin-smoke focus:z-10 focus:outline-none focus:ring-2 focus:ring-admin-amber/30 transition ease-in-out duration-150" aria-label="{{ __('pagination.next') }}">
-                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                            </svg>
-                        </a>
-                    @else
-                        <span aria-disabled="true" aria-label="{{ __('pagination.next') }}">
-                            <span class="relative inline-flex items-center px-2 py-2 -ml-px text-sm font-medium text-admin-muted bg-admin-surface border border-admin-line cursor-default rounded-r-lg leading-5" aria-hidden="true">
-                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                                </svg>
-                            </span>
-                        </span>
-                    @endif
-                </span>
-            </div>
-        </div>
+        {{-- Layar sempit: nomor halaman diganti "3 / 12" supaya barisnya tidak patah. --}}
+        <span class="admin-num sm:hidden">{{ $paginator->currentPage() }} / {{ $paginator->lastPage() }}</span>
+
+        @if ($paginator->hasMorePages())
+            <{{ $lw ? 'button type=button' : 'a' }} @if ($lw) wire:click="nextPage('{{ $nama }}')" @else href="{{ $paginator->nextPageUrl() }}" @endif
+               rel="next" class="admin-icon-btn size-7" aria-label="{{ __('pagination.next') }}">
+                <x-admin.icon name="right" class="size-3.5" />
+            </{{ $lw ? 'button' : 'a' }}>
+        @else
+            <span class="admin-icon-btn size-7" aria-disabled="true" aria-label="{{ __('pagination.next') }}">
+                <x-admin.icon name="right" class="size-3.5" />
+            </span>
+        @endif
     </nav>
 @endif

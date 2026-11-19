@@ -12,17 +12,18 @@
 @endphp
 
 <div>
-    <div class="mb-2 flex items-end justify-between gap-4">
-        <div>
+    {{-- Kepala hanya dibuat kalau memang ada isinya: tanpa label dan hint,
+         editornya menempel langsung ke judul seksi di atasnya. --}}
+    @if ($label || $hint)
+        <div class="mb-2">
             @if ($label)
-                <label class="block text-sm font-semibold text-admin-ash">{{ $label }}</label>
+                <p class="admin-label mb-0">{{ $label }}</p>
             @endif
             @if ($hint)
-                <p class="text-xs text-admin-muted">{{ $hint }}</p>
+                <p class="admin-hint mt-0.5">{{ $hint }}</p>
             @endif
         </div>
-        <span class="shrink-0 bg-admin-raised px-2.5 py-1 text-[11px] font-medium uppercase tracking-wide text-admin-muted">TinyMCE custom</span>
-    </div>
+    @endif
 
     {{-- Dua textarea, bukan satu. Yang di dalam wire:ignore adalah tempat
          TinyMCE menanam dirinya, dan harus kebal morph Livewire — kalau
@@ -44,6 +45,6 @@
     </div>
 
     @error($wireModel)
-        <p class="mt-1.5 text-xs font-medium text-red-400">{{ $message }}</p>
+        <p class="admin-error">{{ $message }}</p>
     @enderror
 </div>

@@ -1,74 +1,73 @@
-<div>
-    {{-- Login card --}}
-    <div class="bg-admin-surface/80 backdrop-blur-xl border border-admin-line rounded-2xl p-8 shadow-2xl shadow-black/30">
+<main class="grid min-h-screen lg:grid-cols-[1.05fr_minmax(400px,0.95fr)]">
+    {{-- Panel merek. Selalu gelap, apa pun temanya — karena itu warnanya
+         ditulis langsung, bukan lewat token CMS yang terang. Di layar sempit
+         ia menyusut jadi pita di atas form. --}}
+    <section class="relative flex min-h-[140px] flex-col justify-between overflow-hidden bg-[hsl(0_0%_7%)] p-6 text-white sm:min-h-[260px] lg:p-10">
+        {{-- Garis Nusantara, digambar provinsi demi provinsi dari barat ke
+             timur. Animasinya ada di dalam berkas SVG-nya sendiri; dibangkitkan
+             dari public/data/peta-provinsi.js. --}}
+        <img src="{{ asset('img/cms-nusantara.svg') }}" alt="" aria-hidden="true"
+             class="pointer-events-none absolute top-1/2 -left-[8%] w-[116%] max-w-none -translate-y-1/2 select-none">
 
-        {{-- Brand --}}
-        <div class="flex items-center gap-3 mb-8">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-admin-amber to-admin-red flex items-center justify-center shadow-lg shadow-admin-amber/20">
-                <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                </svg>
-            </div>
-            <div>
-                <h1 class="font-admin-display font-bold text-admin-smoke text-xl tracking-tight">Pasopati</h1>
-                <p class="text-[11px] text-admin-muted uppercase tracking-[0.2em] font-medium">Monitoring Center</p>
-            </div>
+        <p class="relative text-[17px] font-semibold tracking-tight">
+            Pasopati<span class="text-[#e5484d]">.</span>
+        </p>
+        <p class="relative text-[12px] font-medium text-white/50">
+            Ruang redaksi Pasopati · Auriga Nusantara
+        </p>
+    </section>
+
+    <section class="flex items-center justify-center p-6 lg:p-10">
+        <div class="w-full max-w-[380px]">
+            <p class="admin-eyebrow">Pasopati CMS</p>
+            <h1 class="mt-2 text-[26px] leading-tight font-semibold tracking-tight">Masuk</h1>
+            <p class="mt-2.5 text-[14px] text-admin-ash">Kelola artikel, kejadian, petisi, dan arsip Deforestory.</p>
+
+            {{-- Galat masuk (email/password salah) dipasang komponennya di
+                 kunci `email`; ditampilkan sekali di sini, tidak diulang di
+                 bawah isiannya. --}}
+            @error('email')
+                <div class="admin-alert mt-5" role="alert">{{ $message }}</div>
+            @enderror
+
+            <form wire:submit.prevent="login" class="mt-6">
+                <div class="grid gap-4">
+                    <div>
+                        <label for="email" class="admin-eyebrow mb-1.5 block">Email</label>
+                        <input id="email" type="email" wire:model.lazy="email"
+                               class="admin-input"
+                               placeholder="nama@contoh.id"
+                               autocomplete="email" autofocus
+                               @error('email') aria-invalid="true" @enderror>
+                    </div>
+
+                    <div>
+                        <label for="password" class="admin-eyebrow mb-1.5 block">Password</label>
+                        <input id="password" type="password" wire:model.lazy="password"
+                               class="admin-input"
+                               placeholder="Masukkan password"
+                               autocomplete="current-password"
+                               @error('password') aria-invalid="true" @enderror>
+                        @error('password')
+                            <p class="admin-error">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <label class="flex cursor-pointer items-center gap-2">
+                        <input type="checkbox" wire:model="remember" class="size-4">
+                        <span class="text-[13.5px] text-admin-ash">Ingat saya</span>
+                    </label>
+                </div>
+
+                <button type="submit" class="admin-btn admin-btn--primary mt-6 w-full" wire:loading.attr="disabled">
+                    <span wire:loading.remove wire:target="login">Masuk</span>
+                    <span wire:loading wire:target="login">Memproses…</span>
+                </button>
+            </form>
+
+            <p class="mt-5 border-t border-admin-line pt-4 text-[12.5px] leading-[1.6] text-admin-muted">
+                Akun dibuat oleh admin. Kalau lupa password, minta admin mengaturnya ulang dari menu Pengguna.
+            </p>
         </div>
-
-        <form wire:submit.prevent="login" class="space-y-5">
-            {{-- Email --}}
-            <div>
-                <label for="email" class="block text-xs font-semibold text-admin-ash uppercase tracking-wider mb-1.5">Email</label>
-                <input id="email" type="email" wire:model.lazy="email"
-                       class="admin-input"
-                       placeholder="nama@contoh.id"
-                       autocomplete="email" autofocus>
-                @error('email')
-                    <p class="mt-1.5 text-xs text-red-400">{{ $message }}</p>
-                @enderror
-            </div>
-
-            {{-- Password --}}
-            <div>
-                <label for="password" class="block text-xs font-semibold text-admin-ash uppercase tracking-wider mb-1.5">Password</label>
-                <input id="password" type="password" wire:model.lazy="password"
-                       class="admin-input"
-                       placeholder="Masukkan password"
-                       autocomplete="current-password">
-                @error('password')
-                    <p class="mt-1.5 text-xs text-red-400">{{ $message }}</p>
-                @enderror
-            </div>
-
-            {{-- Remember me --}}
-            <label class="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" wire:model="remember"
-                       class="w-4 h-4 rounded border-admin-line bg-admin-raised text-admin-amber focus:ring-admin-amber/30 focus:ring-offset-0">
-                <span class="text-sm text-admin-ash">Ingat saya</span>
-            </label>
-
-            {{-- Submit --}}
-            <button type="submit"
-                    class="w-full py-2.5 px-4 rounded-lg font-semibold text-sm bg-gradient-to-r from-admin-amber to-admin-ember text-white shadow-lg shadow-admin-amber/20 hover:shadow-admin-amber/30 hover:brightness-110 transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
-                    wire:loading.attr="disabled">
-                <span wire:loading.remove wire:target="login">Masuk</span>
-                <span wire:loading wire:target="login" class="flex items-center justify-center gap-2">
-                    <svg class="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" class="opacity-25"/><path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" fill="currentColor" class="opacity-75"/></svg>
-                    Memproses…
-                </span>
-            </button>
-        </form>
-
-        {{-- General error --}}
-        @if ($errors->has('email'))
-            <div class="mt-4 text-center text-sm text-red-400 bg-red-400/10 rounded-lg py-2">
-                {{ $errors->first('email') }}
-            </div>
-        @endif
-    </div>
-
-    {{-- Footer --}}
-    <p class="text-center text-xs text-admin-muted mt-6">
-        Sistem Monitoring Karhutla Indonesia
-    </p>
-</div>
+    </section>
+</main>
